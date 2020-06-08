@@ -8,6 +8,9 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
 
+'''
+Function for filtering out entries that are further out than some specified distance in pc
+'''
 def filter_distance(df, dist, *args, **kwargs):
     
     #TODO: Assert parallax_lower type and value
@@ -19,12 +22,20 @@ def filter_distance(df, dist, *args, **kwargs):
 
     return df
 
+
+'''
+Generalised filtering function
+'''
 # TODO: Function with a passible dictionary of parameter restrictions
 def filter_value(df, *args, **kwargs):
 
     #TODO: Use inplace functions from pandas
     pass
 
+
+'''
+Helper function for 'get_SkyCoord_object' function. Returns QTable containing parallax values.
+'''
 def get_parallax_table(parallax_series):
 
     df_parallax = pd.DataFrame(parallax_series, columns="index parallax".split())
@@ -33,6 +44,9 @@ def get_parallax_table(parallax_series):
 
     return t
 
+'''
+Function for instantiating a SkyCoord object with given data.
+'''
 def get_SkyCoord_object(df):
 
     # Gets a distance object to input into SkyCoord object. Need to fix this in the future..
@@ -52,6 +66,10 @@ def get_SkyCoord_object(df):
 # Currently expect data to be in DataFrame format
 # TODO: Allow for varying of positional parameters of the Sun
 # TODO: Transform back to DataFrame
+'''
+Function for transforming data into a galactocentric reference frame using SkyCoord objects and 
+the 'transform_to' function.
+'''
 def transform_to_galcen(df, z_sun=17*u.pc, galcen_distance=8.178*u.kpc):
     
     c = get_SkyCoord_object(df)
@@ -62,44 +80,49 @@ def transform_to_galcen(df, z_sun=17*u.pc, galcen_distance=8.178*u.kpc):
 def main():
     
     # For finding current module working directory
-    #import os 
-    #dir_path = os.path.dirname(os.path.realpath(__file__))
-    #print(dir_path)
+    import os 
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    print(dir_path)
 
+
+    #from astroquery.gaia import Gaia
+    #Gaia.login()
+
+    #full_qualified_table_name = 'user_spoder.table_test_from_file'
+    #query = 'select * from ' + full_qualified_table_name
+    #job = Gaia.launch_job(query=query, dump_to_file = True, output_format='csv', output_file='user_uploaded_table_test.csv')
+
+    #print(job)
     # Get first 10 non-header rows from our data file
-    df = pd.read_csv(my_path, nrows=10)
-   
-    print(df.shape)
     
-    df = filter_distance(df, 32000)
-    print(df.shape)
+    my_path = 'user_uploaded_table_test.csv'
+    df = pd.read_csv(my_path)
    
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+    
+    print("Filtering entries that are further than 32 000 pc")
+    df = filter_distance(df, 32000)
+    
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+
+
+    print("Removing negative parallaxes...")
     df=df[df.parallax > 0]
     df.reset_index(inplace=True, drop=True)
+    print("Checking indexing...")
     print(df.head)
 
+    print("Transforming data to galactocentric frame...")
     galcen = transform_to_galcen(df)
 
-
-    from matplotlib.ticker import FormatStrFormatter
-    from matplotlib.ticker import StrMethodFormatter
-    import matplotlib.pyplot as plt
-    fig = plt.figure(figsize=(10, 10))
-
-    plt.hist(-galcen.x.value, bins=np.linspace(-10000, 10000, 32))
-    plt.xlabel('$x$ [{0:latex_inline}]'.format(galcen.z.unit), fontdict={'fontsize': 18});
-    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
-    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-
-    plt.ylabel('Count', fontdict={'fontsize': 18});
-    plt.grid()
-    plt.rcParams["patch.force_edgecolor"] = True
-    plt.title("Distribution by Distance", pad=20, fontdict={'fontsize': 20})
-
-    plt.show()
-
+    from data_plot import distribution_hist
+    distribution_hist(galcen)
+   
+    print("Plotting done!")
 
 
 if __name__ == "__main__":
+
+    
     main()
 
