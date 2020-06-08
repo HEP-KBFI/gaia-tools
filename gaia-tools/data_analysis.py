@@ -115,9 +115,11 @@ def main():
     print("Transforming data to galactocentric frame...")
     galcen = transform_to_galcen(df)
 
-    from data_plot import distribution_hist
+    from data_plot import distribution_hist, point_density
     distribution_hist(galcen)
    
+    point_density(galcen, 2000)
+
     print("Plotting done!")
 
 
