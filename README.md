@@ -17,3 +17,9 @@ To start working on this project:
 The point of using verion control is to make it easier for multiple people to work on the code base without submitting conflicting scripts.  
 For each issue/task a separate code "branch" should be created. Once the task is complete, that same branch will be reviewed and merged into the master branch.  
 
+## Requirements
+
+The code is all written in python3 and makes substantial use of the standard pandas, numpy, matplotlib, etc. Additional libraries that you may need to investigate depending on your installation:
+
+* [`astropy`](https://www.astropy.org/)
+* [`mpl_scatter_density`](https://anaconda.org/conda-forge/mpl-scatter-density)
