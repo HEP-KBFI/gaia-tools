@@ -8,6 +8,7 @@ import astropy.coordinates as coord
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
+from BinCollection import BinCollection
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
@@ -109,11 +110,14 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     z = -plottable_df.v_x
     z2 = plottable_df.v_y
 
+    # Number of bins to binned_statistic_2d
+    bins = 10
+
     #v_x
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z,bins = 10, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = bins, statistic='mean')
 
     #v_y
-    H2, xedges2, yedges2, binnumber2 = stats.binned_statistic_2d(x, y, values = z2,bins = 10, statistic='mean')
+    H2, xedges2, yedges2, binnumber2 = stats.binned_statistic_2d(x, y, values = z2, bins = bins, statistic='mean')
 
     if(show_bins == True):
         from data_plot import display_bins
@@ -122,6 +126,17 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
         display_bins(xedges, yedges, {'Data': H2, 'Projection':'y', 'Unit':galcen_data.v_y.unit})
     
     VEC_COORDS = generate_vector_mesh(xedges, yedges)
+
+    plottable_df['Bin_index'] = binnumber
+
+    bin_collection = BinCollection(plottable_df)
+    bin_collection.N_bins = bins
+
+    print(bin_collection.bin_num_set)
+
+    bin_collection.GenerateBins()
+
+    print(len(bin_collection.bins))
 
     return ({'Data':[H, H2], 
             'Projections':['x', 'y'],
