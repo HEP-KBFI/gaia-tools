@@ -153,15 +153,15 @@ def generate_vector_mesh(XX, YY):
 
     # We create a meshgrid out of all the vector locations
     VEC_XX, VEC_YY = np.meshgrid(vec_x, vec_y)
-    print(VEC_XX.shape)
+    
     return VEC_XX, VEC_YY
 
 def main():
     
     # For finding current module working directory
-    import os 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    print(dir_path)
+    #import os 
+    #dir_path = os.path.dirname(os.path.realpath(__file__))
+    #print(dir_path)
 
     # YOUR DATA FILE
     my_path = 'spectroscopic_test_table.csv'
@@ -176,6 +176,7 @@ def main():
 
     print("Removing negative parallaxes...")
     df=df[df.parallax > 0]
+
     df.reset_index(inplace=True, drop=True)
     print("Checking indexing...")
     print(df.head)

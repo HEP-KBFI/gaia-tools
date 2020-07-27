@@ -67,7 +67,9 @@ def point_density(galcen, vmax):
 
     plt.show()
    
-    
+'''
+A function that displays the specific numerical values inside each bin.
+'''
 def display_values(XX, YY, H):
     for i in range(YY.shape[0]-1):
         for j in range(XX.shape[0]-1):
@@ -80,7 +82,7 @@ A plot which enables the user to see the bins created by the 'bin_data' function
 data analysis module. It takes in the histogram data and does a colormesh with colours 
 mapped to the value inside the 2D bin.
 '''
-def display_mean_velocity(bin_collection, projection_parameter):
+def display_mean_velocity(bin_collection, projection_parameter, showBinValues = True):
 
     parameter = projection_parameter
 
@@ -92,7 +94,8 @@ def display_mean_velocity(bin_collection, projection_parameter):
     ax1=plt.subplot(111)
     plot1 = ax1.pcolormesh(XX, YY, values.T)
 
-    display_values(XX, YY, values)
+    if(showBinValues):
+        display_values(XX, YY, values)
 
     cbar = plt.colorbar(plot1,ax=ax1, 
                         pad = .015, 
@@ -120,8 +123,6 @@ def generate_velocity_map(bin_collection):
 
     H = bin_collection.CalculateValues('v_x')
     H2 = bin_collection.CalculateValues('v_y')
-
-    print(bin_collection.bin_boundaries[0].shape)
 
     # Gets the vector coordinates
     VEC_XX, VEC_YY = generate_vector_mesh(bin_collection.bin_boundaries[0], bin_collection.bin_boundaries[1])

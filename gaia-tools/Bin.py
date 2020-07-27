@@ -1,6 +1,9 @@
 '''
 Data object for data entries with the same bin index.
 
+Inside this class we can define functions and variables to calculate
+needed error parameters that can be accessed at any later time.
+
 Instance variables
 ------------------
 data : DataFrame 
