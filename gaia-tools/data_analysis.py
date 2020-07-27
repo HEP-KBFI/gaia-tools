@@ -119,9 +119,6 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     # Create a meshgrid from the vertices   
     XX, YY = np.meshgrid(xedges, yedges)
 
-    # Center points of the bins translated into a meshgrid
-    bin_mid_points = generate_vector_mesh(xedges, yedges)
-
     # Assign a binnumber for each data entry
     plottable_df['Bin_index'] = binnumber
 
@@ -151,8 +148,8 @@ def generate_vector_mesh(XX, YY):
     vec_z = []
 
     for i in range(XX.shape[0]-1):
-        vec_x.append((XX[i+1]+XX[i])/2)
-        vec_y.append((YY.T[i+1]+YY.T[i])/2)
+        vec_x.append((XX[0][i+1]+XX[0][i])/2)
+        vec_y.append((YY.T[0][i+1]+YY.T[0][i])/2)
 
     # We create a meshgrid out of all the vector locations
     VEC_XX, VEC_YY = np.meshgrid(vec_x, vec_y)

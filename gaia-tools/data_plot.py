@@ -124,6 +124,8 @@ def generate_velocity_map(bin_collection):
     H = bin_collection.CalculateValues('v_x')
     H2 = bin_collection.CalculateValues('v_y')
 
+    print(bin_collection.bin_boundaries[0].shape)
+
     # Gets the vector coordinates
     VEC_XX, VEC_YY = generate_vector_mesh(bin_collection.bin_boundaries[0], bin_collection.bin_boundaries[1])
 
@@ -152,8 +154,8 @@ def generate_velocity_map(bin_collection):
     plt.xlim(-20000,20000)
     plt.ylim(-20000,20000)
 
-    ax.set_xlabel('$x$ [{0:latex_inline}]'.format(binned_dict['Distance Units'][0]), fontdict={'fontsize': 18})
-    ax.set_ylabel('$y$ [{0:latex_inline}]'.format(binned_dict['Distance Units'][1]), fontdict={'fontsize': 18})
+    ax.set_xlabel('$x$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
+    ax.set_ylabel('$y$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
     
     plt.grid()
     plt.show()
