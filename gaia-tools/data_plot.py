@@ -5,8 +5,11 @@ import matplotlib as mpl
 import matplotlib.cm as cm
 import numpy as np
 import mpl_scatter_density
+import astropy
+from data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
+from BinCollection import BinCollection
 
 def test_func():
     print("I am from data_plot!")
@@ -66,31 +69,46 @@ def point_density(galcen, vmax):
     ax.set_ylabel('$y$ [{0:latex_inline}]'.format(galcen.y.unit))
 
     plt.show()
+   
     
+def display_values(XX, YY, H):
+    for i in range(YY.shape[0]-1):
+        for j in range(XX.shape[0]-1):
+            plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
+                 horizontalalignment='center',
+                 verticalalignment='center')
 
 '''
 A plot which enables the user to see the bins created by the 'bin_data' functions in the 
 data analysis module. It takes in the histogram data and does a colormesh with colours 
-mapped to the mean value inside the 2D bin.
+mapped to the value inside the 2D bin.
 '''
-def display_bins(xedges, yedges, data_dict):
+def display_mean_velocity(bin_collection, projection_parameter):
 
-    XX, YY = np.meshgrid(xedges, yedges)
+    parameter = projection_parameter
 
-    fig = plt.figure(figsize = (7,7))
+    XX, YY = bin_collection.bin_boundaries
+
+    values = bin_collection.CalculateValues(parameter)
+
+    fig = plt.figure(figsize = (10,10))
     ax1=plt.subplot(111)
-    plot1 = ax1.pcolormesh(XX,YY,data_dict['Data'].T)
+    plot1 = ax1.pcolormesh(XX, YY, values.T)
 
-    cbar = plt.colorbar(plot1,ax=ax1, pad = .015, aspect=10, label='2D Bins Velocity V{0}[{1}]'.format(data_dict['Projection'], 
-                                                                                                                   data_dict['Unit']))
+    display_values(XX, YY, values)
+
+    cbar = plt.colorbar(plot1,ax=ax1, 
+                        pad = .015, 
+                        aspect=10, 
+                        label='2D Bins Velocity V{0}[{1}]'.format(parameter, 'km/s'))
 
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
 
-    ax1.set_xlabel('$x$ [{0:latex_inline}]'.format(data_dict['Unit']), fontdict={'fontsize': 18})
-    ax1.set_ylabel('$y$ [{0:latex_inline}]'.format(data_dict['Unit']), fontdict={'fontsize': 18})
+    ax1.set_xlabel('$x$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
+    ax1.set_ylabel('$y$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
 
-    plt.title("2D Bins Velocity V{0}".format(data_dict['Projection']), pad=20, fontdict={'fontsize': 20})
+    plt.title("2D Bins Velocity V{0}".format(parameter), pad=20, fontdict={'fontsize': 20})
     
     plt.show()
 
@@ -100,15 +118,16 @@ Generates a velocity field from binned data.
 Input parameters:
     binned_dict - A dictionary containing all requisite data for displaying the vector field
 '''
-def generate_velocity_map(binned_dict):
+def generate_velocity_map(bin_collection):
  
-    H = binned_dict['Data'][0]
-    H2 = binned_dict['Data'][1]
 
-    VEC_XX, VEC_YY = binned_dict['Vector Coordinates']
+    H = bin_collection.CalculateValues('v_x')
+    H2 = bin_collection.CalculateValues('v_y')
+
+    # Gets the vector coordinates
+    VEC_XX, VEC_YY = generate_vector_mesh(bin_collection.bin_boundaries[0], bin_collection.bin_boundaries[1])
 
     fig, ax = plt.subplots(figsize = (7,7))
-
 
     # Gives the hypotenuse of vectors
     M = np.hypot(H.T, H2.T)

@@ -127,9 +127,9 @@ class BinCollection:
 
                     # Value to be calculated
                     if(parameter == 'v_x'):
-                        temp_val = -np.mean(self.bins[count].data[parameter])
-                    
-                    temp_val = np.mean(self.bins[count].data[parameter])
+                        temp_val = (-1)*np.mean(self.bins[count].data[parameter])
+                    else:
+                        temp_val = np.mean(self.bins[count].data[parameter])
                     rows.append(temp_val)
                     count = count + 1  
                     

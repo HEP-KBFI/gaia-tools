@@ -116,51 +116,47 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     #v_x
     H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = bins, statistic='mean')
 
-    #v_y
-    H2, xedges2, yedges2, binnumber2 = stats.binned_statistic_2d(x, y, values = z2, bins = bins, statistic='mean')
-
+    # Create a meshgrid from the vertices   
     XX, YY = np.meshgrid(xedges, yedges)
+
+    # Center points of the bins translated into a meshgrid
+    bin_mid_points = generate_vector_mesh(xedges, yedges)
+
+    # Assign a binnumber for each data entry
+    plottable_df['Bin_index'] = binnumber
+
+    # Instantiate a BinCollection object
+    bin_collection = BinCollection(plottable_df, bins, XX, YY)
+
+    # Generate the bins with respective x-y boundaries
+    bin_collection.GenerateBins()
 
     # TODO: Generalise this!
     if(show_bins == True):
-        from data_plot import display_bins
+        from data_plot import display_mean_velocity
 
-        display_bins(xedges, yedges, {'Data': H, 'Projection':'x', 'Unit':galcen_data.v_x.unit})
-        display_bins(xedges, yedges, {'Data': H2, 'Projection':'y', 'Unit':galcen_data.v_y.unit})
-    
-    VEC_COORDS = generate_vector_mesh(xedges, yedges)
-
-    plottable_df['Bin_index'] = binnumber
-
-    bin_collection = BinCollection(plottable_df, bins, XX, YY)
-
-    bin_collection.GenerateBins()
-
-
-    return ({'Data':[H, H2], 
-            'Projections':['x', 'y'],
-            'Velocity Units':[galcen_data.v_x.unit, galcen_data.v_y.unit],
-            'Distance Units':[galcen_data.x.unit, galcen_data.y.unit],
-            'Vector Coordinates':VEC_COORDS})
+        display_mean_velocity(bin_collection, 'v_x')
+        display_mean_velocity(bin_collection, 'v_y')
+        
+    return bin_collection
 
 '''
 Function for finding center points of bins in binned data and then 
 creating a meshgrid out of all the point coordinates. The center points of bins
 are the origin points for the vectors.
 '''
-def generate_vector_mesh(xedges, yedges):
+def generate_vector_mesh(XX, YY):
     vec_x = []
     vec_y = []
     vec_z = []
 
-    # TODO: Automate this for n
-    for i in range(10):
-        vec_x.append((xedges[i+1]+xedges[i])/2)
-        vec_y.append((yedges[i+1]+yedges[i])/2)
+    for i in range(XX.shape[0]-1):
+        vec_x.append((XX[i+1]+XX[i])/2)
+        vec_y.append((YY.T[i+1]+YY.T[i])/2)
 
     # We create a meshgrid out of all the vector locations
     VEC_XX, VEC_YY = np.meshgrid(vec_x, vec_y)
-
+    print(VEC_XX.shape)
     return VEC_XX, VEC_YY
 
 def main():
@@ -200,14 +196,11 @@ def main():
     print("Transforming data to galactocentric frame...")
     galcen = transform_to_galcen(df)
 
-    from data_plot import distribution_hist, point_density, display_bins, generate_velocity_map
+    from data_plot import distribution_hist, point_density, display_mean_velocity, generate_velocity_map
     distribution_hist(galcen)
    
-    #print("Point density test")
-    #point_density(galcen, 2000)
-
-    bin_dict = bin_data(galcen, show_bins = True)
-    generate_velocity_map(bin_dict)
+    bins = bin_data(galcen, show_bins = True)
+    generate_velocity_map(bins)
 
     print("Plotting done!")
 
