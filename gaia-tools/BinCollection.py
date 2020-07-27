@@ -131,6 +131,8 @@ class BinCollection:
     '''        
     def CalculateValues(self, parameter):
         
+        assert len(self.bins) > 0, "No bins inside BinCollection! Did you forget to use GenerateBins()?"
+
         # 2D list of values
         values = []
         
