@@ -119,6 +119,9 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     #v_y
     H2, xedges2, yedges2, binnumber2 = stats.binned_statistic_2d(x, y, values = z2, bins = bins, statistic='mean')
 
+    XX, YY = np.meshgrid(xedges, yedges)
+
+    # TODO: Generalise this!
     if(show_bins == True):
         from data_plot import display_bins
 
@@ -129,14 +132,10 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
 
     plottable_df['Bin_index'] = binnumber
 
-    bin_collection = BinCollection(plottable_df)
-    bin_collection.N_bins = bins
-
-    print(bin_collection.bin_num_set)
+    bin_collection = BinCollection(plottable_df, bins, XX, YY)
 
     bin_collection.GenerateBins()
 
-    print(len(bin_collection.bins))
 
     return ({'Data':[H, H2], 
             'Projections':['x', 'y'],
@@ -204,6 +203,7 @@ def main():
     from data_plot import distribution_hist, point_density, display_bins, generate_velocity_map
     distribution_hist(galcen)
    
+    #print("Point density test")
     #point_density(galcen, 2000)
 
     bin_dict = bin_data(galcen, show_bins = True)
