@@ -3,9 +3,31 @@ import numpy as np
 import pandas as pd
 
 '''
-A collection of spatially binned data ("Bin") structures.
+A collection of spatially binned ("Bin") objects.
+
+Instance variables
+------------------
+data : DataFrame 
+        The original reference-transformed DataFrame.
+
+bins : list[]
+        A list of 'Bin' class objects.
+
+N_bins : int 
+        Number of bins along main axis.
+
+bin_boundaries : ndarray 
+        A meshgrid of bin vertices in terms of x- and y-coordinates.
+
+bin_num_set : set()
+        A set of unique bin numbers. If no data was inside a particular spatial bin, a bin number was not
+        generated for it.
+
+debug : bool()
+        Enable debug mode to print additional information to console.
 '''
 class BinCollection:
+    
     def __init__(self, data, N_bins, XX, YY, debug = False):
         
         self.data = data
@@ -15,6 +37,7 @@ class BinCollection:
         self.bin_num_set = set(data.Bin_index)
         self.debug = debug
         
+
     '''
     Collect all bins provided parameters from the 'binned_statistic_2d' function
 
@@ -38,6 +61,7 @@ class BinCollection:
                 continue
 
             # If no data is inside bin, will return Bin with empty DataFrame
+            # It basically means that no data entries were found in that spatial bin
             if(bin_index not in self.bin_num_set):
                 
                 if(self.debug):

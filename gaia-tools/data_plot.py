@@ -11,9 +11,6 @@ from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 from BinCollection import BinCollection
 
-def test_func():
-    print("I am from data_plot!")
-
 # TODO: Add additional projections: along y- and z-axis
 # TODO: Add options for DataFrame format
 '''
@@ -160,5 +157,3 @@ def generate_velocity_map(bin_collection):
     plt.grid()
     plt.show()
 
-def main():
-    print("I am the main function")

@@ -110,10 +110,10 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     z = -plottable_df.v_x
     z2 = plottable_df.v_y
 
-    # Number of bins to binned_statistic_2d
+    # Number of bins along main axis
     bins = 10
 
-    #v_x
+    # Calling the actual binning function
     H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = bins, statistic='mean')
 
     # Create a meshgrid from the vertices   
@@ -163,16 +163,7 @@ def main():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     print(dir_path)
 
-
-    #from astroquery.gaia import Gaia
-    #Gaia.login()
-
-    #full_qualified_table_name = 'user_spoder.table_test_from_file'
-    #query = 'select * from ' + full_qualified_table_name
-    #job = Gaia.launch_job(query=query, dump_to_file = True, output_format='csv', output_file='user_uploaded_table_test.csv')
-
-    #print(job)
-    
+    # YOUR DATA FILE
     my_path = 'spectroscopic_test_table.csv'
     df = pd.read_csv(my_path)
    
@@ -182,7 +173,6 @@ def main():
     df = filter_distance(df, 32000)
     
     print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-
 
     print("Removing negative parallaxes...")
     df=df[df.parallax > 0]
@@ -204,6 +194,5 @@ def main():
 
 if __name__ == "__main__":
 
-    
     main()
 
