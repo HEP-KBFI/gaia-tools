@@ -37,21 +37,24 @@ def distribution_hist(galcen):
 '''
 A 2d point source density plot on the x-y plane.
 Good for visualising large data sets (number of points > 50 000)
-Input parameters:
+
+Input parameters
+----------------
     galcen - SkyCoord object in galactocentric frame
     vmax - maximum number of points normalised per pixel
 '''
+# CURRENTLY BROKEN
 def point_density(galcen, vmax):
     
     norm = ImageNormalize(vmin=0., vmax=10, stretch=LogStretch())
 
-    xkoord = -galcen.x.value
-    ykoord = galcen.y.value
+    x_coord = -galcen.x.value
+    y_coord = galcen.y.value
    
     fig = plt.figure(figsize=(7.5, 6))
     ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
     
-    density = ax.scatter_density(xkoord, ykoord, norm=norm, dpi = 200, cmap=plt.cm.jet)
+    density = ax.scatter_density(x_coord, y_coord, norm=norm, dpi = 200, cmap=plt.cm.jet)
     
     fig.colorbar(density, label='Number of sources per pixel')
     
@@ -67,6 +70,36 @@ def point_density(galcen, vmax):
 
     plt.show()
    
+'''
+A 2D histogram to depict point source density in different regions using 2D bins.
+Using this to replace the currently broken 'point_density' plot.
+
+'''
+def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n_bins = 200):
+    
+    x_coord = [-x for x in galcen.x.value]
+    y_coord = [y for y in galcen.y.value]
+
+    norm_hist2d = ImageNormalize(vmin=0., vmax=vmax, stretch=LogStretch())
+    
+    fig = plt.figure(figsize=(10, 10))
+    
+    plt.hist2d(x_coord, y_coord, bins=np.linspace(bin_start, bin_end, n_bins), norm = norm_hist2d)
+    
+    plt.xlabel('x [pc]', fontsize=15)
+    plt.ylabel('y [pc]', fontsize=15)
+    plt.title("2D Histograms of Data Sources", pad=20, fontdict={'fontsize': 20})
+    plt.xlim(bin_start, bin_end)
+    plt.ylim(bin_start, bin_end)
+    plt.grid()
+
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel('Number of stars in bin')
+
+    plt.show()
+
+
+
 '''
 A function that displays the specific numerical values inside each bin.
 '''

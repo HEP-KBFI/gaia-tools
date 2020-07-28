@@ -184,9 +184,11 @@ def main():
     print("Transforming data to galactocentric frame...")
     galcen = transform_to_galcen(df)
 
-    from data_plot import distribution_hist, point_density, display_mean_velocity, generate_velocity_map
+    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
     distribution_hist(galcen)
    
+    point_density_histogram(galcen, 50)
+
     bins = bin_data(galcen, show_bins = True)
     generate_velocity_map(bins)
 
