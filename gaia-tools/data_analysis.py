@@ -166,7 +166,8 @@ def main():
     #print(dir_path)
 
     # YOUR DATA FILE
-    my_path = 'spectroscopic_test_table.csv'
+    my_path = "spectroscopic_test_table.csv"
+    print("Start import...")
     df = pd.read_csv(my_path)
    
     print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
