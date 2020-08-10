@@ -20,6 +20,10 @@ x_boundaries : tuple()
 
 y_boundaries : tuple()
         A tuple of y-coordinate values defining the edges of the bins in the y-direction.
+
+z_boundaries : tuple()
+        A tuple of z-coordinate values defining the edges of the bins in the z-direction.
+
 '''
 
 class Bin:
@@ -29,5 +33,6 @@ class Bin:
         self.N_points = data_subset.shape[0]
         self.x_boundaries = []
         self.y_boundaries =[]
+        self.z_boundaries = []
 
 

@@ -119,11 +119,13 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     # Create a meshgrid from the vertices   
     XX, YY = np.meshgrid(xedges, yedges)
 
+    ZZ = (np.min(plottable_df.z), np.max(plottable_df.z))
+
     # Assign a binnumber for each data entry
     plottable_df['Bin_index'] = binnumber
 
     # Instantiate a BinCollection object
-    bin_collection = BinCollection(plottable_df, bins, XX, YY)
+    bin_collection = BinCollection(plottable_df, bins, XX, YY, ZZ)
 
     # Generate the bins with respective x-y boundaries
     bin_collection.GenerateBins()
@@ -191,6 +193,9 @@ def main():
 
     bins = bin_data(galcen, show_bins = True)
     generate_velocity_map(bins)
+
+    print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
+    
 
     print("Plotting done!")
 

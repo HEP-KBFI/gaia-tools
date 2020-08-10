@@ -28,12 +28,12 @@ debug : bool()
 '''
 class BinCollection:
     
-    def __init__(self, data, N_bins, XX, YY, debug = False):
+    def __init__(self, data, N_bins, XX, YY, ZZ, debug = False):
         
         self.data = data
         self.bins = []
         self.N_bins = N_bins
-        self.bin_boundaries = XX, YY
+        self.bin_boundaries = XX, YY, ZZ
         self.bin_num_set = set(data.Bin_index)
         self.debug = debug
         
@@ -48,6 +48,7 @@ class BinCollection:
         bin_index = N_bins + 3
         row_count = 0
         
+        # START Bin Generating
         while bin_index < max_bin_index + 1:
             
             # If reaches end of column will skip 2 next index numbers 
@@ -88,7 +89,10 @@ class BinCollection:
             self.bins.append(Bin(data_subset))
             row_count += 1
             bin_index += 1
+        
             
+        # END Bin Generating
+
         '''
         Assign boundaries to pre-loaded bins from bottom -> top column wise
 
@@ -100,6 +104,9 @@ class BinCollection:
         XX = self.bin_boundaries[0]
         YY = self.bin_boundaries[1]
         
+        # Get slice of data height in terms of z-coordinate span
+        temp_z = self.bin_boundaries[2]
+
         count = 0
 
         # For j in range of columns: -1 because we look at binwise not edgewise
@@ -114,9 +121,12 @@ class BinCollection:
                     # Grabs adjacent bin edges in the y-direction
                     temp_y = (YY.T[0][i], YY.T[0][i+1])
 
+                   
+
                     # Assign boundaries to bin objects
                     self.bins[count].x_boundaries = temp_x
                     self.bins[count].y_boundaries = temp_y
+                    self.bins[count].z_boundaries = temp_z
 
                     count = count + 1  
                

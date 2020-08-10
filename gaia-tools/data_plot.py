@@ -119,7 +119,7 @@ def display_mean_velocity(bin_collection, projection_parameter, showBinValues = 
 
     parameter = projection_parameter
 
-    XX, YY = bin_collection.bin_boundaries
+    XX, YY = bin_collection.bin_boundaries[0:2]
 
     values = bin_collection.CalculateValues(parameter)
 
