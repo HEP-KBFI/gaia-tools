@@ -12,7 +12,13 @@ R_GALCEN = 8178
 Z_0 = 27
 
 # Angle theta
-THETA_SUN = np.arcsin(z0/R_GALCEN)
+THETA_SUN = np.arcsin(Z_0/R_GALCEN)
+
+# Tangential velocity of the Sun. Currently borrowed values from Astropy!
+V_SUN = np.array([[11.1], 
+                  [232.24], 
+                  [7.25]])
+
 
 '''
 A transposed matrix, which depends on the values of the ICRS coordinates of the north galactic pole and the 
@@ -34,5 +40,10 @@ k1 = 10**3
 # Constant for converting 1/yr to km/s
 k2 = 4.74047
 
+def get_b_matrix(ra, dec):
 
+    B = np.array([[np.cos(ra)*np.cos(dec), -np.sin(ra), -np.cos(ra)*np.sin(dec)],
+             [np.sin(ra)*np.cos(dec), np.cos(ra), -np.sin(ra)*np.sin(dec)],
+             [np.sin(dec), 0, np.cos(dec)]])
+    return B
 

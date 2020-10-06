@@ -9,6 +9,7 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
 from BinCollection import BinCollection
+import transformation_constants
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
@@ -158,12 +159,99 @@ def generate_vector_mesh(XX, YY):
     
     return VEC_XX, VEC_YY
 
+
+
+#region Manual Coordinate Transformation
+
+def get_transformed_data(df):
+
+    galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z".split())
+
+    for i in range(df.shape[0]):
+
+        # Coordinate vector in galactocentric frame in xyz
+        coords = transform_coordinates_galactocentric(df.ra.iloc[i], df.dec.iloc[i], df.parallax.iloc[i])
+
+        # Velocity vector in galactocentric frame in xyz
+        velocities = transform_velocities_galactocentric(df.ra.iloc[i], df.dec.iloc[i], df.parallax.iloc[i], df.pmra.iloc[i], df.pmdec.iloc[i], df.radial_velocity.iloc[i])
+
+
+        galcen_df = galcen_df.append({'x' : coords[0][0], 
+                              'y' : coords[1][0], 
+                              'z' : coords[2][0],
+                              'v_x' : velocities[0][0], 
+                              'v_y' : velocities[1][0], 
+                              'v_z' : velocities[2][0]},  
+                ignore_index = True)
+
+    return galcen_df
+
+def transform_coordinates_galactocentric(ra, dec, w):
+
+    #TODO: Add ASSERT checks on function input parameters.
+    # ra dec can only be in a specific range
+
+    # Going from DEG -> RAD
+    ra = np.deg2rad(ra)
+    dec = np.deg2rad(dec)
+
+    # from kpc -> pc
+    k1 = transformation_constants.k1
+
+    # Initial cartesian coordinate vector in ICRS
+    coordxyz_ICRS = np.array([[(k1/w)*np.cos(ra)*np.cos(dec)],
+                      [(k1/w)*np.sin(ra)*np.cos(dec)],
+                       [(k1/w)*np.sin(dec)]])
+
+    # Using M1, M2, M3 for transparency in case of bugs
+    M1 = transformation_constants.A @ coordxyz_ICRS
+    M2 = M1 - np.array([[transformation_constants.R_GALCEN], 
+                        [0], 
+                        [0]])
+    M3 = transformation_constants.H @ M2
+
+    return M3
+
+def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r):
+    
+    # Going from DEG -> RAD
+    ra = np.deg2rad(ra)
+    dec = np.deg2rad(dec)
+
+    # from 1/yr -> km/s
+    k2 = transformation_constants.k2
+
+    # Initial velocity vector in ICRS in units km/s
+    v_ICRS = np.array([[v_r],
+                      [(k2/w)*mu_ra],
+                       [(k2/w)*mu_dec]])
+
+    B = transformation_constants.get_b_matrix(ra, dec)
+
+    # Using M1, M2, M3, .. for transparency in case of bugs
+    M1 = B @ v_ICRS
+    M2 = transformation_constants.A @ M1
+    M3 = transformation_constants.H @ M2
+    M4 = M3 - transformation_constants.V_SUN
+    return M4
+
+
+def generate_covariance_matrices():
+    pass
+
+#endregion
+
+
+
+
 def main():
     
     # For finding current module working directory
     #import os 
     #dir_path = os.path.dirname(os.path.realpath(__file__))
     #print(dir_path)
+
+    # START File Import Section
 
     # YOUR DATA FILE
     my_path = "spectroscopic_test_table.csv"
@@ -184,21 +272,29 @@ def main():
     print("Checking indexing...")
     print(df.head)
 
+    # END File Import Section
+
+    # Testing Our Results to Astropy Functions
     print("Transforming data to galactocentric frame...")
+    
     galcen = transform_to_galcen(df)
+    print(galcen[0:5])
 
-    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
-    distribution_hist(galcen)
+    galcen2 = get_transformed_data(df)
+    print(galcen2.iloc[0:5])
+
+    #from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
+    #distribution_hist(galcen)
    
-    point_density_histogram(galcen, 50)
+    #point_density_histogram(galcen, 50)
 
-    bins = bin_data(galcen, show_bins = True)
-    generate_velocity_map(bins)
+    #bins = bin_data(galcen, show_bins = True)
+    #generate_velocity_map(bins)
 
-    print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
+    #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
     
 
-    print("Plotting done!")
+    #print("Plotting done!")
 
 
 if __name__ == "__main__":
