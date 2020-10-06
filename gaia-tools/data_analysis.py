@@ -244,6 +244,7 @@ def generate_covariance_matrices():
 
 
 
+
 def main():
     
     # For finding current module working directory
@@ -254,7 +255,8 @@ def main():
     # START File Import Section
 
     # YOUR DATA FILE
-    my_path = "spectroscopic_test_table.csv"
+    my_path = "astroquery_test.csv"
+    
     print("Start import...")
     df = pd.read_csv(my_path)
    
@@ -290,6 +292,13 @@ def main():
    
     point_density_histogram(galcen, 50)
     point_density_histogram(galcen2, 50)
+
+    import covariance_generation as cov
+
+    cov_dict = cov.generate_covmatrices(df)
+
+    print(cov_dict)
+
 
     #bins = bin_data(galcen, show_bins = True)
     #generate_velocity_map(bins)
