@@ -232,7 +232,7 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r):
     M1 = B @ v_ICRS
     M2 = transformation_constants.A @ M1
     M3 = transformation_constants.H @ M2
-    M4 = M3 - transformation_constants.V_SUN
+    M4 = M3 + transformation_constants.V_SUN
     return M4
 
 
