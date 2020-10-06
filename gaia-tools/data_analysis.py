@@ -277,16 +277,19 @@ def main():
     # Testing Our Results to Astropy Functions
     print("Transforming data to galactocentric frame...")
     
+    # Old Method
     galcen = transform_to_galcen(df)
     print(galcen[0:5])
 
+    # Our Method
     galcen2 = get_transformed_data(df)
     print(galcen2.iloc[0:5])
 
-    #from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
+    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
     #distribution_hist(galcen)
    
-    #point_density_histogram(galcen, 50)
+    point_density_histogram(galcen, 50)
+    point_density_histogram(galcen2, 50)
 
     #bins = bin_data(galcen, show_bins = True)
     #generate_velocity_map(bins)

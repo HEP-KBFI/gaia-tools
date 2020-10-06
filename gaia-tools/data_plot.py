@@ -6,6 +6,7 @@ import matplotlib.cm as cm
 import numpy as np
 import mpl_scatter_density
 import astropy
+import pandas as pd
 from data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -77,8 +78,13 @@ Using this to replace the currently broken 'point_density' plot.
 '''
 def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n_bins = 200):
     
-    x_coord = [-x for x in galcen.x.value]
-    y_coord = [y for y in galcen.y.value]
+    # Check if data is in DataFrame or Astropy SkyCoords object
+    if isinstance(galcen, pd.DataFrame):
+        x_coord = [-x for x in galcen.x]
+        y_coord = [y for y in galcen.y]
+    else:
+        x_coord = [-x for x in galcen.x.value]
+        y_coord = [y for y in galcen.y.value]
 
     norm_hist2d = ImageNormalize(vmin=0., vmax=vmax, stretch=LogStretch())
     
