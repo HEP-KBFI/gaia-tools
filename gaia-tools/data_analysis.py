@@ -224,7 +224,7 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r):
     # Initial velocity vector in ICRS in units km/s
     v_ICRS = np.array([[v_r],
                       [(k2/w)*mu_ra],
-                       [(k2/w)*mu_dec]])
+                      [(k2/w)*mu_dec]])
 
     B = transformation_constants.get_b_matrix(ra, dec)
 
@@ -234,10 +234,6 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r):
     M3 = transformation_constants.H @ M2
     M4 = M3 + transformation_constants.V_SUN
     return M4
-
-
-def generate_covariance_matrices():
-    pass
 
 #endregion
 

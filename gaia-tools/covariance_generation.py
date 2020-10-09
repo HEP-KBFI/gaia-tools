@@ -4,12 +4,14 @@ data covariance matrices.
 '''
 
 import numpy as np
+import transformation_constants
+
 
 '''
 Function that iterates over the DataFrame and appends covariances matrices to a 
 dictonary with 'the source_id' as key.
 '''
-def generate_covmatrices(df):
+def generate_covmatrices(df, transform_to_galcen = false):
 
     cov_dict = {}
 
@@ -20,6 +22,9 @@ def generate_covmatrices(df):
 
         # Get covariance matrix
         C = generate_covmat(sub_df)
+
+        if(transform_to_galcen is true):
+            C = transform_cov_matrice(C, sub_df)
 
         # Append
         cov_dict[sub_df.source_id] = C
@@ -70,3 +75,12 @@ def generate_covmat(sub_df):
                     C[j, i] = C[i, j]
 
     return C
+
+
+def transform_cov_matrix(C, sub_df):
+
+    J = get_jacobian(sub_df.ra, sub_df.dec, sub_df.parallax, sub_df.pmra, sub_df.pmdec, sub_df.radial_velocity)
+
+    C_transformed = J @ C @ J.T
+    
+    return C_transformed
