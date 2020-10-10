@@ -205,7 +205,7 @@ def transform_coordinates_galactocentric(ra, dec, w):
 
     # Using M1, M2, M3 for transparency in case of bugs
     M1 = transformation_constants.A @ coordxyz_ICRS
-    M2 = M1 - np.array([[transformation_constants.R_GALCEN], 
+    M2 = M1 - np.array([[transformation_constants.R_0], 
                         [0], 
                         [0]])
     M3 = transformation_constants.H @ M2
@@ -286,12 +286,19 @@ def main():
     from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
     #distribution_hist(galcen)
    
-    point_density_histogram(galcen, 50)
-    point_density_histogram(galcen2, 50)
+    #point_density_histogram(galcen, 50)
+    #point_density_histogram(galcen2, 50)
 
     import covariance_generation as cov
+    import time, timeit
 
-    cov_dict = cov.generate_covmatrices(df)
+    tic=timeit.default_timer()
+
+    cov_dict = cov.generate_covmatrices(df, transform_to_galcen = True)
+    
+    toc=timeit.default_timer()
+    print("Time elapsed {a} sec".format(a=toc-tic))
+    print("Covariance matrices...")
 
     print(cov_dict)
 
