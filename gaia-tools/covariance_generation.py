@@ -11,7 +11,7 @@ import pandas as pd
 Function that iterates over the DataFrame and appends covariances matrices to a 
 dictonary with 'the source_id' as key.
 '''
-def generate_covmatrices(df, transform_to_galcen = False, is_cylindrical = False):
+def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transform_to_cylindrical = False):
 
     cov_dict = {}
 
@@ -24,10 +24,15 @@ def generate_covmatrices(df, transform_to_galcen = False, is_cylindrical = False
         C = generate_covmat(sub_df)
 
         if(transform_to_galcen is True):
-            C = transform_cov_matrix(C, sub_df)
+            C = transform_cov_matrix(C, sub_df, "Cartesian")
 
-        if(is_cylindrical):
-            C = transform_cov_matrix(C, sub_df, is_cylindrical)
+        # Transforms to cylindrical coordinate system. Can only be done if coordinates are in galactocentric frame.
+        # Expects DF with parameters in Cartesian.
+
+        # TODO: Implement exception handling in the future
+        if(transform_to_cylindrical is True):
+            sub_df_crt = df_crt.iloc[i]
+            C = transform_cov_matrix(C, sub_df_crt, "Cylindrical")
 
         # Append
         cov_dict[sub_df.source_id] = C
@@ -88,9 +93,10 @@ def generate_covmat(sub_df):
     return C
 
 
-def transform_cov_matrix(C, sub_df, is_cylindrical):
+def transform_cov_matrix(C, sub_df, coordinate_system):
 
-    J = transformation_constants.get_jacobian(sub_df.ra, sub_df.dec, sub_df.parallax, sub_df.pmra, sub_df.pmdec, sub_df.radial_velocity, is_cylindrical)
+    # Grabs the correct Jacobian depending on the coordinate system needed
+    J = transformation_constants.get_jacobian(sub_df, coordinate_system)
 
     C_transformed = J @ C @ J.T
     

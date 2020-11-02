@@ -307,8 +307,6 @@ def main():
     from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
     #distribution_hist(galcen)
    
-    return
-
     #point_density_histogram(galcen, 50)
     #point_density_histogram(galcen2, 50)
 
@@ -317,7 +315,7 @@ def main():
 
     tic=timeit.default_timer()
 
-    cov_dict = cov.generate_covmatrices(df, transform_to_galcen = True)
+    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
     
     toc=timeit.default_timer()
     print("Time elapsed {a} sec".format(a=toc-tic))
