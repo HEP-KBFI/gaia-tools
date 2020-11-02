@@ -53,6 +53,9 @@ def get_b_matrix(ra, dec):
 
 def get_jacobian(ra, dec, parallax, mu_ra, mu_dec, v_r):
 
+   
+
+
     # Constants to improve readability
     c1 = k1/parallax
     c2 = -k1/(parallax**2)
@@ -115,10 +118,10 @@ def get_jacobian(ra, dec, parallax, mu_ra, mu_dec, v_r):
     J66 = cos_ra*cos_dec*(A[2,0]*cos_theta - A[0,0]*sin_theta) + sin_ra*cos_dec*(A[2,1]*cos_theta - A[0,1]*sin_theta) + cos_dec*(A[2,2]*cos_theta - A[0,2]*sin_theta)
 
     J = np.array([[J11, J12, J13, J14, J15, J16],
-                  [J21, J22, J23, J24, J25, J26],
-                  [J31, J32, J33, J24, J25, J26],
-                  [J41, J42, J43, J44, J45, J46],
-                  [J51, J52, J53, J54, J55, J56],
-                  [J61, J62, J63, J64, J65, J66]])
+                    [J21, J22, J23, J24, J25, J26],
+                    [J31, J32, J33, J24, J25, J26],
+                    [J41, J42, J43, J44, J45, J46],
+                    [J51, J52, J53, J54, J55, J56],
+                    [J61, J62, J63, J64, J65, J66]])
 
     return J

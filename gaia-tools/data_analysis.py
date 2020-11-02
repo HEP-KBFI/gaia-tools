@@ -163,9 +163,12 @@ def generate_vector_mesh(XX, YY):
 
 #region Manual Coordinate Transformation
 
-def get_transformed_data(df):
+def get_transformed_data(df, include_cylindrical = False):
 
-    galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z".split())
+    if(include_cylindrical):
+         galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z r phi".split())
+    else:
+        galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z".split())
 
     for i in range(df.shape[0]):
 
@@ -183,6 +186,10 @@ def get_transformed_data(df):
                               'v_y' : velocities[1][0], 
                               'v_z' : velocities[2][0]},  
                 ignore_index = True)
+
+        if(include_cylindrical):
+            galcen_df['r'].loc[i] = np.sqrt(galcen_df.x[i]**2 + galcen_df.y[i]**2)
+            galcen_df['phi'].loc[i] = np.arctan(galcen_df.y[i]/galcen_df.x[i])
 
     return galcen_df
 
@@ -235,6 +242,7 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r):
     M4 = M3 + transformation_constants.V_SUN
     return M4
 
+
 #endregion
 
 
@@ -280,12 +288,14 @@ def main():
     print(galcen[0:5])
 
     # Our Method
-    galcen2 = get_transformed_data(df)
+    galcen2 = get_transformed_data(df, include_cylindrical = True)
     print(galcen2.iloc[0:5])
 
     from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
     #distribution_hist(galcen)
    
+    return
+
     #point_density_histogram(galcen, 50)
     #point_density_histogram(galcen2, 50)
 
