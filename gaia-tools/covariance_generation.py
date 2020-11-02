@@ -4,12 +4,14 @@ data covariance matrices.
 '''
 
 import numpy as np
+import transformation_constants
+import pandas as pd
 
 '''
 Function that iterates over the DataFrame and appends covariances matrices to a 
 dictonary with 'the source_id' as key.
 '''
-def generate_covmatrices(df):
+def generate_covmatrices(df, transform_to_galcen = False):
 
     cov_dict = {}
 
@@ -20,6 +22,9 @@ def generate_covmatrices(df):
 
         # Get covariance matrix
         C = generate_covmat(sub_df)
+
+        if(transform_to_galcen is True):
+            C = transform_cov_matrix(C, sub_df)
 
         # Append
         cov_dict[sub_df.source_id] = C
@@ -32,8 +37,6 @@ Function that gets the covariance matrix of a specific point source (row in Data
 '''
 def generate_covmat(sub_df):
 
-    #TODO: Add check if error and corr values dont exist - > Quit Function or Skip DF row.
-
     # Declare empty matrix
     C = np.zeros((6, 6))
     
@@ -42,7 +45,12 @@ def generate_covmat(sub_df):
     
     # For Diagonal Elements
     for i, name in enumerate(names):
-            ext = names[i] + "_error"   
+            ext = names[i] + "_error"
+
+            if not ext in sub_df.index:
+                print("{0} not in data!".format(ext))
+                return
+
             err = sub_df[ext]
  
             if(name == 'ra' or name == 'dec'):
@@ -63,6 +71,11 @@ def generate_covmat(sub_df):
                         continue
 
                     ext = "{0}_{1}_corr".format(name1, name2)
+
+                    if not ext in sub_df.index:
+                        print("{0} not in data!".format(ext))
+                        return
+
                     corr = sub_df[ext]
                
                     # Sqrt because it accesses values from the main diagonal which are squared.
@@ -70,3 +83,12 @@ def generate_covmat(sub_df):
                     C[j, i] = C[i, j]
 
     return C
+
+
+def transform_cov_matrix(C, sub_df):
+
+    J = transformation_constants.get_jacobian(sub_df.ra, sub_df.dec, sub_df.parallax, sub_df.pmra, sub_df.pmdec, sub_df.radial_velocity)
+
+    C_transformed = J @ C @ J.T
+    
+    return C_transformed
