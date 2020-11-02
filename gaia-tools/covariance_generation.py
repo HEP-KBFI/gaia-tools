@@ -5,7 +5,7 @@ data covariance matrices.
 
 import numpy as np
 import transformation_constants
-
+import pandas as pd
 
 '''
 Function that iterates over the DataFrame and appends covariances matrices to a 
@@ -37,8 +37,6 @@ Function that gets the covariance matrix of a specific point source (row in Data
 '''
 def generate_covmat(sub_df):
 
-    #TODO: Add check if error and corr values dont exist - > Quit Function or Skip DF row.
-
     # Declare empty matrix
     C = np.zeros((6, 6))
     
@@ -47,7 +45,12 @@ def generate_covmat(sub_df):
     
     # For Diagonal Elements
     for i, name in enumerate(names):
-            ext = names[i] + "_error"   
+            ext = names[i] + "_error"
+
+            if not ext in sub_df.index:
+                print("{0} not in data!".format(ext))
+                return
+
             err = sub_df[ext]
  
             if(name == 'ra' or name == 'dec'):
@@ -68,6 +71,11 @@ def generate_covmat(sub_df):
                         continue
 
                     ext = "{0}_{1}_corr".format(name1, name2)
+
+                    if not ext in sub_df.index:
+                        print("{0} not in data!".format(ext))
+                        return
+
                     corr = sub_df[ext]
                
                     # Sqrt because it accesses values from the main diagonal which are squared.
