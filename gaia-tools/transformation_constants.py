@@ -51,6 +51,14 @@ def get_b_matrix(ra, dec):
              [np.sin(dec), 0, np.cos(dec)]])
     return B
 
+def get_cylindrical_velocity_matrix(phi):
+   
+    M = np.array([[np.cos(phi), np.sin(phi), 0],
+             [-np.sin(phi), np.cos(phi), 0],
+             [0, 0, 1]])
+    return M
+
+
 def get_jacobian(ra, dec, parallax, mu_ra, mu_dec, v_r):
 
    

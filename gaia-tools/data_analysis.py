@@ -166,7 +166,7 @@ def generate_vector_mesh(XX, YY):
 def get_transformed_data(df, include_cylindrical = False):
 
     if(include_cylindrical):
-         galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z r phi".split())
+         galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z r phi v_r v_phi".split())
     else:
         galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z".split())
 
@@ -188,8 +188,17 @@ def get_transformed_data(df, include_cylindrical = False):
                 ignore_index = True)
 
         if(include_cylindrical):
+
+            phi = galcen_df.y[i]/galcen_df.x[i]
+            vel_cyl = transform_velocities_cylindrical(velocities, phi)
+
+
             galcen_df['r'].loc[i] = np.sqrt(galcen_df.x[i]**2 + galcen_df.y[i]**2)
-            galcen_df['phi'].loc[i] = np.arctan(galcen_df.y[i]/galcen_df.x[i])
+            galcen_df['phi'].loc[i] = np.arctan(phi)
+            galcen_df['v_r'].loc[i] = vel_cyl[0][0]
+            galcen_df['v_phi'].loc[i] = vel_cyl[1][0]
+
+
 
     return galcen_df
 
@@ -242,7 +251,11 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r):
     M4 = M3 + transformation_constants.V_SUN
     return M4
 
+def transform_velocities_cylindrical(velocities, phi):
 
+    v_cylindrical = transformation_constants.get_cylindrical_velocity_matrix(phi) @ velocities
+
+    return v_cylindrical
 #endregion
 
 
