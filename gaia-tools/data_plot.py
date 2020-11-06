@@ -199,33 +199,42 @@ def generate_velocity_map(bin_collection):
 
 
 
-def run_coordinate_tests(galcen_astropy, galcen_my, coordinate_list):
+def run_parameter_tests(galcen_astropy, galcen_my, parameter_list):
 
-    for coordinate in coordinate_list:
-        coordinate_test_plot(galcen_astropy, galcen_my, coordinate)
+    for parameter in parameter_list:
+        parameter_test_plot(galcen_astropy, galcen_my, parameter)
 
 
 
-def coordinate_test_plot(galcen_astropy, galcen_my, test_coordinate):
+def parameter_test_plot(galcen_astropy, galcen_my, test_parameter):
     
     # Check if data is in DataFrame or Astropy SkyCoords object
     if isinstance(galcen_astropy, pd.DataFrame):
-        x_coord = galcen_my[test_coordinate]
-        y_coord = galcen_astropy[test_coordinate]
+        x_coord = galcen_my[test_parameter]
+        y_coord = galcen_astropy[test_parameter]
     else:
-        x_coord = galcen_my[test_coordinate]
-        if(test_coordinate == 'x'):
+        x_coord = galcen_my[test_parameter]
+        if(test_parameter == 'x'):
             y_coord = galcen_astropy.x.value
 
-        elif(test_coordinate == 'y'):
+        elif(test_parameter == 'y'):
             y_coord = galcen_astropy.y.value
 
-        elif(test_coordinate == 'z'):
+        elif(test_parameter == 'z'):
             y_coord = galcen_astropy.z.value
+
+        elif(test_parameter == 'v_x'):
+            y_coord = galcen_astropy.v_x.value
+
+        elif(test_parameter == 'v_y'):
+            y_coord = galcen_astropy.v_y.value
+
+        elif(test_parameter == 'v_z'):
+            y_coord = galcen_astropy.v_z.value
 
     
     # Right-hand transformation
-    if(test_coordinate == 'x'):
+    if(test_parameter == 'x' or test_parameter == 'v_x'):
         x_coord = [-x for x in x_coord]
         y_coord = [-y for y in y_coord]
 
@@ -233,11 +242,11 @@ def coordinate_test_plot(galcen_astropy, galcen_my, test_coordinate):
     x_coord = [x for x in x_coord]
     y_coord = [y for y in y_coord]
 
-    plot_label = "Testing coordinate: {0}".format(test_coordinate)
+    plot_label = "Testing parameter: {0}".format(test_parameter)
 
     plt.scatter(x_coord, y_coord, label=plot_label)
-    plt.xlabel("Our values [{0}]".format(test_coordinate))
-    plt.ylabel("Astropy values [{0}]".format(test_coordinate))
+    plt.xlabel("Our values [{0}]".format(test_parameter))
+    plt.ylabel("Astropy values [{0}]".format(test_parameter))
     plt.legend(loc='upper left')
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
@@ -246,6 +255,4 @@ def coordinate_test_plot(galcen_astropy, galcen_my, test_coordinate):
     plt.show()
 
 
-def run_velocity_tests():
-    pass
 

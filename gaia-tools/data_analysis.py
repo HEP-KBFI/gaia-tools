@@ -304,10 +304,10 @@ def main():
     galcen2 = get_transformed_data(df, include_cylindrical = True)
     print(galcen2.iloc[0:5])
 
-    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map, run_coordinate_tests
+    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map, run_parameter_tests
     #distribution_hist(galcen)
-    coordinate_list = ["x", "y", "z"]
-    run_coordinate_tests(galcen, galcen2, coordinate_list)
+    parameter_list = ["x", "y", "z", "v_x", "v_y", "v_z"]
+    run_parameter_tests(galcen, galcen2, parameter_list)
 
     #point_density_histogram(galcen, 50)
     #point_density_histogram(galcen2, 50)
