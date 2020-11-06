@@ -199,7 +199,7 @@ def get_transformed_data(df, include_cylindrical = False):
             galcen_df['v_phi'].loc[i] = vel_cyl[1][0]
 
 
-
+    # Returns transformed data as Pandas DataFrame   
     return galcen_df
 
 def transform_coordinates_galactocentric(ra, dec, w):
@@ -296,7 +296,7 @@ def main():
     # Testing Our Results to Astropy Functions
     print("Transforming data to galactocentric frame...")
     
-    # Old Method
+    # Old Method (Astropy)
     galcen = transform_to_galcen(df)
     print(galcen[0:5])
 
@@ -304,9 +304,11 @@ def main():
     galcen2 = get_transformed_data(df, include_cylindrical = True)
     print(galcen2.iloc[0:5])
 
-    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map
+    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map, run_coordinate_tests
     #distribution_hist(galcen)
-   
+    coordinate_list = ["x", "y", "z"]
+    run_coordinate_tests(galcen, galcen2, coordinate_list)
+
     #point_density_histogram(galcen, 50)
     #point_density_histogram(galcen2, 50)
 
