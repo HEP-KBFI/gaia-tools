@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="gaia-tools",
     version="0.0.1",
-    author="Sven P�der",
+    author="Sven Poder",
     author_email="sven.poder@live.com",
     description="A small example package",
     long_description=long_description,
