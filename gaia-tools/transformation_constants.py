@@ -11,7 +11,7 @@ import numpy as np
 R_0 = 8178
 
 # Distance above galactic midplane in pc
-Z_0 = 27
+Z_0 = 17
 
 # Angle theta (in rad)
 THETA_0 = np.arcsin(Z_0/R_0)
