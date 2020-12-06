@@ -28,12 +28,17 @@ debug : bool()
 '''
 class BinCollection:
     
-    def __init__(self, data, N_bins, XX, YY, ZZ, debug = False):
+    def __init__(self, data, N_bins, XX, YY, ZZ, mode='xyz', debug = False):
         
         self.data = data
         self.bins = []
         self.N_bins = N_bins
-        self.bin_boundaries = XX, YY, ZZ
+        self.mode = mode
+        if(mode == 'xyz'):
+            self.bin_boundaries = XX, YY, ZZ
+        if(mode == 'r-z'):
+            self.bin_boundaries = XX, YY
+
         self.bin_num_set = set(data.Bin_index)
         self.debug = debug
         
@@ -89,8 +94,7 @@ class BinCollection:
             self.bins.append(Bin(data_subset))
             row_count += 1
             bin_index += 1
-        
-            
+               
         # END Bin Generating
 
         '''
@@ -104,8 +108,9 @@ class BinCollection:
         XX = self.bin_boundaries[0]
         YY = self.bin_boundaries[1]
         
-        # Get slice of data height in terms of z-coordinate span
-        temp_z = self.bin_boundaries[2]
+        if(self.mode == 'xyz'):
+            # Get slice of data height in terms of z-coordinate span
+            temp_z = self.bin_boundaries[2]
 
         count = 0
 
@@ -115,18 +120,24 @@ class BinCollection:
                 # For i in range of rows: again binwise
                 for i in range(YY.shape[0]-1):
 
+
                     # Grabs adjacent bin edges in the x-direction
                     temp_x = (XX[0][j], XX[0][j+1])
 
                     # Grabs adjacent bin edges in the y-direction
                     temp_y = (YY.T[0][i], YY.T[0][i+1])
 
-                   
-
                     # Assign boundaries to bin objects
-                    self.bins[count].x_boundaries = temp_x
-                    self.bins[count].y_boundaries = temp_y
-                    self.bins[count].z_boundaries = temp_z
+                    if(self.mode == 'r-z'):
+                        self.bins[count].r_boundaries = temp_x
+                        self.bins[count].z_boundaries = temp_y
+
+                    else:
+                        self.bins[count].x_boundaries = temp_x
+                        self.bins[count].y_boundaries = temp_y
+
+                    if(self.mode == 'xyz'):
+                        self.bins[count].z_boundaries = temp_z
 
                     count = count + 1  
                
