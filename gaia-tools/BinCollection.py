@@ -120,6 +120,7 @@ class BinCollection:
                 # For i in range of rows: again binwise
                 for i in range(YY.shape[0]-1):
 
+
                     # Grabs adjacent bin edges in the x-direction
                     temp_x = (XX[0][j], XX[0][j+1])
 
@@ -127,8 +128,13 @@ class BinCollection:
                     temp_y = (YY.T[0][i], YY.T[0][i+1])
 
                     # Assign boundaries to bin objects
-                    self.bins[count].x_boundaries = temp_x
-                    self.bins[count].y_boundaries = temp_y
+                    if(self.mode == 'r-z'):
+                        self.bins[count].r_boundaries = temp_x
+                        self.bins[count].z_boundaries = temp_y
+
+                    else:
+                        self.bins[count].x_boundaries = temp_x
+                        self.bins[count].y_boundaries = temp_y
 
                     if(self.mode == 'xyz'):
                         self.bins[count].z_boundaries = temp_z

@@ -154,11 +154,14 @@ XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
 def get_collapsed_bins(data, N_bins, BL_r, BL_z):
     
-    # Add assertion for existence of Z and R
-    
-    # Sort data from 0 to increasing r
 
-     # Fix for newly developed method
+    assert len(data.shape) > 0, "No data!"
+
+    if not 'r' or 'phi' in data.index:
+        print("No cylindrical coordinates found!")
+        return
+
+    # Fix for newly developed method
     plottable_df = data
 
     # Define spatial limits.
@@ -437,9 +440,10 @@ def Collapsed_Plot_Test():
 
     from data_plot import plot_collapsed_bins, display_mean_velocity
 
-
+    
     plot_collapsed_bins(bins, 'v_r')
 
+    print(galcen.index)
 
 
 
