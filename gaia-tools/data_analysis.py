@@ -72,6 +72,8 @@ def get_SkyCoord_object(df):
 '''
 Function for transforming data into a galactocentric reference frame using SkyCoord objects and 
 the 'transform_to' function.
+
+Returns a SkyCoord object
 '''
 def transform_to_galcen(df, z_sun=17*u.pc, galcen_distance=8.178*u.kpc):
     
@@ -89,14 +91,17 @@ Input parameters:
 def bin_data(galcen_data, show_bins = False, BL = 20000):
    
     
-
+    # DEPRECATED
     # Map values to temporary data frame.
-    plottable_df = pd.DataFrame({'x': galcen_data.x.value,
-                            'y':galcen_data.y.value,
-                            'z':galcen_data.z.value,
-                            'v_x':galcen_data.v_x.value,
-                            'v_y':galcen_data.v_y.value,
-                            'v_z':galcen_data.v_z.value})
+    #plottable_df = pd.DataFrame({'x': galcen_data.x.value,
+    #                        'y':galcen_data.y.value,
+    #                        'z':galcen_data.z.value,
+    #                        'v_x':galcen_data.v_x.value,
+    #                        'v_y':galcen_data.v_y.value,
+    #                        'v_z':galcen_data.v_z.value})
+
+    # Fix for newly developed method
+    plottable_df = galcen_data
 
     # Define spatial limits.
     plottable_df = plottable_df[(plottable_df.x >= -BL) & (plottable_df.x <= BL)]
@@ -139,6 +144,56 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
         display_mean_velocity(bin_collection, 'v_y')
         
     return bin_collection
+
+'''
+Returns bins in terms of R - Z. (Cylindrical)
+
+data - dataframe with data
+N_bins - number of bins in R direction
+XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
+'''
+def get_collapsed_bins(data, N_bins, BL_r, BL_z):
+    
+    # Add assertion for existence of Z and R
+    
+    # Sort data from 0 to increasing r
+
+     # Fix for newly developed method
+    plottable_df = data
+
+    # Define spatial limits.
+    plottable_df = plottable_df[(plottable_df.r >= -BL_r) & (plottable_df.r <= BL_r)]
+    plottable_df = plottable_df[(plottable_df.z >= -BL_z) & (plottable_df.z <= BL_z)]
+
+    # r and z parameters of points loaded into Series
+    r = plottable_df.r
+    z = plottable_df.z
+
+    # Velocity projections of points: NOT NEEDED
+    c = plottable_df.v_phi
+
+    # Number of bins along main axis
+    N_bins = 10
+
+    # Calling the actual binning function
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[0, BL_r], [-BL_z, BL_z]], bins = N_bins, statistic='mean')
+
+    # Create a meshgrid from the vertices: X, Y -> R, Z
+    XX, YY = np.meshgrid(xedges, yedges)
+    
+    # Assign a binnumber for each data entry
+    plottable_df['Bin_index'] = binnumber
+
+    # Instantiate a BinCollection object
+    bin_collection = BinCollection(plottable_df, N_bins, XX, YY, YY, mode='r-z', debug=True)
+    
+    # Generate the bins with respective r-z boundaries
+    bin_collection.GenerateBins()
+    
+    return bin_collection
+
+    
+
 
 '''
 Function for finding center points of bins in binned data and then 
@@ -334,8 +389,62 @@ def main():
 
     #print("Plotting done!")
 
+# Temporary function for Issue no. 18
+def Collapsed_Plot_Test():
+
+    # LOAD DATA
+    #region
+
+    my_path = "astroquery_test.csv"
+    
+    print("Start import...")
+    df = pd.read_csv(my_path)
+   
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+    
+    print("Filtering entries that are further than 32 000 pc")
+    df = filter_distance(df, 32000)
+    
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+
+    print("Removing negative parallaxes...")
+    df=df[df.parallax > 0]
+
+    df.reset_index(inplace=True, drop=True)
+    print("Checking indexing...")
+    print(df.head)
+
+    #endregion
+    galcen = get_transformed_data(df, include_cylindrical = True)
+    print(galcen.iloc[0:5])
+
+    print("Data Loaded Successfully.")
+
+    bins = get_collapsed_bins(galcen, 10, 100000, 5000)
+
+    #Testing bin method manually
+    temp = []
+    for index, row in galcen.iterrows():
+        
+        if(row.r >= 0 and row.r < 10000 and row.z >= 0 and row.z < 1000):
+            temp.append(row.v_phi)
+
+    mean = np.mean(temp)
+    print(mean)
+
+    print(bins.bins)
+    print(bins.bins[17].data)
+
+    from data_plot import plot_collapsed_bins, display_mean_velocity
+
+
+    plot_collapsed_bins(bins, 'v_r')
+
+
+
 
 if __name__ == "__main__":
 
-    main()
+    #main()
+    Collapsed_Plot_Test()
 

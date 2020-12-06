@@ -29,10 +29,14 @@ z_boundaries : tuple()
 class Bin:
     def __init__(self, data_subset):
         self.data = data_subset
-        self.bin_num = data_subset.Bin_index.iloc[0]
+
+        if("Bin_index" in data_subset.index):
+            self.bin_num = data_subset.Bin_index.iloc[0]
         self.N_points = data_subset.shape[0]
         self.x_boundaries = []
         self.y_boundaries =[]
         self.z_boundaries = []
+        self.r_boundaries = []
+        self.z_boundaries= []
 
 

@@ -152,8 +152,41 @@ def display_mean_velocity(bin_collection, projection_parameter, showBinValues = 
     plt.show()
 
 
+def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = True):
+
+    parameter = projection_parameter
+
+    XX, YY = bin_collection.bin_boundaries[0:2]
+
+    values = bin_collection.CalculateValues(parameter)
+
+
+    fig = plt.figure(figsize = (10,10))
+    ax1=plt.subplot(111)
+    plot1 = ax1.pcolormesh(XX,YY,values.T)
+    
+    if(showBinValues):
+        display_values(XX, YY, values)
+
+    # Fix unit displaying later on!
+    cbar = plt.colorbar(plot1,ax=ax1, 
+                        pad = .015, 
+                        aspect=20, 
+                        label='R-Z Bins {0} [{1}]'.format(parameter, 'a.u.'))
+
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    ax1.set_xlabel('$r$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
+    ax1.set_ylabel('$z$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
+    
+    plt.title("Collapsed Bins in r-z Plane", pad=20, fontdict={'fontsize': 20})
+
+    arrowed_spines(fig, ax1)
+    plt.show()
+   
+
 '''
-Generates a velocity field from binned data.
+Generates a velocity vector field from binned data.
 Input parameters:
     binned_dict - A dictionary containing all requisite data for displaying the vector field
 '''
@@ -253,6 +286,48 @@ def parameter_test_plot(galcen_astropy, galcen_my, test_parameter):
     plt.grid()
     plt.title("Our transformation VS Astropy", pad=20, fontdict={'fontsize': 20})
     plt.show()
+
+# Displays arrows on plot
+def arrowed_spines(fig, ax):
+
+    xmin, xmax = ax.get_xlim() 
+    ymin, ymax = ax.get_ylim()
+
+    ax.spines["left"].set_position(("data", 0.))
+    ax.spines["right"].set_position(("data", xmax))
+    
+    # removing the default axis on all sides:
+    for side in ['bottom','top']:
+        ax.spines[side].set_visible(False)
+
+    # get width and height of axes object to compute 
+    # matching arrowhead length and width
+    dps = fig.dpi_scale_trans.inverted()
+    bbox = ax.get_window_extent().transformed(dps)
+    width, height = bbox.width, bbox.height
+
+    # manual arrowhead width and length
+    hw = 1./30.*(ymax-ymin) 
+    hl = 1./30.*(xmax-xmin)
+    lw = 1 # axis line width
+    ohg = 0 # arrow overhang
+
+    # compute matching arrowhead length and width
+    yhw = hw/(ymax-ymin)*(xmax-xmin)* height/width 
+    yhl = hl/(xmax-xmin)*(ymax-ymin)* width/height
+
+    # draw x and y axis
+    ax.arrow(0., 0., xmax-xmin, 0., fc='black', ec='black', lw = lw, 
+             head_width=hw, head_length=hl, overhang = ohg, 
+             length_includes_head= True, clip_on = False) 
+
+    ax.arrow(0, 0, 0., (ymax-ymin)/2, fc='k', ec='k', lw = lw, 
+             head_width=yhw, head_length=yhl, overhang = ohg, 
+             length_includes_head= True, clip_on = False)
+    
+    ax.arrow(0, 0, 0., (ymin-ymax)/2, fc='k', ec='k', lw = lw, 
+             head_width=yhw, head_length=yhl, overhang = ohg, 
+             length_includes_head= True, clip_on = False)
 
 
 
