@@ -449,6 +449,6 @@ def Collapsed_Plot_Test():
 
 if __name__ == "__main__":
 
-    #main()
-    Collapsed_Plot_Test()
+    main()
+    #Collapsed_Plot_Test()
 
