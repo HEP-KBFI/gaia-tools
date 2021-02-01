@@ -463,7 +463,7 @@ def Collapsed_Plot_Test():
     print(bins.bins)
     print(bins.bins[17].data)
 
-    from data_plot import plot_collapsed_bins, display_mean_velocity
+    from data_plot import plot_collapsed_bins, display_bins
 
     
     plot_collapsed_bins(bins, 'v_r')
@@ -479,6 +479,6 @@ def Parameter_Test():
 
 if __name__ == "__main__":
 
-    main()
-    #Collapsed_Plot_Test()
+    #main()
+    Collapsed_Plot_Test()
 
