@@ -14,7 +14,9 @@ R_0 = 8178
 Z_0 = 17
 
 # Angle theta (in rad)
-THETA_0 = np.arcsin(Z_0/R_0)
+# Now calculated only in function get_H_matrix()
+
+#THETA_0 = np.arcsin(Z_0/R_0)
 
 # Velocity vector of the Sun. Currently borrowed values from Astropy!
 V_SUN = np.array([[11.1], 
@@ -31,11 +33,6 @@ A = np.array([[(-1)*0.0548755604162154, (-1)*0.8734370902348850, (-1)*0.48383501
             [0.4941094278755837, (-1)*0.4448296299600112, 0.7469822444972189],
             [(-1)*0.8676661490190047, (-1)*0.1980763734312015, 0.4559837761750669]])
 
-# Matrix H which accounts for the height of the Sun (Z_0) aboce the Galactic plane.
-H = np.array([[np.cos(THETA_0), 0, np.sin(THETA_0)],
-             [0, 1, 0],
-             [-np.sin(THETA_0), 0, np.cos(THETA_0)]])
-
 # Constant used for fixing the order of magnitude of distance
 k1 = 10**3
 
@@ -43,6 +40,24 @@ k1 = 10**3
 k2 = 4.74047
 
 #endregion
+
+
+# Matrix H which accounts for the height of the Sun (Z_0) aboce the Galactic plane.
+def get_H_matrix(Z_0, R_0):
+    
+    if(Z_0/R_0 is None):
+        print("Something went wrong! No values for either Z_0 or R_0 were found!")
+        return
+   
+    THETA_0 = np.arcsin(Z_0/R_0)
+
+    H = np.array([[np.cos(THETA_0), 0, np.sin(THETA_0)],
+                 [0, 1, 0],
+                 [-np.sin(THETA_0), 0, np.cos(THETA_0)]])
+
+    return H
+
+
 
 def get_b_matrix(ra, dec):
 
