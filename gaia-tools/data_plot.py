@@ -121,13 +121,13 @@ A plot which enables the user to see the bins created by the 'bin_data' function
 data analysis module. It takes in the histogram data and does a colormesh with colours 
 mapped to the value inside the 2D bin.
 '''
-def display_mean_velocity(bin_collection, projection_parameter, showBinValues = True):
+def display_bins(bin_collection, projection_parameter, mode = 'mean', showBinValues = True):
 
     parameter = projection_parameter
 
     XX, YY = bin_collection.bin_boundaries[0:2]
 
-    values = bin_collection.CalculateValues(parameter)
+    values = bin_collection.CalculateValues(parameter, mode)
 
     fig = plt.figure(figsize = (10,10))
     ax1=plt.subplot(111)
@@ -150,6 +150,7 @@ def display_mean_velocity(bin_collection, projection_parameter, showBinValues = 
     plt.title("2D Bins Velocity V{0}".format(parameter), pad=20, fontdict={'fontsize': 20})
     
     plt.show()
+
 
 
 def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = True):

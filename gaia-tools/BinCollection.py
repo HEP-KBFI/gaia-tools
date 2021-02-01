@@ -149,10 +149,15 @@ class BinCollection:
     function inside each bin.
 
     parameter - DataFrame column name in the form of a string. For example: 'v_x', v_y', 'v_z'
+
+    mode - the statistic to be calculated of the chosen parameter in data
+
     '''        
-    def CalculateValues(self, parameter):
+    def CalculateValues(self, parameter, mode = 'mean'):
         
         assert len(self.bins) > 0, "No bins inside BinCollection! Did you forget to use GenerateBins()?"
+
+
 
         # 2D list of values
         values = []
@@ -173,10 +178,19 @@ class BinCollection:
                 for i in range(YY.shape[0]-1):
 
                     # Value to be calculated
-                    if(parameter == 'v_x'):
+
+                    if(parameter == 'v_x' and mode == 'mean'):
                         temp_val = (-1)*np.mean(self.bins[count].data[parameter])
-                    else:
+
+                    elif(mode == 'mean'):
                         temp_val = np.mean(self.bins[count].data[parameter])
+
+                    elif(mode == 'std'):
+                        temp_val = np.std(self.bins[count].data[parameter])
+
+                    else:
+                        print("Mode not given!")
+                    
                     rows.append(temp_val)
                     count = count + 1  
                     
@@ -184,3 +198,12 @@ class BinCollection:
                 
         # Convert to a numpy array and return        
         return np.asarray(values)
+
+
+    def GetMean(data):
+
+
+        pass;
+
+    def GetStd():
+        pass;
