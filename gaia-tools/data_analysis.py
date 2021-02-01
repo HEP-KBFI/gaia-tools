@@ -138,10 +138,10 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
 
     # TODO: Generalise this!
     if(show_bins == True):
-        from data_plot import display_mean_velocity
+        from data_plot import display_bins
 
-        display_mean_velocity(bin_collection, 'v_x')
-        display_mean_velocity(bin_collection, 'v_y')
+        display_bins(bin_collection, 'v_x')
+        display_bins(bin_collection, 'v_y')
         
     return bin_collection
 
@@ -327,7 +327,7 @@ def main():
     #dir_path = os.path.dirname(os.path.realpath(__file__))
     #print(dir_path)
 
-    # START File Import Section
+    #region Import Section
 
     # YOUR DATA FILE
     my_path = "astroquery_test.csv"
@@ -349,23 +349,22 @@ def main():
     print("Checking indexing...")
     print(df.head)
 
-    # END File Import Section
+    #endregion File Import Section
 
     # Testing Our Results to Astropy Functions
     print("Transforming data to galactocentric frame...")
     
     # Old Method (Astropy)
-    galcen = transform_to_galcen(df)
-    print(galcen[0:5])
+    #galcen = transform_to_galcen(df)
+    #print(galcen[0:5])
 
     # Our Method
     galcen2 = get_transformed_data(df, include_cylindrical = True)
     print(galcen2.iloc[0:5])
 
-    from data_plot import distribution_hist, point_density_histogram, display_mean_velocity, generate_velocity_map, run_parameter_tests
+    from data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
     #distribution_hist(galcen)
-    parameter_list = ["x", "y", "z", "v_x", "v_y", "v_z"]
-    run_parameter_tests(galcen, galcen2, parameter_list)
+    
 
     #point_density_histogram(galcen, 50)
     #point_density_histogram(galcen2, 50)
@@ -384,13 +383,16 @@ def main():
     print(cov_dict)
 
 
-    #bins = bin_data(galcen, show_bins = True)
+    bins = bin_data(galcen2,  show_bins = True)
+
+    display_bins(bins,projection_parameter = 'v_x', mode='std')
+    
     #generate_velocity_map(bins)
 
-    #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
+    print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
+     
     
-
-    #print("Plotting done!")
+    print("Plotting done!")
 
 # Temporary function for Issue no. 18
 def Collapsed_Plot_Test():
@@ -445,6 +447,11 @@ def Collapsed_Plot_Test():
 
     print(galcen.index)
 
+
+# Move this to separate test module later
+def Parameter_Test():
+    parameter_list = ["x", "y", "z", "v_x", "v_y", "v_z"]
+    run_parameter_tests(galcen, galcen2, parameter_list)
 
 
 if __name__ == "__main__":
