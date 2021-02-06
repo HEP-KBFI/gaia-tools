@@ -372,23 +372,13 @@ def main():
 
     #endregion File Import Section
 
-    # Testing Our Results to Astropy Functions
     print("Transforming data to galactocentric frame...")
     
-    # Old Method (Astropy)
-    #galcen = transform_to_galcen(df)
-    #print(galcen[0:5])
-
     # Our Method
     galcen2 = get_transformed_data(df, include_cylindrical = True)
 
     from data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
-    #distribution_hist(galcen)
-    
-
-    #point_density_histogram(galcen, 50)
-    #point_density_histogram(galcen2, 50)
-
+ 
     import covariance_generation as cov
     import time, timeit
 
@@ -445,7 +435,7 @@ def Collapsed_Plot_Test():
 
     print("Data Loaded Successfully.")
 
-    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (10, 5))
+    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (5, 10))
      
     #Testing bin method manually
     temp = []

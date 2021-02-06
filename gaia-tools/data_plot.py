@@ -232,8 +232,19 @@ def generate_velocity_map(bin_collection):
     plt.show()
 
 
+'''
+df - Imported data from CSV
+'''
+def run_parameter_tests(df, parameter_list):
 
-def run_parameter_tests(galcen_astropy, galcen_my, parameter_list):
+    from data_analysis import transform_to_galcen, get_transformed_data
+
+    # Generating Transformation With Astropy
+    galcen_astropy = transform_to_galcen(df)
+    
+    # Using our method
+    galcen_my = get_transformed_data(df, include_cylindrical = True)
+
 
     for parameter in parameter_list:
         parameter_test_plot(galcen_astropy, galcen_my, parameter)
