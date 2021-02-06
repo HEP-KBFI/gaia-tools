@@ -372,6 +372,10 @@ def main():
 
     #endregion File Import Section
 
+
+    
+
+
     print("Transforming data to galactocentric frame...")
     
     # Our Method
@@ -430,6 +434,9 @@ def Collapsed_Plot_Test():
     print(df.head)
 
     #endregion
+
+    Parameter_Test(df)
+
     galcen = get_transformed_data(df, include_cylindrical = True)
     print(galcen.iloc[0:5])
 
@@ -459,9 +466,12 @@ def Collapsed_Plot_Test():
 
 
 # Move this to separate test module later
-def Parameter_Test():
+def Parameter_Test(df):
+
+    from data_plot import run_parameter_tests
+
     parameter_list = ["x", "y", "z", "v_x", "v_y", "v_z"]
-    run_parameter_tests(galcen, galcen2, parameter_list)
+    run_parameter_tests(df, parameter_list)
 
 
 if __name__ == "__main__":
