@@ -152,7 +152,7 @@ data - dataframe with data
 N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
-def get_collapsed_bins(data, N_bins, BL_r, BL_z):
+def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10)):
     
     # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
@@ -174,9 +174,6 @@ def get_collapsed_bins(data, N_bins, BL_r, BL_z):
 
     # Velocity projections of points: NOT NEEDED
     c = plottable_df.v_phi
-
-    # Number of bins along main axis
-    N_bins = (10, 10)
 
     # Calling the actual binning function
     H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[0, BL_r], [-BL_z, BL_z]], bins=N_bins, statistic='mean')
@@ -408,7 +405,7 @@ def main():
     print(galcen2)
     bins = bin_data(galcen2,  show_bins = True)
 
-    display_bins(bins,projection_parameter = 'v_x', mode='index')
+    display_bins(bins, projection_parameter = 'v_x', mode='index')
     
     #generate_velocity_map(bins)
 
@@ -448,7 +445,7 @@ def Collapsed_Plot_Test():
 
     print("Data Loaded Successfully.")
 
-    bins = get_collapsed_bins(galcen, 10, 100000, 5000)
+    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (10, 5))
      
     #Testing bin method manually
     temp = []
@@ -466,7 +463,7 @@ def Collapsed_Plot_Test():
     from data_plot import plot_collapsed_bins, display_bins
 
     
-    plot_collapsed_bins(bins, 'v_r', mode='index')
+    plot_collapsed_bins(bins, 'v_r', mode='mean')
 
     print(galcen.index)
 
@@ -479,6 +476,6 @@ def Parameter_Test():
 
 if __name__ == "__main__":
 
-    main()
-    #Collapsed_Plot_Test()
+    #main()
+    Collapsed_Plot_Test()
 

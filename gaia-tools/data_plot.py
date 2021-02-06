@@ -111,7 +111,7 @@ A function that displays the specific numerical values inside each bin.
 '''
 def display_values(XX, YY, H):
     for i in range(YY.shape[0]-1):
-        for j in range(XX.shape[0]-1):
+        for j in range(XX.shape[1]-1):
             plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
                  horizontalalignment='center',
                  verticalalignment='center')

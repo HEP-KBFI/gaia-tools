@@ -28,7 +28,7 @@ debug : bool()
 '''
 class BinCollection:
     
-    def __init__(self, data, N_bins, XX, YY, ZZ, mode='xyz', debug = False):
+    def __init__(self, data, N_bins, XX, YY, ZZ, mode='xyz', debug = True):
         
         self.data = data
         self.bins = []
@@ -59,7 +59,7 @@ class BinCollection:
         while bin_index < max_bin_index + 1:
             
             # If reaches end of column will skip 2 next index numbers 
-            if(row_count == N_bins):
+            if(row_count == N_bins[1]):
                 
                 if(self.debug):
                     print("Skipping bin: {} and {}!".format(bin_index, bin_index+1))
@@ -190,6 +190,7 @@ class BinCollection:
                     elif(mode == 'std'):
                         temp_val = np.std(self.bins[count].data[parameter])
                     
+                    # Mode to check bin indexing
                     elif(mode =='index'):
                         temp_val = self.bins[count].bin_num
 
