@@ -13,6 +13,8 @@ import transformation_constants
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
+
+NOTE! Distance from Solar System!
 '''
 def filter_distance(df, dist, *args, **kwargs):
     
@@ -348,32 +350,10 @@ def main():
     #dir_path = os.path.dirname(os.path.realpath(__file__))
     #print(dir_path)
 
-    #region Import Section
-
     # YOUR DATA FILE
     my_path = "astroquery_test.csv"
     
-    print("Start import...")
-    df = pd.read_csv(my_path)
-   
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-    
-    print("Filtering entries that are further than 32 000 pc")
-    df = filter_distance(df, 32000)
-    
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-
-    print("Removing negative parallaxes...")
-    df=df[df.parallax > 0]
-
-    df.reset_index(inplace=True, drop=True)
-    print("Checking indexing...")
-    print(df.head)
-
-    #endregion File Import Section
-
-
-    
+    df = import_data(path = my_path)
 
 
     print("Transforming data to galactocentric frame...")
@@ -416,26 +396,9 @@ def Collapsed_Plot_Test():
 
     my_path = "astroquery_test.csv"
     
-    print("Start import...")
-    df = pd.read_csv(my_path)
-   
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-    
-    print("Filtering entries that are further than 32 000 pc")
-    df = filter_distance(df, 32000)
-    
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-
-    print("Removing negative parallaxes...")
-    df=df[df.parallax > 0]
-
-    df.reset_index(inplace=True, drop=True)
-    print("Checking indexing...")
-    print(df.head)
+    df = import_data(path = my_path)
 
     #endregion
-
-    Parameter_Test(df)
 
     galcen = get_transformed_data(df, include_cylindrical = True)
     print(galcen.iloc[0:5])
@@ -473,9 +436,31 @@ def Parameter_Test(df):
     parameter_list = ["x", "y", "z", "v_x", "v_y", "v_z"]
     run_parameter_tests(df, parameter_list)
 
+# Move this to separate import module later
+def import_data(path, distance = 32000):
+    
+    print("Start import...")
+    df = pd.read_csv(path)
+   
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+    
+    print("Filtering entries that are further than 32 000 pc")
+    df = filter_distance(df, distance)
+    
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+
+    print("Removing negative parallaxes...")
+    df=df[df.parallax > 0]
+
+    df.reset_index(inplace=True, drop=True)
+    print("Checking indexing...")
+    print(df.head)
+
+    return df
+
 
 if __name__ == "__main__":
 
-    #main()
-    Collapsed_Plot_Test()
+    main()
+    #Collapsed_Plot_Test()
 

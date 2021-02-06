@@ -28,7 +28,7 @@ debug : bool()
 '''
 class BinCollection:
     
-    def __init__(self, data, N_bins, XX, YY, ZZ, mode='xyz', debug = True):
+    def __init__(self, data, N_bins, XX, YY, ZZ, mode='xyz', debug = False):
         
         self.data = data
         self.bins = []
