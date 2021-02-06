@@ -117,7 +117,7 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     z2 = plottable_df.v_y
 
     # Number of bins along main axis
-    bins = 10
+    bins = (10, 10)
 
     # Calling the actual binning function
     H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = bins, statistic='mean')
@@ -154,7 +154,7 @@ XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
 def get_collapsed_bins(data, N_bins, BL_r, BL_z):
     
-
+    # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
 
     if not 'r' or 'phi' in data.index:
@@ -176,10 +176,10 @@ def get_collapsed_bins(data, N_bins, BL_r, BL_z):
     c = plottable_df.v_phi
 
     # Number of bins along main axis
-    N_bins = 10
+    N_bins = (10, 10)
 
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[0, BL_r], [-BL_z, BL_z]], bins = N_bins, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[0, BL_r], [-BL_z, BL_z]], bins=N_bins, statistic='mean')
 
     # Create a meshgrid from the vertices: X, Y -> R, Z
     XX, YY = np.meshgrid(xedges, yedges)
@@ -408,7 +408,7 @@ def main():
     print(galcen2)
     bins = bin_data(galcen2,  show_bins = True)
 
-    display_bins(bins,projection_parameter = 'v_x', mode='std')
+    display_bins(bins,projection_parameter = 'v_x', mode='index')
     
     #generate_velocity_map(bins)
 
@@ -449,7 +449,7 @@ def Collapsed_Plot_Test():
     print("Data Loaded Successfully.")
 
     bins = get_collapsed_bins(galcen, 10, 100000, 5000)
-
+     
     #Testing bin method manually
     temp = []
     for index, row in galcen.iterrows():
@@ -466,7 +466,7 @@ def Collapsed_Plot_Test():
     from data_plot import plot_collapsed_bins, display_bins
 
     
-    plot_collapsed_bins(bins, 'v_r')
+    plot_collapsed_bins(bins, 'v_r', mode='index')
 
     print(galcen.index)
 
@@ -479,6 +479,6 @@ def Parameter_Test():
 
 if __name__ == "__main__":
 
-    #main()
-    Collapsed_Plot_Test()
+    main()
+    #Collapsed_Plot_Test()
 

@@ -46,11 +46,13 @@ class BinCollection:
     '''
     Collect all bins provided parameters from the 'binned_statistic_2d' function
 
+
+
     '''
     def GenerateBins(self):
         N_bins = self.N_bins
-        max_bin_index = ((N_bins+3) * N_bins)     
-        bin_index = N_bins + 3
+        max_bin_index = ((N_bins[1]+1) + N_bins[0]*N_bins[1] +2*N_bins[0])     
+        bin_index = N_bins[1] + 3
         row_count = 0
         
         # START Bin Generating
@@ -187,6 +189,9 @@ class BinCollection:
 
                     elif(mode == 'std'):
                         temp_val = np.std(self.bins[count].data[parameter])
+                    
+                    elif(mode =='index'):
+                        temp_val = self.bins[count].bin_num
 
                     else:
                         print("Mode not given!")

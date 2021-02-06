@@ -153,13 +153,13 @@ def display_bins(bin_collection, projection_parameter, mode = 'mean', showBinVal
 
 
 
-def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = True):
+def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = True, mode = 'mean'):
 
     parameter = projection_parameter
 
     XX, YY = bin_collection.bin_boundaries[0:2]
 
-    values = bin_collection.CalculateValues(parameter)
+    values = bin_collection.CalculateValues(parameter, mode = mode)
 
 
     fig = plt.figure(figsize = (10,10))
