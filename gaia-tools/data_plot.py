@@ -111,7 +111,7 @@ A function that displays the specific numerical values inside each bin.
 '''
 def display_values(XX, YY, H):
     for i in range(YY.shape[0]-1):
-        for j in range(XX.shape[0]-1):
+        for j in range(XX.shape[1]-1):
             plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
                  horizontalalignment='center',
                  verticalalignment='center')
@@ -153,13 +153,13 @@ def display_bins(bin_collection, projection_parameter, mode = 'mean', showBinVal
 
 
 
-def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = True):
+def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = True, mode = 'mean'):
 
     parameter = projection_parameter
 
     XX, YY = bin_collection.bin_boundaries[0:2]
 
-    values = bin_collection.CalculateValues(parameter)
+    values = bin_collection.CalculateValues(parameter, mode = mode)
 
 
     fig = plt.figure(figsize = (10,10))
@@ -232,8 +232,19 @@ def generate_velocity_map(bin_collection):
     plt.show()
 
 
+'''
+df - Imported data from CSV
+'''
+def run_parameter_tests(df, parameter_list):
 
-def run_parameter_tests(galcen_astropy, galcen_my, parameter_list):
+    from data_analysis import transform_to_galcen, get_transformed_data
+
+    # Generating Transformation With Astropy
+    galcen_astropy = transform_to_galcen(df)
+    
+    # Using our method
+    galcen_my = get_transformed_data(df, include_cylindrical = True)
+
 
     for parameter in parameter_list:
         parameter_test_plot(galcen_astropy, galcen_my, parameter)

@@ -14,7 +14,7 @@ bins : list[]
         A list of 'Bin' class objects.
 
 N_bins : int 
-        Number of bins along main axis.
+        Number of bins along main and secondary axis.
 
 bin_boundaries : ndarray 
         A meshgrid of bin vertices in terms of x- and y-coordinates.
@@ -46,18 +46,20 @@ class BinCollection:
     '''
     Collect all bins provided parameters from the 'binned_statistic_2d' function
 
+
+
     '''
     def GenerateBins(self):
         N_bins = self.N_bins
-        max_bin_index = ((N_bins+3) * N_bins)     
-        bin_index = N_bins + 3
+        max_bin_index = ((N_bins[1]+1) + N_bins[0]*N_bins[1] +2*N_bins[0])     
+        bin_index = N_bins[1] + 3
         row_count = 0
         
         # START Bin Generating
         while bin_index < max_bin_index + 1:
             
             # If reaches end of column will skip 2 next index numbers 
-            if(row_count == N_bins):
+            if(row_count == N_bins[1]):
                 
                 if(self.debug):
                     print("Skipping bin: {} and {}!".format(bin_index, bin_index+1))
@@ -187,6 +189,10 @@ class BinCollection:
 
                     elif(mode == 'std'):
                         temp_val = np.std(self.bins[count].data[parameter])
+                    
+                    # Mode to check bin indexing
+                    elif(mode =='index'):
+                        temp_val = self.bins[count].bin_num
 
                     else:
                         print("Mode not given!")

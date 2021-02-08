@@ -13,6 +13,8 @@ import transformation_constants
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
+
+NOTE! Distance from Solar System!
 '''
 def filter_distance(df, dist, *args, **kwargs):
     
@@ -88,7 +90,7 @@ Function for binning data in 2 dimensions. Used to plot vector maps of velocitie
 Input parameters:
     BL - Bin Limit (The edges of the xyz boundary)
 '''
-def bin_data(galcen_data, show_bins = False, BL = 20000):
+def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10)):
    
     
     # DEPRECATED
@@ -116,11 +118,8 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     z = -plottable_df.v_x
     z2 = plottable_df.v_y
 
-    # Number of bins along main axis
-    bins = 10
-
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = bins, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = N_bins, statistic='mean')
 
     # Create a meshgrid from the vertices   
     XX, YY = np.meshgrid(xedges, yedges)
@@ -131,7 +130,7 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     plottable_df['Bin_index'] = binnumber
 
     # Instantiate a BinCollection object
-    bin_collection = BinCollection(plottable_df, bins, XX, YY, ZZ)
+    bin_collection = BinCollection(plottable_df, N_bins, XX, YY, ZZ)
 
     # Generate the bins with respective x-y boundaries
     bin_collection.GenerateBins()
@@ -152,9 +151,9 @@ data - dataframe with data
 N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
-def get_collapsed_bins(data, N_bins, BL_r, BL_z):
+def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10)):
     
-
+    # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
 
     if not 'r' or 'phi' in data.index:
@@ -175,11 +174,8 @@ def get_collapsed_bins(data, N_bins, BL_r, BL_z):
     # Velocity projections of points: NOT NEEDED
     c = plottable_df.v_phi
 
-    # Number of bins along main axis
-    N_bins = 10
-
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[0, BL_r], [-BL_z, BL_z]], bins = N_bins, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[0, BL_r], [-BL_z, BL_z]], bins=N_bins, statistic='mean')
 
     # Create a meshgrid from the vertices: X, Y -> R, Z
     XX, YY = np.meshgrid(xedges, yedges)
@@ -208,9 +204,11 @@ def generate_vector_mesh(XX, YY):
     vec_y = []
     vec_z = []
 
-    for i in range(XX.shape[0]-1):
+    for i in range(XX.shape[1]-1):
         vec_x.append((XX[0][i+1]+XX[0][i])/2)
-        vec_y.append((YY.T[0][i+1]+YY.T[0][i])/2)
+
+    for j in range(YY.shape[0]-1):
+        vec_y.append((YY.T[0][j+1]+YY.T[0][j])/2)
 
     # We create a meshgrid out of all the vector locations
     VEC_XX, VEC_YY = np.meshgrid(vec_x, vec_y)
@@ -351,47 +349,19 @@ def main():
     #dir_path = os.path.dirname(os.path.realpath(__file__))
     #print(dir_path)
 
-    #region Import Section
-
     # YOUR DATA FILE
     my_path = "astroquery_test.csv"
     
-    print("Start import...")
-    df = pd.read_csv(my_path)
-   
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-    
-    print("Filtering entries that are further than 32 000 pc")
-    df = filter_distance(df, 32000)
-    
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+    df = import_data(path = my_path)
 
-    print("Removing negative parallaxes...")
-    df=df[df.parallax > 0]
 
-    df.reset_index(inplace=True, drop=True)
-    print("Checking indexing...")
-    print(df.head)
-
-    #endregion File Import Section
-
-    # Testing Our Results to Astropy Functions
     print("Transforming data to galactocentric frame...")
     
-    # Old Method (Astropy)
-    #galcen = transform_to_galcen(df)
-    #print(galcen[0:5])
-
     # Our Method
     galcen2 = get_transformed_data(df, include_cylindrical = True)
 
     from data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
-    #distribution_hist(galcen)
-    
-
-    #point_density_histogram(galcen, 50)
-    #point_density_histogram(galcen2, 50)
-
+ 
     import covariance_generation as cov
     import time, timeit
 
@@ -406,11 +376,11 @@ def main():
     #print(cov_dict)
 
     print(galcen2)
-    bins = bin_data(galcen2,  show_bins = True)
+    bins = bin_data(galcen2,  show_bins = True, N_bins = (10, 10))
 
-    display_bins(bins,projection_parameter = 'v_x', mode='std')
+    display_bins(bins, projection_parameter = 'v_x', mode='index')
     
-    #generate_velocity_map(bins)
+    generate_velocity_map(bins)
 
     print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
      
@@ -425,31 +395,17 @@ def Collapsed_Plot_Test():
 
     my_path = "astroquery_test.csv"
     
-    print("Start import...")
-    df = pd.read_csv(my_path)
-   
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-    
-    print("Filtering entries that are further than 32 000 pc")
-    df = filter_distance(df, 32000)
-    
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-
-    print("Removing negative parallaxes...")
-    df=df[df.parallax > 0]
-
-    df.reset_index(inplace=True, drop=True)
-    print("Checking indexing...")
-    print(df.head)
+    df = import_data(path = my_path)
 
     #endregion
+
     galcen = get_transformed_data(df, include_cylindrical = True)
     print(galcen.iloc[0:5])
 
     print("Data Loaded Successfully.")
 
-    bins = get_collapsed_bins(galcen, 10, 100000, 5000)
-
+    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (5, 10))
+     
     #Testing bin method manually
     temp = []
     for index, row in galcen.iterrows():
@@ -463,18 +419,43 @@ def Collapsed_Plot_Test():
     print(bins.bins)
     print(bins.bins[17].data)
 
-    from data_plot import plot_collapsed_bins, display_mean_velocity
+    from data_plot import plot_collapsed_bins, display_bins
 
     
-    plot_collapsed_bins(bins, 'v_r')
+    plot_collapsed_bins(bins, 'v_r', mode='mean')
 
     print(galcen.index)
 
 
 # Move this to separate test module later
-def Parameter_Test():
+def Parameter_Test(df):
+
+    from data_plot import run_parameter_tests
+
     parameter_list = ["x", "y", "z", "v_x", "v_y", "v_z"]
-    run_parameter_tests(galcen, galcen2, parameter_list)
+    run_parameter_tests(df, parameter_list)
+
+# Move this to separate import module later
+def import_data(path, distance = 32000):
+    
+    print("Start import...")
+    df = pd.read_csv(path)
+   
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+    
+    print("Filtering entries that are further than 32 000 pc")
+    df = filter_distance(df, distance)
+    
+    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
+
+    print("Removing negative parallaxes...")
+    df=df[df.parallax > 0]
+
+    df.reset_index(inplace=True, drop=True)
+    print("Checking indexing...")
+    print(df.head)
+
+    return df
 
 
 if __name__ == "__main__":
