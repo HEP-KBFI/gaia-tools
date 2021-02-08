@@ -14,7 +14,7 @@ bins : list[]
         A list of 'Bin' class objects.
 
 N_bins : int 
-        Number of bins along main axis.
+        Number of bins along main and secondary axis.
 
 bin_boundaries : ndarray 
         A meshgrid of bin vertices in terms of x- and y-coordinates.

@@ -90,7 +90,7 @@ Function for binning data in 2 dimensions. Used to plot vector maps of velocitie
 Input parameters:
     BL - Bin Limit (The edges of the xyz boundary)
 '''
-def bin_data(galcen_data, show_bins = False, BL = 20000):
+def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10)):
    
     
     # DEPRECATED
@@ -118,11 +118,8 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     z = -plottable_df.v_x
     z2 = plottable_df.v_y
 
-    # Number of bins along main axis
-    bins = (10, 10)
-
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = bins, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = N_bins, statistic='mean')
 
     # Create a meshgrid from the vertices   
     XX, YY = np.meshgrid(xedges, yedges)
@@ -133,7 +130,7 @@ def bin_data(galcen_data, show_bins = False, BL = 20000):
     plottable_df['Bin_index'] = binnumber
 
     # Instantiate a BinCollection object
-    bin_collection = BinCollection(plottable_df, bins, XX, YY, ZZ)
+    bin_collection = BinCollection(plottable_df, N_bins, XX, YY, ZZ)
 
     # Generate the bins with respective x-y boundaries
     bin_collection.GenerateBins()
@@ -207,9 +204,11 @@ def generate_vector_mesh(XX, YY):
     vec_y = []
     vec_z = []
 
-    for i in range(XX.shape[0]-1):
+    for i in range(XX.shape[1]-1):
         vec_x.append((XX[0][i+1]+XX[0][i])/2)
-        vec_y.append((YY.T[0][i+1]+YY.T[0][i])/2)
+
+    for j in range(YY.shape[0]-1):
+        vec_y.append((YY.T[0][j+1]+YY.T[0][j])/2)
 
     # We create a meshgrid out of all the vector locations
     VEC_XX, VEC_YY = np.meshgrid(vec_x, vec_y)
@@ -377,11 +376,11 @@ def main():
     #print(cov_dict)
 
     print(galcen2)
-    bins = bin_data(galcen2,  show_bins = True)
+    bins = bin_data(galcen2,  show_bins = True, N_bins = (10, 10))
 
     display_bins(bins, projection_parameter = 'v_x', mode='index')
     
-    #generate_velocity_map(bins)
+    generate_velocity_map(bins)
 
     print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
      
