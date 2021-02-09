@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="gaia-tools",
+    name="gaia_tools",
     version="0.0.1",
     author="Sven Poder",
     author_email="sven.poder@live.com",
