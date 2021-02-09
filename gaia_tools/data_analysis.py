@@ -8,8 +8,8 @@ import astropy.coordinates as coord
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
-from BinCollection import BinCollection
-import transformation_constants
+from .BinCollection import BinCollection
+from . import transformation_constants
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
