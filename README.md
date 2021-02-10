@@ -23,3 +23,8 @@ The code is all written in python3 and makes substantial use of the standard pan
 
 * [`astropy`](https://www.astropy.org/)
 * [`mpl_scatter_density`](https://anaconda.org/conda-forge/mpl-scatter-density)
+
+
+## Tutorials
+
+The folder `jupyter-notebok` contains Jupyter Notebooks with examples of how to use this package. 
