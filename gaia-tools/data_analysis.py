@@ -232,25 +232,17 @@ def get_transformed_data(df,
                          r_0 = transformation_constants.R_0,
                          v_sun = transformation_constants.V_SUN):
 
-    #if(include_cylindrical):
-    #     galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z r phi v_r v_phi".split())
-    #else:
-    #    galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z".split())
 
     #region Loop over all data points
 
+    
     coords_list = []
     velocities_list = []
     coords_cyl_list = []
     velocities_cyl_list = []
 
-    import time, timeit
-
-    
-
     for i in range(df.shape[0]):
 
-        tic=timeit.default_timer()
         
         print("Starting loop over all data points -> Start timer ")
 
@@ -277,49 +269,33 @@ def get_transformed_data(df,
                                                          z_0, 
                                                          r_0, 
                                                          v_sun)
-        
         velocities_list.append(velocities)
-
-        #galcen_df = galcen_df.append({'x' : coords[0][0], 
-        #                              'y' : coords[1][0], 
-        #                              'z' : coords[2][0],
-        #                              'v_x' : velocities[0][0], 
-        #                              'v_y' : velocities[1][0], 
-        #                              'v_z' : velocities[2][0]},  
-        #                              ignore_index = True)
         
-
+        
         if(include_cylindrical):
 
-            #phi = galcen_df.y[i]/galcen_df.x[i]
-
-            phi = coords_list[i][1][0]/coords_list[i][0][0]
+            phi = coords_list[i][1]/coords_list[i][0]
             vel_cyl = transform_velocities_cylindrical(velocities, phi)
 
-            #coords_cyl_list.append( (np.sqrt(galcen_df.x[i]**2 + galcen_df.y[i]**2), np.arctan(phi)))
-            
-            coords_cyl_list.append( (np.sqrt(coords_list[i][0][0]**2 + coords_list[i][1][0]**2), np.arctan(phi)))
+            coords_cyl_list.append( (np.sqrt(coords_list[i][0]**2 + coords_list[i][1]**2), np.arctan(phi)))
 
-            velocities_cyl_list.append( (vel_cyl[0][0], vel_cyl[1][0]))
-
-            #galcen_df['r'].loc[i] = np.sqrt(galcen_df.x[i]**2 + galcen_df.y[i]**2)
-            #galcen_df['phi'].loc[i] = np.arctan(phi)
-            #galcen_df['v_r'].loc[i] = vel_cyl[0][0]
-            #galcen_df['v_phi'].loc[i] = vel_cyl[1][0]
-
-        toc=timeit.default_timer()
-
-        print("Time elapsed of whole loop cycle {a} sec".format(a=toc-tic))
-     
-    galcen_df = pd.DataFrame(list(zip(coords_list, velocities_list, coords_cyl_list, velocities_cyl_list)), 
-               columns =['Coords_xyz', 'Vel_xyz', 'Coords_cyl', 'Vel_cyl'])  
-
+            velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
     
+    
+    coords_df = pd.DataFrame(coords_list, columns="x y z".split())
+    velocities_df = pd.DataFrame(velocities_list, columns="v_x v_y v_z".split())
 
+    galcen_df = pd.concat([coords_df, velocities_df], axis=1)
+
+    if(include_cylindrical):
+        coords_df = pd.DataFrame(coords_cyl_list, columns="r phi".split())
+        velocities_df = pd.DataFrame(velocities_cyl_list, columns="v_r v_phi".split())
+        df_1 = pd.concat([coords_df, velocities_df], axis=1)
+        galcen_df = pd.concat([galcen_df, df_1], axis=1)
+     
     #endregion
 
     # Returns transformed data as Pandas DataFrame   
-    print(galcen_df)
     return galcen_df
 
 def transform_coordinates_galactocentric(ra, dec, w, z_0, r_0):
@@ -346,9 +322,9 @@ def transform_coordinates_galactocentric(ra, dec, w, z_0, r_0):
                         [0]])
     M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
 
+    result = (M3[0][0], M3[1][0], M3[2][0])
 
-
-    return M3
+    return result
 
 def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0, v_sun):
     
@@ -371,7 +347,10 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0
     M2 = transformation_constants.A @ M1
     M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
     M4 = M3 + v_sun
-    return M4
+
+    result = (M4[0][0], M4[1][0], M4[2][0])
+
+    return result
 
 def transform_velocities_cylindrical(velocities, phi):
 
@@ -380,7 +359,9 @@ def transform_velocities_cylindrical(velocities, phi):
     return v_cylindrical
 #endregion
 
-
+# Helper function for transformation result
+def expand_dataframe(df):
+    pass
 
 
 
@@ -398,7 +379,7 @@ def main():
     my_path = "astroquery_test.csv"
     full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Reduced_Spectroscopic_Set-result.csv"
 
-    df = import_data(path = full_path)
+    df = import_data(path = my_path)
 
     print("Transforming data to galactocentric frame...")
 
@@ -413,12 +394,14 @@ def main():
     #print("Covariance matrices...")
     #print(cov_dict)
 
-    #print(galcen2)
-    #bins = bin_data(galcen2,  show_bins = True, N_bins = (10, 10))
-
-    #display_bins(bins, projection_parameter = 'v_x', mode='index')
+    print("START PRINT")
     
-    #generate_velocity_map(bins)
+    print(galcen2)
+    bins = bin_data(galcen2, show_bins = True, N_bins = (10, 10))
+
+    display_bins(bins, projection_parameter = 'v_x', mode='index')
+    
+    generate_velocity_map(bins)
 
     #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
     print("END OF MAIN")
