@@ -359,12 +359,6 @@ def transform_velocities_cylindrical(velocities, phi):
     return v_cylindrical
 #endregion
 
-# Helper function for transformation result
-def expand_dataframe(df):
-    pass
-
-
-
 def main():
     from data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
     import covariance_generation as cov
