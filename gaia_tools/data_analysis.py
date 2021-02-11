@@ -232,13 +232,21 @@ def get_transformed_data(df,
                          r_0 = transformation_constants.R_0,
                          v_sun = transformation_constants.V_SUN):
 
-    if(include_cylindrical):
-         galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z r phi v_r v_phi".split())
-    else:
-        galcen_df = pd.DataFrame(columns="x y z v_x v_y v_z".split())
 
     #region Loop over all data points
+
+    
+    coords_list = []
+    velocities_list = []
+    coords_cyl_list = []
+    velocities_cyl_list = []
+
     for i in range(df.shape[0]):
+
+        
+        print("Starting loop over all data points -> Start timer ")
+
+        print("Finding coordinates of {0}".format(i))
 
         # Coordinate vector in galactocentric frame in xyz
         coords = transform_coordinates_galactocentric(df.ra.iloc[i], 
@@ -246,6 +254,10 @@ def get_transformed_data(df,
                                                       df.parallax.iloc[i], 
                                                       z_0, 
                                                       r_0)
+
+        coords_list.append(coords)
+
+        print("Finding velocity of {0}".format(i))
 
         # Velocity vector in galactocentric frame in xyz
         velocities = transform_velocities_galactocentric(df.ra.iloc[i], 
@@ -257,26 +269,30 @@ def get_transformed_data(df,
                                                          z_0, 
                                                          r_0, 
                                                          v_sun)
-
-
-        galcen_df = galcen_df.append({'x' : coords[0][0], 
-                                      'y' : coords[1][0], 
-                                      'z' : coords[2][0],
-                                      'v_x' : velocities[0][0], 
-                                      'v_y' : velocities[1][0], 
-                                      'v_z' : velocities[2][0]},  
-                                      ignore_index = True)
-
+        velocities_list.append(velocities)
+        
+        
         if(include_cylindrical):
 
-            phi = galcen_df.y[i]/galcen_df.x[i]
+            phi = coords_list[i][1]/coords_list[i][0]
             vel_cyl = transform_velocities_cylindrical(velocities, phi)
 
+            coords_cyl_list.append( (np.sqrt(coords_list[i][0]**2 + coords_list[i][1]**2), np.arctan(phi)))
 
-            galcen_df['r'].loc[i] = np.sqrt(galcen_df.x[i]**2 + galcen_df.y[i]**2)
-            galcen_df['phi'].loc[i] = np.arctan(phi)
-            galcen_df['v_r'].loc[i] = vel_cyl[0][0]
-            galcen_df['v_phi'].loc[i] = vel_cyl[1][0]
+            velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
+    
+    
+    coords_df = pd.DataFrame(coords_list, columns="x y z".split())
+    velocities_df = pd.DataFrame(velocities_list, columns="v_x v_y v_z".split())
+
+    galcen_df = pd.concat([coords_df, velocities_df], axis=1)
+
+    if(include_cylindrical):
+        coords_df = pd.DataFrame(coords_cyl_list, columns="r phi".split())
+        velocities_df = pd.DataFrame(velocities_cyl_list, columns="v_r v_phi".split())
+        df_1 = pd.concat([coords_df, velocities_df], axis=1)
+        galcen_df = pd.concat([galcen_df, df_1], axis=1)
+     
     #endregion
 
     # Returns transformed data as Pandas DataFrame   
@@ -306,7 +322,9 @@ def transform_coordinates_galactocentric(ra, dec, w, z_0, r_0):
                         [0]])
     M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
 
-    return M3
+    result = (M3[0][0], M3[1][0], M3[2][0])
+
+    return result
 
 def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0, v_sun):
     
@@ -329,7 +347,10 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0
     M2 = transformation_constants.A @ M1
     M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
     M4 = M3 + v_sun
-    return M4
+
+    result = (M4[0][0], M4[1][0], M4[2][0])
+
+    return result
 
 def transform_velocities_cylindrical(velocities, phi):
 
@@ -338,11 +359,10 @@ def transform_velocities_cylindrical(velocities, phi):
     return v_cylindrical
 #endregion
 
-
-
-
-
 def main():
+    from data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
+    import covariance_generation as cov
+    import time, timeit
     
     # For finding current module working directory
     #import os 
@@ -351,41 +371,33 @@ def main():
 
     # YOUR DATA FILE
     my_path = "astroquery_test.csv"
-    
+    full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Reduced_Spectroscopic_Set-result.csv"
+
     df = import_data(path = my_path)
 
-
     print("Transforming data to galactocentric frame...")
+
     
-    # Our Method
     galcen2 = get_transformed_data(df, include_cylindrical = True)
-
-    from data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
- 
-    import covariance_generation as cov
-    import time, timeit
-
-    #tic=timeit.default_timer()
-
-    #cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
     
-    #toc=timeit.default_timer()
-    #print("Time elapsed {a} sec".format(a=toc-tic))
-    #print("Covariance matrices...")
 
-    #print(cov_dict)
+    
+    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
+    
+    print("Covariance matrices...")
+    print(cov_dict)
 
+    print("START PRINT")
+    
     print(galcen2)
-    bins = bin_data(galcen2,  show_bins = True, N_bins = (10, 10))
+    bins = bin_data(galcen2, show_bins = True, N_bins = (10, 10))
 
     display_bins(bins, projection_parameter = 'v_x', mode='index')
     
     generate_velocity_map(bins)
 
-    print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
-     
-    
-    print("Plotting done!")
+    #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
+    print("END OF MAIN")
 
 # Temporary function for Issue no. 18
 def Collapsed_Plot_Test():
@@ -404,7 +416,7 @@ def Collapsed_Plot_Test():
 
     print("Data Loaded Successfully.")
 
-    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (5, 10))
+    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (10, 10))
      
     #Testing bin method manually
     temp = []
@@ -436,8 +448,12 @@ def Parameter_Test(df):
     run_parameter_tests(df, parameter_list)
 
 # Move this to separate import module later
-def import_data(path, distance = 32000):
+def import_data(path, distance = 32000, time_function = False):
     
+    if(time_function):
+        import time, timeit
+        tic=timeit.default_timer()
+
     print("Start import...")
     df = pd.read_csv(path)
    
@@ -454,6 +470,10 @@ def import_data(path, distance = 32000):
     df.reset_index(inplace=True, drop=True)
     print("Checking indexing...")
     print(df.head)
+
+    if(time_function):
+        toc=timeit.default_timer()
+        print("Time elapsed {a} sec".format(a=toc-tic))
 
     return df
 

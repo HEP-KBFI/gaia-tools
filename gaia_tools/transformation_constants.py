@@ -77,9 +77,15 @@ def get_cylindrical_velocity_matrix(phi):
     return M
 
 
-def get_jacobian(sub_df, coordinate_system):
+def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
 
     if(coordinate_system == "Cartesian"):
+
+        if(Z_0/R_0 is None):
+            print("Something went wrong! No values for either Z_0 or R_0 were found!")
+            return
+   
+        THETA_0 = np.arcsin(Z_0/R_0)
 
         # TODO: Implement exception handling!
 
