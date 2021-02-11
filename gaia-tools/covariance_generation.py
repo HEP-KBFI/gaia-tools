@@ -96,7 +96,7 @@ def generate_covmat(sub_df):
 def transform_cov_matrix(C, sub_df, coordinate_system):
 
     # Grabs the correct Jacobian depending on the coordinate system needed
-    J = transformation_constants.get_jacobian(sub_df, coordinate_system)
+    J = transformation_constants.get_jacobian(sub_df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
 
     C_transformed = J @ C @ J.T
     

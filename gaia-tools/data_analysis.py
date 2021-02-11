@@ -381,12 +381,11 @@ def main():
     galcen2 = get_transformed_data(df, include_cylindrical = True)
     
 
-    #tic=timeit.default_timer()
-    #cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
-    #toc=timeit.default_timer()
-    #print("Time elapsed {a} sec".format(a=toc-tic))
-    #print("Covariance matrices...")
-    #print(cov_dict)
+    
+    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
+    
+    print("Covariance matrices...")
+    print(cov_dict)
 
     print("START PRINT")
     
@@ -417,7 +416,7 @@ def Collapsed_Plot_Test():
 
     print("Data Loaded Successfully.")
 
-    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (5, 10))
+    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (10, 10))
      
     #Testing bin method manually
     temp = []
