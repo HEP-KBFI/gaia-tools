@@ -243,32 +243,32 @@ def get_transformed_data(df,
 
     import timeit, time
 
-    for i in range(df.shape[0]):
+    for row in df.itertuples():
 
-        tic = time.
-
+        tic=timeit.default_timer()
+    
         print("Starting loop over all data points -> Start timer ")
 
-        print("Finding coordinates of {0}".format(i))
+        print("Finding coordinates of {0}".format(row.Index))
 
         # Coordinate vector in galactocentric frame in xyz
-        coords = transform_coordinates_galactocentric(df.ra.iloc[i], 
-                                                      df.dec.iloc[i], 
-                                                      df.parallax.iloc[i], 
+        coords = transform_coordinates_galactocentric(row.ra, 
+                                                      row.dec, 
+                                                      row.parallax, 
                                                       z_0, 
                                                       r_0)
 
         coords_list.append(coords)
 
-        print("Finding velocity of {0}".format(i))
+        print("Finding velocity of {0}".format(row.Index))
 
         # Velocity vector in galactocentric frame in xyz
-        velocities = transform_velocities_galactocentric(df.ra.iloc[i], 
-                                                         df.dec.iloc[i], 
-                                                         df.parallax.iloc[i], 
-                                                         df.pmra.iloc[i], 
-                                                         df.pmdec.iloc[i], 
-                                                         df.radial_velocity.iloc[i], 
+        velocities = transform_velocities_galactocentric(row.ra, 
+                                                         row.dec, 
+                                                         row.parallax, 
+                                                         row.pmra, 
+                                                         row.pmdec, 
+                                                         row.radial_velocity, 
                                                          z_0, 
                                                          r_0, 
                                                          v_sun)
@@ -277,13 +277,16 @@ def get_transformed_data(df,
         
         if(include_cylindrical):
 
-            phi = coords_list[i][1]/coords_list[i][0]
+            phi = coords_list[row.Index][1]/coords_list[row.Index][0]
             vel_cyl = transform_velocities_cylindrical(velocities, phi)
 
-            coords_cyl_list.append( (np.sqrt(coords_list[i][0]**2 + coords_list[i][1]**2), np.arctan(phi)))
+            coords_cyl_list.append( (np.sqrt(coords_list[row.Index][0]**2 + coords_list[row.Index][1]**2), np.arctan(phi)))
 
             velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
     
+
+        toc=timeit.default_timer()
+        print("Time elapsed {a} sec".format(a=toc-tic))
     
     coords_df = pd.DataFrame(coords_list, columns="x y z".split())
     velocities_df = pd.DataFrame(velocities_list, columns="v_x v_y v_z".split())
@@ -313,10 +316,14 @@ def transform_coordinates_galactocentric(ra, dec, w, z_0, r_0):
     # from kpc -> pc
     k1 = transformation_constants.k1
 
+    # Declaring constants to reduce process time
+    c1 = k1/w
+    cosdec = np.cos(dec)
+
     # Initial cartesian coordinate vector in ICRS
-    coordxyz_ICRS = np.array([[(k1/w)*np.cos(ra)*np.cos(dec)],
-                      [(k1/w)*np.sin(ra)*np.cos(dec)],
-                       [(k1/w)*np.sin(dec)]])
+    coordxyz_ICRS = np.array([[(c1)*np.cos(ra)*cosdec],
+                      [(c1)*np.sin(ra)*cosdec],
+                       [(c1)*np.sin(dec)]])
 
     # Using M1, M2, M3 for transparency in case of bugs
     M1 = transformation_constants.A @ coordxyz_ICRS
@@ -338,10 +345,13 @@ def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0
     # from 1/yr -> km/s
     k2 = transformation_constants.k2
 
+    # Declaring constants to reduce process time
+    c2 = k2/w
+
     # Initial velocity vector in ICRS in units km/s
     v_ICRS = np.array([[v_r],
-                      [(k2/w)*mu_ra],
-                      [(k2/w)*mu_dec]])
+                      [(c2)*mu_ra],
+                      [(c2)*mu_dec]])
 
     B = transformation_constants.get_b_matrix(ra, dec)
 
