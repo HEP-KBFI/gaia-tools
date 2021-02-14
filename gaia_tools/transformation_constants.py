@@ -179,6 +179,7 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
 
         # TODO: Implement exception handling!
 
+
         x = sub_df.x
         y = sub_df.y
         r = sub_df.r
@@ -188,6 +189,10 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
 
         c1 = x/(r**2)
         c2 = y/(r**2)
+        
+        # Declaring variables to reduce number of computations 
+        sin_phi = np.sin(phi)
+        cos_phi = np.cos(phi)
 
         J11 = x/r
         J12 = y/r
@@ -213,15 +218,15 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
         J41 = -v_phi*c2
         J42 = v_phi*c1
         J43 = 0 
-        J44 = np.cos(phi)
-        J45 = np.sin(phi)
+        J44 = cos_phi
+        J45 = sin_phi
         J46 = 0
 
         J51 = v_r*c2
         J52 = -v_r*c1
         J53 = 0 
-        J54 = -np.sin(phi)
-        J55 = np.cos(phi)
+        J54 = -sin_phi
+        J55 = cos_phi
         J56 = 0
 
         J61 = 0
