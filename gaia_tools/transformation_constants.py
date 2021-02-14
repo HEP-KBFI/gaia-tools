@@ -51,9 +51,13 @@ def get_H_matrix(Z_0, R_0):
    
     THETA_0 = np.arcsin(Z_0/R_0)
 
-    H = np.array([[np.cos(THETA_0), 0, np.sin(THETA_0)],
+    # Defining constants to reduce process time
+    costheta = np.cos(THETA_0)
+    sintheta = np.sin(THETA_0)
+
+    H = np.array([[costheta, 0, sintheta],
                  [0, 1, 0],
-                 [-np.sin(THETA_0), 0, np.cos(THETA_0)]])
+                 [-sintheta, 0, costheta]])
 
     return H
 
