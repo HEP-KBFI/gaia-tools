@@ -235,19 +235,21 @@ def get_transformed_data(df,
 
     #region Loop over all data points
 
+    import timeit, time
+    tic=timeit.default_timer()
+    
+    print("Starting loop over all data points -> Start timer ")
+
     
     coords_list = []
     velocities_list = []
     coords_cyl_list = []
     velocities_cyl_list = []
 
-    import timeit, time
 
     for row in df.itertuples():
 
-        tic=timeit.default_timer()
-    
-        print("Starting loop over all data points -> Start timer ")
+        
 
         print("Finding coordinates of {0}".format(row.Index))
 
@@ -285,8 +287,7 @@ def get_transformed_data(df,
             velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
     
 
-        toc=timeit.default_timer()
-        print("Time elapsed {a} sec".format(a=toc-tic))
+        
     
     coords_df = pd.DataFrame(coords_list, columns="x y z".split())
     velocities_df = pd.DataFrame(velocities_list, columns="v_x v_y v_z".split())
@@ -299,6 +300,10 @@ def get_transformed_data(df,
         df_1 = pd.concat([coords_df, velocities_df], axis=1)
         galcen_df = pd.concat([galcen_df, df_1], axis=1)
      
+
+    toc=timeit.default_timer()
+    print("Time elapsed for data {a} sec".format(a=toc-tic))
+    
     #endregion
 
     # Returns transformed data as Pandas DataFrame   
@@ -391,9 +396,14 @@ def main():
     print("Transforming data to galactocentric frame...")
 
     
-    galcen2 = get_transformed_data(df, include_cylindrical = True)
+    galcen2 = get_transformed_data(df, include_cylindrical = False)
     
-
+    tic=timeit.default_timer()
+    galcen_astropy = transform_to_galcen(df)
+    toc=timeit.default_timer()
+    print("Time elapsed for data {a} sec".format(a=toc-tic))
+    print("*******")
+    return;
     
     cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
     
