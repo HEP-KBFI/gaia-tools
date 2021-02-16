@@ -39,6 +39,8 @@ def filter_value(df, *args, **kwargs):
 
 
 '''
+OLD ASTROPY FUNCTION
+
 Helper function for 'get_SkyCoord_object' function. Returns QTable containing parallax values.
 '''
 def get_parallax_table(parallax_series):
@@ -51,6 +53,8 @@ def get_parallax_table(parallax_series):
 
 '''
 Function for instantiating a SkyCoord object with given data.
+
+OLD ASTROPY FUNCTION
 '''
 def get_SkyCoord_object(df):
 
@@ -72,6 +76,8 @@ def get_SkyCoord_object(df):
 # TODO: Allow for varying of positional parameters of the Sun
 # TODO: Transform back to DataFrame
 '''
+OLD ASTROPY FUNCTION
+
 Function for transforming data into a galactocentric reference frame using SkyCoord objects and 
 the 'transform_to' function.
 
@@ -219,6 +225,8 @@ def generate_vector_mesh(XX, YY):
 
 #region Manual Coordinate Transformation
 '''
+Main function for transforming coordinates to galactocentric frame of reference.
+
 z_0 - the distance above galactic midplane in pc
 r_0 - the distance to the galctic centre in pc
 v_sun - velocity vector of the Sun. Of type 3x1 np.array
@@ -396,19 +404,26 @@ def main():
     print("Transforming data to galactocentric frame...")
 
     
-    galcen2 = get_transformed_data(df, include_cylindrical = False)
+    galcen2 = get_transformed_data(df, include_cylindrical = True)
     
+    # Astropy Time Benchmark
+    #tic=timeit.default_timer()
+    #galcen_astropy = transform_to_galcen(df)
+    #toc=timeit.default_timer()
+    #print("Time elapsed for data {a} sec".format(a=toc-tic))
+    #print("*******")
+    
+    print("Generating CovMatrices")
     tic=timeit.default_timer()
-    galcen_astropy = transform_to_galcen(df)
-    toc=timeit.default_timer()
-    print("Time elapsed for data {a} sec".format(a=toc-tic))
-    print("*******")
-    return;
-    
+
     cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
-    
-    print("Covariance matrices...")
-    print(cov_dict)
+
+    toc=timeit.default_timer()
+    print("Time elapsed for CovMatrices {a} sec".format(a=toc-tic))
+    print("*******")
+
+    return;
+    #print(cov_dict)
 
     print("START PRINT")
     
@@ -435,24 +450,24 @@ def Collapsed_Plot_Test():
     #endregion
 
     galcen = get_transformed_data(df, include_cylindrical = True)
-    print(galcen.iloc[0:5])
+    #print(galcen.iloc[0:5])
 
     print("Data Loaded Successfully.")
 
     bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (10, 10))
      
     #Testing bin method manually
-    temp = []
-    for index, row in galcen.iterrows():
+    #temp = []
+    #for index, row in galcen.iterrows():
         
-        if(row.r >= 0 and row.r < 10000 and row.z >= 0 and row.z < 1000):
-            temp.append(row.v_phi)
+    #    if(row.r >= 0 and row.r < 10000 and row.z >= 0 and row.z < 1000):
+    #        temp.append(row.v_phi)
 
-    mean = np.mean(temp)
-    print(mean)
+    #mean = np.mean(temp)
+    #print(mean)
 
-    print(bins.bins)
-    print(bins.bins[17].data)
+    #print(bins.bins)
+    #print(bins.bins[17].data)
 
     from data_plot import plot_collapsed_bins, display_bins
 
