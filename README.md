@@ -31,7 +31,7 @@ The following steps have to be taken in order to use the code in this repository
 
 - 1st step: Start singularity environment/image:
 ```bash
-[manivald]$ singularity shell /home/software/singularity/base_sven.simg
+[manivald]$ singularity shell -B /hdfs -B /scratch /home/software/singularity/base_sven.simg
 ```
 - 2nd step: Install `gaia-tools` (INSTALL THIS DIRECTLY IN SINGULARITY)
 ```bash
@@ -42,6 +42,11 @@ For more info on "singularity images", please visit [this github repository](htt
 
 ### Jupyter notebooks
 [This](https://ljvmiranda921.github.io/notebook/2018/01/31/running-a-jupyter-notebook/) is a fantastic guide on how to run a Jupyter notebook from a remote server.
+
+### Data
+
+Data is stored in `/scratch/mariacst/`
+
 
 ## Tutorials
 
