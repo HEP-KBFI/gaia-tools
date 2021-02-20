@@ -179,8 +179,7 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
 
         # TODO: Implement exception handling!
 
-        import time, timeit
-        tic=timeit.default_timer()
+
 
         x = sub_df.x
         y = sub_df.y
@@ -189,9 +188,7 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
         v_r = sub_df.v_r
         v_phi = sub_df.v_phi
 
-        toc=timeit.default_timer()
-        print("Time elapsed for CovMatrix Transform Loop var assignment {a} sec".format(a=toc-tic))
-
+    
         c1 = x/(r**2)
         c2 = y/(r**2)
         

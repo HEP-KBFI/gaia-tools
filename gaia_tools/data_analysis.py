@@ -238,28 +238,28 @@ def get_transformed_data(df,
                          include_cylindrical = False, 
                          z_0 = transformation_constants.Z_0, 
                          r_0 = transformation_constants.R_0,
-                         v_sun = transformation_constants.V_SUN):
+                         v_sun = transformation_constants.V_SUN,
+                         debug = False,
+                         is_source_included = False):
 
+    if(debug):
+        import timeit, time
+        tic=timeit.default_timer()
+    
+        print("Starting galactocentric transformation loop over all data points.. ")
 
     #region Loop over all data points
 
-    import timeit, time
-    tic=timeit.default_timer()
-    
-    print("Starting loop over all data points -> Start timer ")
-
-    
     coords_list = []
     velocities_list = []
     coords_cyl_list = []
     velocities_cyl_list = []
 
-
     for row in df.itertuples():
 
         
-
-        print("Finding coordinates of {0}".format(row.Index))
+        if(debug):
+            print("Finding coordinates of {0}".format(row.Index))
 
         # Coordinate vector in galactocentric frame in xyz
         coords = transform_coordinates_galactocentric(row.ra, 
@@ -270,7 +270,8 @@ def get_transformed_data(df,
 
         coords_list.append(coords)
 
-        print("Finding velocity of {0}".format(row.Index))
+        if(debug):
+            print("Finding velocity of {0}".format(row.Index))
 
         # Velocity vector in galactocentric frame in xyz
         velocities = transform_velocities_galactocentric(row.ra, 
@@ -294,6 +295,7 @@ def get_transformed_data(df,
 
             velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
     
+    #endregion
 
         
     
@@ -308,12 +310,18 @@ def get_transformed_data(df,
         df_1 = pd.concat([coords_df, velocities_df], axis=1)
         galcen_df = pd.concat([galcen_df, df_1], axis=1)
      
+    if(is_source_included):
 
-    toc=timeit.default_timer()
-    print("Time elapsed for data {a} sec".format(a=toc-tic))
+        if not 'source_id' in df.columns:
+            print("Error! Source ID column not found in input DataFrame!")
+        
+        galcen_df['source_id'] = df.source_id
+
+       
+    if(debug):
+        toc=timeit.default_timer()
+        print("Time elapsed for data coordinate transformation: {a} sec".format(a=toc-tic))
     
-    #endregion
-
     # Returns transformed data as Pandas DataFrame   
     return galcen_df
 
@@ -397,15 +405,17 @@ def main():
 
     # YOUR DATA FILE
     my_path = "astroquery_test.csv"
-    full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Reduced_Spectroscopic_Set-result.csv"
+    full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Spectroscopic_Data_With_Correlations.csv"
 
-    df = import_data(path = my_path)
 
-    print("Transforming data to galactocentric frame...")
+    df = import_data(path = my_path, debug = True)
 
+    galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
     
-    galcen2 = get_transformed_data(df, include_cylindrical = True)
-    
+    print(galcen2)
+
+    return;
+
     # Astropy Time Benchmark
     #tic=timeit.default_timer()
     #galcen_astropy = transform_to_galcen(df)
@@ -416,7 +426,7 @@ def main():
     print("Generating CovMatrices")
     tic=timeit.default_timer()
 
-    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = True, transform_to_cylindrical = True)
+    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True)
 
     toc=timeit.default_timer()
     print("Time elapsed for CovMatrices {a} sec".format(a=toc-tic))
@@ -486,14 +496,14 @@ def Parameter_Test(df):
     run_parameter_tests(df, parameter_list)
 
 # Move this to separate import module later
-def import_data(path, distance = 32000, time_function = False):
+def import_data(path, distance = 32000, debug = False):
     
-    if(time_function):
+    if(debug):
         import time, timeit
         tic=timeit.default_timer()
 
     print("Start import...")
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, nrows=100)
    
     print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
     
@@ -506,12 +516,13 @@ def import_data(path, distance = 32000, time_function = False):
     df=df[df.parallax > 0]
 
     df.reset_index(inplace=True, drop=True)
-    print("Checking indexing...")
-    print(df.head)
+    print("Checking indexing... \n")
 
-    if(time_function):
+    if(debug):
+        print(df.head, '\n')
         toc=timeit.default_timer()
-        print("Time elapsed {a} sec".format(a=toc-tic))
+        print("Time elapsed for data import: {a} sec".format(a=toc-tic))
+        print("<!--------------------------------------------------!> \n")
 
     return df
 

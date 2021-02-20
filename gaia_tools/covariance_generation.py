@@ -6,6 +6,7 @@ data covariance matrices.
 import numpy as np
 import transformation_constants
 import pandas as pd
+import time, timeit
 
 ERROR_NAMES = ['ra_error', 'dec_error', 'parallax_error', 'pmra_error', 'pmdec_error']
 
@@ -20,25 +21,37 @@ def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transfo
 
     cov_dict = {}
 
+    # A piece of code whose point is to prevent indexing over 
+    # dataframe inside the loop. It takes too long.
+
+    if(df_crt is not None):
+        df = pd.concat([df, df_crt], axis=1)
+
     for row in df.itertuples():   
+
+        tic=timeit.default_timer()
 
         # Get covariance matrix from ICRS coordinates
         C = generate_covmat(row)
 
         if(transform_to_galcen is True):
             C = transform_cov_matrix(C, row, "Cartesian")
-
+        
         # Transforms to cylindrical coordinate system. Can only be done if coordinates are in galactocentric frame.
         # Expects DF with parameters in Cartesian.
 
         # TODO: Implement exception handling in the future
         # EXAMPLE: If cylindrical coordinates not found give an error.
         if(transform_to_cylindrical is True):
-            sub_df_crt = df_crt.iloc[row.Index]
-            C = transform_cov_matrix(C, sub_df_crt, "Cylindrical")
+            #sub_df_crt = df_crt.iloc[row.Index]
+
+            C = transform_cov_matrix(C, row, "Cylindrical")    
 
         # Append
         cov_dict[row.source_id] = C
+        
+        toc=timeit.default_timer()
+        print("Time elapsed for Cylindrical COV Transformation {a} sec".format(a=toc-tic))
 
     return cov_dict
 
@@ -58,7 +71,7 @@ def generate_covmat(sub_df):
     for i, name in enumerate(names):
             ext = names[i] + "_error"
 
-            if not ext in ERROR_NAMES:
+            if not ext in sub_df._fields:
                 print("{0} not in data!".format(ext))
                 return
 
