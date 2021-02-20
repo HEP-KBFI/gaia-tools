@@ -17,7 +17,16 @@ Main function for generating covariance matrices and transforming them.
 Function that iterates over the DataFrame and appends covariances matrices to a 
 dictonary with 'the source_id' as key.
 '''
-def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transform_to_cylindrical = False, debug = False):
+def generate_covmatrices(df, 
+                         df_crt = None, 
+                         transform_to_galcen = False, 
+                         transform_to_cylindrical = False,
+                         z_0 = transformation_constants.Z_0, 
+                         r_0 = transformation_constants.R_0,
+                         debug = False):
+
+    Z_0 = z_0
+    R_0 = r_0
 
     assert len(df) > 0, "Error! No data found in input DataFrame!"
     assert len(df_crt) > 0, "Error! No data found in input galactocentric DataFrame!"
@@ -43,7 +52,7 @@ def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transfo
         C = generate_covmat(row)
 
         if(transform_to_galcen is True):
-            C = transform_cov_matrix(C, row, "Cartesian")
+            C = transform_cov_matrix(C, row, "Cartesian", Z_0, R_0)
         
         # Transforms to cylindrical coordinate system. Can only be done if coordinates are in galactocentric frame.
         # Expects DF with parameters in Cartesian.
@@ -53,7 +62,7 @@ def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transfo
         if(transform_to_cylindrical is True):
             
             #sub_df_crt = df_crt.iloc[row.Index]
-            C = transform_cov_matrix(C, row, "Cylindrical")    
+            C = transform_cov_matrix(C, row, "Cylindrical", Z_0, R_0)    
 
         # Append
         cov_dict[row.source_id] = C
@@ -63,6 +72,14 @@ def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transfo
         print("Time elapsed for covariance matrix generation and transformation: {a} sec".format(a=toc-tic))
 
     return cov_dict
+
+'''
+A new function for transforming covariance matrices of whole data set.
+The idea is that it will not create a new matrix every iteration but 
+transform the initial ones generated from Gaia input data. 
+'''
+def transform_cov_matrices():
+    pass
 
 
 '''
@@ -118,7 +135,7 @@ def generate_covmat(sub_df):
     return C
 
 
-def transform_cov_matrix(C, sub_df, coordinate_system):
+def transform_cov_matrix(C, sub_df, coordinate_system, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0):
 
     # Grabs the correct Jacobian depending on the coordinate system needed
     J = transformation_constants.get_jacobian(sub_df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
