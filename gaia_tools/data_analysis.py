@@ -268,7 +268,7 @@ def get_transformed_data(df,
 
         
         if(debug):
-            print("Finding coordinates of {0}".format(row.Index))
+            print("Finding coordinates and velocities of {0}".format(row.Index))
 
         # Coordinate vector in galactocentric frame in xyz
         coords = transform_coordinates_galactocentric(row.ra, 
@@ -277,10 +277,7 @@ def get_transformed_data(df,
                                                       z_0, 
                                                       r_0)
 
-        coords_list.append(coords)
-
-        if(debug):
-            print("Finding velocity of {0}".format(row.Index))
+        coords_list.append(coords)     
 
         # Velocity vector in galactocentric frame in xyz
         velocities = transform_velocities_galactocentric(row.ra, 
@@ -417,7 +414,7 @@ def main():
     full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Spectroscopic_Data_With_Correlations.csv"
 
 
-    df = import_data(path = my_path, debug = True)
+    df = import_data(path = full_path, debug = True)
 
     galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
     
@@ -496,7 +493,7 @@ def import_data(path, distance = 32000, debug = False):
         tic=timeit.default_timer()
 
     print("Start import...")
-    df = pd.read_csv(path, nrows=100)
+    df = pd.read_csv(path)
    
     print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
     
