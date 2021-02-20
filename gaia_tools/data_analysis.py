@@ -412,9 +412,7 @@ def main():
 
     galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
     
-    print(galcen2)
-
-    return;
+    print("\n",galcen2)
 
     # Astropy Time Benchmark
     #tic=timeit.default_timer()
@@ -423,17 +421,10 @@ def main():
     #print("Time elapsed for data {a} sec".format(a=toc-tic))
     #print("*******")
     
-    print("Generating CovMatrices")
-    tic=timeit.default_timer()
-
-    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True)
-
-    toc=timeit.default_timer()
-    print("Time elapsed for CovMatrices {a} sec".format(a=toc-tic))
-    print("*******")
+    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True, debug=True)
 
     return;
-    #print(cov_dict)
+    
 
     print("START PRINT")
     

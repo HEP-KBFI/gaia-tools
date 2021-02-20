@@ -17,7 +17,14 @@ Main function for generating covariance matrices and transforming them.
 Function that iterates over the DataFrame and appends covariances matrices to a 
 dictonary with 'the source_id' as key.
 '''
-def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transform_to_cylindrical = False):
+def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transform_to_cylindrical = False, debug = False):
+
+    assert len(df) > 0, "Error! No data found in input DataFrame!"
+    assert len(df_crt) > 0, "Error! No data found in input galactocentric DataFrame!"
+
+    if(debug):
+        print("Generating covariance matrices from input data..")
+        tic=timeit.default_timer()
 
     cov_dict = {}
 
@@ -29,7 +36,8 @@ def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transfo
 
     for row in df.itertuples():   
 
-        tic=timeit.default_timer()
+        if(debug):
+            print("Generating covariance matrix of {0}".format(row.Index))
 
         # Get covariance matrix from ICRS coordinates
         C = generate_covmat(row)
@@ -43,15 +51,16 @@ def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transfo
         # TODO: Implement exception handling in the future
         # EXAMPLE: If cylindrical coordinates not found give an error.
         if(transform_to_cylindrical is True):
+            
             #sub_df_crt = df_crt.iloc[row.Index]
-
             C = transform_cov_matrix(C, row, "Cylindrical")    
 
         # Append
         cov_dict[row.source_id] = C
         
+    if(debug):
         toc=timeit.default_timer()
-        print("Time elapsed for Cylindrical COV Transformation {a} sec".format(a=toc-tic))
+        print("Time elapsed for covariance matrix generation and transformationL: {a} sec".format(a=toc-tic))
 
     return cov_dict
 
