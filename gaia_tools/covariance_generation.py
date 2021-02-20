@@ -60,7 +60,7 @@ def generate_covmatrices(df, df_crt = None, transform_to_galcen = False, transfo
         
     if(debug):
         toc=timeit.default_timer()
-        print("Time elapsed for covariance matrix generation and transformationL: {a} sec".format(a=toc-tic))
+        print("Time elapsed for covariance matrix generation and transformation: {a} sec".format(a=toc-tic))
 
     return cov_dict
 

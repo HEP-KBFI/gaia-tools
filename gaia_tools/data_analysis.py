@@ -96,8 +96,13 @@ Function for binning data in 2 dimensions. Used to plot vector maps of velocitie
 Input parameters:
     BL - Bin Limit (The edges of the xyz boundary)
 '''
-def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10)):
+def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debug = False):
    
+    if(debug):
+        import time, timeit
+        tic=timeit.default_timer()
+        print("Binning data from galactocentric input data...")
+
     
     # DEPRECATED
     # Map values to temporary data frame.
@@ -148,6 +153,10 @@ def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10)):
         display_bins(bin_collection, 'v_x')
         display_bins(bin_collection, 'v_y')
         
+    if(debug):
+        toc=timeit.default_timer()
+        print("Time elapsed for binning data: {a} sec".format(a=toc-tic))
+
     return bin_collection
 
 '''
@@ -414,13 +423,6 @@ def main():
     
     print("\n",galcen2)
 
-    # Astropy Time Benchmark
-    #tic=timeit.default_timer()
-    #galcen_astropy = transform_to_galcen(df)
-    #toc=timeit.default_timer()
-    #print("Time elapsed for data {a} sec".format(a=toc-tic))
-    #print("*******")
-    
     cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True, debug=True)
 
     return;
@@ -517,6 +519,21 @@ def import_data(path, distance = 32000, debug = False):
 
     return df
 
+'''
+Function for testing the time it takes for Astropy package to convert data in
+to a galactocentric frame of reference.
+'''
+def astropy_timer_benchmark():
+    
+    import time, timeit
+    tic=timeit.default_timer()
+
+    galcen_astropy = transform_to_galcen(df)
+
+    toc=timeit.default_timer()
+
+    print("Time elapsed for data {a} sec".format(a=toc-tic))
+    print("<!----------------------------------------------!>")
 
 if __name__ == "__main__":
 
