@@ -25,7 +25,7 @@ The code is all written in python3 and makes substantial use of the standard pan
 * [`mpl_scatter_density`](https://anaconda.org/conda-forge/mpl-scatter-density)
 
 
-## Ruun in manivald
+## Run in manivald
 
 The following steps have to be taken in order to use the code in this repository in manivald:
 
@@ -39,6 +39,9 @@ Singularity> export PYTHONPATH="/home/username/.local/lib/python3.6/site-package
 Singularity> python3 setup.py install --prefix=/home/username/.local/lib/python3.6/site-packages
 ```
 For more info on "singularity images", please visit [this github repository](https://github.com/HEP-KBFI/singularity).
+
+### Jupyter notebooks
+[This](https://ljvmiranda921.github.io/notebook/2018/01/31/running-a-jupyter-notebook/) is a fantastic guide on how to run a Jupyter notebook from a remote server.
 
 ## Tutorials
 
