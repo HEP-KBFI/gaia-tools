@@ -25,6 +25,21 @@ The code is all written in python3 and makes substantial use of the standard pan
 * [`mpl_scatter_density`](https://anaconda.org/conda-forge/mpl-scatter-density)
 
 
+## Ruun in manivald
+
+The following steps have to be taken in order to use the code in this repository in manivald:
+
+- 1st step: Start singularity environment/image:
+```bash
+[manivald]$ singularity shell /home/software/singularity/base_sven.simg
+```
+- 2nd step: Install `gaia-tools` (INSTALL THIS DIRECTLY IN SINGULARITY)
+```bash
+Singularity> export PYTHONPATH="/home/username/.local/lib/python3.6/site-packages/lib/python3.6/site-packages/"
+Singularity> python3 setup.py install --prefix=/home/username/.local/lib/python3.6/site-packages
+```
+For more info on "singularity images", please visit [this github repository](https://github.com/HEP-KBFI/singularity).
+
 ## Tutorials
 
 The folder `jupyter-notebok` contains Jupyter Notebooks with examples of how to use this package. 
