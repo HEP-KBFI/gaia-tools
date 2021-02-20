@@ -7,10 +7,10 @@ import numpy as np
 import mpl_scatter_density
 import astropy
 import pandas as pd
-from data_analysis import generate_vector_mesh
+from .data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
-import BinCollection
+from . import BinCollection
 
 # TODO: Add additional projections: along y- and z-axis
 # TODO: Add options for DataFrame format

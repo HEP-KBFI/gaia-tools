@@ -8,8 +8,8 @@ import astropy.coordinates as coord
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
-from BinCollection import BinCollection
-import transformation_constants
+from .BinCollection import BinCollection
+from . import transformation_constants
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
@@ -148,7 +148,7 @@ def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debu
 
     # TODO: Generalise this!
     if(show_bins == True):
-        from data_plot import display_bins
+        from .data_plot import display_bins
 
         display_bins(bin_collection, 'v_x')
         display_bins(bin_collection, 'v_y')
@@ -469,7 +469,7 @@ def Collapsed_Plot_Test():
     #print(bins.bins)
     #print(bins.bins[17].data)
 
-    from data_plot import plot_collapsed_bins, display_bins
+    from .data_plot import plot_collapsed_bins, display_bins
 
     
     plot_collapsed_bins(bins, 'v_r', mode='mean')
