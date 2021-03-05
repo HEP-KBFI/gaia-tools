@@ -61,7 +61,7 @@ def log_likelihood(theta, data_icrs):
 
         np.append(likelihood_array, likelihood_value)
     
-
+    # this goes to a sum 
     likelihood_product = np.prod(likelihood_array)
 
     #endregion
@@ -89,12 +89,13 @@ def log_probability(theta, data_icrs):
 def run_sampler(THETA_0):
 
     # Our initial starting point for the sampler
+    # Fix this
     pos = THETA_0
 
     nwalkers = 32
     ndim = 5
 
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, args=(data_icrs))
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability)
     sampler.run_mcmc(pos, 5000, progress=True);
 
     print("Sampler done!")
