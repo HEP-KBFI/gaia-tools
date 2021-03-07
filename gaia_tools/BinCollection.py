@@ -205,6 +205,43 @@ class BinCollection:
         # Convert to a numpy array and return        
         return np.asarray(values)
 
+    '''
+    Function which calculates MLE parameters for each bin inside BinCollection according to 
+    the data model specified by us.
+
+    Uses v_phi velocity component and its errors from covariances matrices to do this.
+    '''
+    def GetMLEParameters():
+
+        # Init numerical solver
+        from .num_solver import get_bin_MLE
+
+        # IDEA: Find out a way to parallelize MLE computation for bins
+        # for now I will use loop but it is stupid
+
+        for bin in self.bins:
+
+            # Get Error Data <-- New function
+            error_array = bin.get_error_data()
+
+            # Get velocity data
+            velocity_array = bin.get_parameter_data()
+
+            # Insert into numerical solver
+            result = get_bin_MLE(velocity_array, error_array)
+
+            # TODO: Add exception handling!
+            # mu and sigma have to be > 0
+            # 
+
+            # Add parameters to Bin objects
+            # They are of type Sympy.float.. if theres an error somewhere here then you know why..
+            bin.MLE_sigma = result[0][s]
+            bin.MLE_mu = result[0][mu]
+
+
+            return
+
 
     def GetMean(data):
 

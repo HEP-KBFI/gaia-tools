@@ -46,26 +46,33 @@ def log_likelihood(theta, data_icrs):
 
     #region Bin Data
 
+    # Declared variable with BinCollection object
     bins = data_analysis.get_collapsed_bins(galcen_data, BL_r = 100000, BL_z = 5000, N_bins = (10, 10))
+
+    # Populates bins with their MLE values of mean and variance
+    bins.GetMLEParameters()
 
     #endregion
 
     #region Calculate Likelihoods
     
-    likelihood_array = np.zeros(nbins)
+    likelihood_array = np.zeros(bins.N_bins)
 
-    for bin in bins:
+    # Now we need to calculate likelihood values for each bin
+    for i, bin in enumerate(bins):
 
-        # Calculate some MLE value inside bin
-        likelihood_value = 0;
-
-        np.append(likelihood_array, likelihood_value)
+        # Get Bin likelihood
+        likelihood_value = bin.get_bin_likelihood()
+        
+        # Add to array
+        likelihood_array[i] = likelihood_value
     
-    # this goes to a sum 
-    likelihood_product = np.prod(likelihood_array)
+    # Square sum likelihoods over all bins
+    likelihood_sum = np.sum(likelihood_array**2)
 
     #endregion
-    return likelihood_product
+
+    return likelihood_sum
 
 def log_prior(theta):
 

@@ -422,6 +422,8 @@ def main():
 
     cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True, debug=True)
 
+    
+
     return;
     
 
