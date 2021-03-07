@@ -49,17 +49,19 @@ class Bin:
     To keep this function generalized, should pass a parameter describing
     what specfic value from covariance matrix is needed
     '''
-    def get_error_data(parameter = null):
+    def get_error_data(parameter = None):
 
-        # Something like this
-        #value_array = [value for valie in self.data.covmat[parameter]
+        # Something like this but IT IS WRONG
+        # Figure out which element in cov mat is correct error!!
 
-        return []
+        value_list = [value for value in self.data.cov_mat[5][5]]
 
-    def get_parameter_data(parameter = null):
+        return value_list
+
+    def get_parameter_data(parameter = None):
 
         # Currently specified to v_phi
-        return self.data.v_phi
+        return self.data[parameter]
 
     '''
     This functions computes the likelihood of the bin. It takes as arguments the MLE

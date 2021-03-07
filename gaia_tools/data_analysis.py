@@ -414,15 +414,17 @@ def main():
     full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Spectroscopic_Data_With_Correlations.csv"
 
 
-    df = import_data(path = full_path, debug = True)
+    df = import_data(path = my_path, debug = True)
 
     galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
     
     print("\n",galcen2)
 
-    cov_dict = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True, debug=True)
+    cov_df = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True, debug=True)
 
-    
+    galcen2['cov_mat'] = cov_df['cov_mat']
+
+ 
 
     return;
     

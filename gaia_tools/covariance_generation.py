@@ -35,7 +35,8 @@ def generate_covmatrices(df,
         print("Generating covariance matrices from input data..")
         tic=timeit.default_timer()
 
-    cov_dict = {}
+    #cov_dict = {}
+    cov_list = []
 
     # A piece of code whose point is to prevent indexing over 
     # dataframe inside the loop. It takes too long.
@@ -65,13 +66,16 @@ def generate_covmatrices(df,
             C = transform_cov_matrix(C, row, "Cylindrical", Z_0, R_0)    
 
         # Append
-        cov_dict[row.source_id] = C
-        
+        #cov_dict[row.source_id] = C
+        cov_list.append((row.source_id, C))
+       
+    cov_df = pd.DataFrame(cov_list, columns=['source_id', 'cov_mat'])
+
     if(debug):
         toc=timeit.default_timer()
         print("Time elapsed for covariance matrix generation and transformation: {a} sec".format(a=toc-tic))
 
-    return cov_dict
+    return cov_df
 
 '''
 A new function for transforming covariance matrices of whole data set.

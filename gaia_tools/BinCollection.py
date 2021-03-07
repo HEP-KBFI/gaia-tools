@@ -46,8 +46,6 @@ class BinCollection:
     '''
     Collect all bins provided parameters from the 'binned_statistic_2d' function
 
-
-
     '''
     def GenerateBins(self):
         N_bins = self.N_bins
@@ -225,7 +223,7 @@ class BinCollection:
             error_array = bin.get_error_data()
 
             # Get velocity data
-            velocity_array = bin.get_parameter_data()
+            velocity_array = bin.get_parameter_data('v_phi')
 
             # Insert into numerical solver
             result = get_bin_MLE(velocity_array, error_array)
