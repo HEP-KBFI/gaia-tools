@@ -86,9 +86,12 @@ class MCMCLooper:
 
     def log_prior(theta):
 
-
         ## Prior assumptions of our parameters
         ## Flat across all parameters at first
+
+        r, z, u_sun, v_sun, w_sun = theta
+        if 0.0 < r < 10000.0 and 0.0 < z < 100.0 and 0.0 < u_sun < 100.0 and 0.0 < v_sun < 1000.0 and 0.0 < w_sun < 100.0:
+            return 0.0
 
         return -np.inf
 
