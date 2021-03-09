@@ -2,55 +2,68 @@
 Separate module for the numerical solver.
 '''
 
-from scipy.optimize import fsolve
-import math
-from sympy import *
-from numpy import random
 import numpy as np
+from lmfit import minimize, Parameters
 
-# Here I declare all the neccessary symbols
-s = symbols('s')
-mu = symbols('mu')
+params = Parameters()
 
-# i-th component of given velocity array
-v_i = symbols('v')
+guess = 10
+params.add('sigma', value = guess, min = 0, max = 1000)
+params
 
-# i-th component of given measurement error array
-s_i = symbols('serr')
-
-# Summation integer
-i = symbols('i', integer=True)
-
-# First equation (MLE of mu)
-a = Function('a')
-
-# Second equation (MLE of sigma)
-b = Function('b')
-
-def a(v_arr, s_arr):
+def objective_function(params, v_i, s_i):
     
-    sum1 = Sum((Indexed('v',i)/(s**2 + Indexed('serr',i)**2)), (i, 0, n-1)) - mu*Sum((1/(s**2 + Indexed('serr',i)**2)), (i, 0, n-1))
+    sigma = params['sigma']
     
-    f1 = lambdify([v_i, s_i], sum1)
+    n = len(v_i)
     
-    return f1(v_arr, s_arr)
+    def sub_sum():
+
+        a = np.array([v_i[i]*denom_sum(i) for i in range(n)]).sum()
+
+        b = np.array([denom_sum(i) for i in range(n)]).sum()
+
+        return a, b
 
 
-def b(v_arr, s_arr):
-    
-    sum2 = Sum((1/(s**2 + Indexed('serr',i)**2)), (i, 0, n-1)) - Sum(((Indexed('v',i) - mu)**2/(s**2 + Indexed('serr',i)**2)**2), (i, 0, n-1))
-    
-    f2 = lambdify([v_i, s_i], sum2)
-    
-    f2(v_test, s_test)
-    
-    return f2(v_arr, s_arr)
+    def denom_sum(i):
 
-def get_bin_MLE(v_arr, s_arr):
+        sum_component = 1/(sigma**2 + s_i[i]**2)
 
-    res = nsolve((a(v_arr, s_arr),b(v_arr, s_arr)), 
-                 (s, mu), 
-                 (10,10), 
-                 dict=True)
+        return sum_component
+    
+    a, b = sub_sum()
+    
+    result_1 = np.array([ ((v_i[i] - a/b)**2)/((sigma**2 + s_i[i]**2))**2 for i in range(n)]).sum()
+    
+    result_2 = b
+    
+    return -result_1 + result_2
 
-    return res
+
+
+def get_MLE_sigma(v_i, s_i):
+
+    out = minimize(objective_function, params, args=(v_i, s_i))
+
+    assert out.success == True, "Bin MLE variance could not be found!"
+    assert out.params['sigma'].value >= 0, "Bin MLE variance can't be negative!"
+        
+    return out.params['sigma'].value
+
+
+def get_MLE_mu(sigma, v_i, s_i):
+    
+    n = len(v_i)
+    
+    def denom_sum(i):
+
+        sum_component = 1/(sigma**2 + s_i[i]**2)
+
+        return sum_component
+    
+    a = np.array([v_i[i]*denom_sum(i) for i in range(n)]).sum()
+
+    b = np.array([denom_sum(i) for i in range(n)]).sum()
+    
+    return a/b

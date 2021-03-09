@@ -51,16 +51,14 @@ class Bin:
     '''
     def get_error_data(parameter = None):
 
-        # Something like this but IT IS WRONG
         # Figure out which element in cov mat is correct error!!
-
-        value_list = [value for value in self.data.cov_mat[5][5]]
+        # Currently have it magic numbered to error of v_phi
+        value_list = [value for value in self.data.cov_mat[4][4]]
 
         return value_list
 
     def get_parameter_data(parameter = None):
 
-        # Currently specified to v_phi
         return self.data[parameter]
 
     '''

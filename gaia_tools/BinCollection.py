@@ -212,7 +212,7 @@ class BinCollection:
     def GetMLEParameters():
 
         # Init numerical solver
-        from .num_solver import get_bin_MLE
+        from .num_solver import get_MLE_sigma, get_MLE_mu
 
         # IDEA: Find out a way to parallelize MLE computation for bins
         # for now I will use loop but it is stupid
@@ -225,18 +225,13 @@ class BinCollection:
             # Get velocity data
             velocity_array = bin.get_parameter_data('v_phi')
 
-            # Insert into numerical solver
-            result = get_bin_MLE(velocity_array, error_array)
-
-            # TODO: Add exception handling!
-            # mu and sigma have to be > 0
-            # 
+            # Insert into numerical solver -> Returns best fit sigma
+            MLE_sigma = get_MLE_sigma(velocity_array, error_array)
+            MLE_mu = get_MLE_mu(sigma, velocity_array, error_array)
 
             # Add parameters to Bin objects
-            # They are of type Sympy.float.. if theres an error somewhere here then you know why..
-            bin.MLE_sigma = result[0][s]
-            bin.MLE_mu = result[0][mu]
-
+            bin.MLE_sigma = MLE_sigma
+            bin.MLE_mu = MLE_mu
 
             return
 
