@@ -1,7 +1,7 @@
-from .Bin import Bin
+from . Bin import Bin
 import numpy as np
 import pandas as pd
-
+import math
 '''
 A collection of spatially binned ("Bin") objects.
 
@@ -45,8 +45,6 @@ class BinCollection:
 
     '''
     Collect all bins provided parameters from the 'binned_statistic_2d' function
-
-
 
     '''
     def GenerateBins(self):
@@ -204,6 +202,45 @@ class BinCollection:
                 
         # Convert to a numpy array and return        
         return np.asarray(values)
+
+    '''
+    Function which calculates MLE parameters for each bin inside BinCollection according to 
+    the data model specified by us.
+
+    Uses v_phi velocity component and its errors from covariances matrices to do this.
+    '''
+    def GetMLEParameters(self):
+
+        # Init numerical solver
+        from . num_solver import get_MLE_sigma, get_MLE_mu
+
+        # IDEA: Find out a way to parallelize MLE computation for bins
+        # for now I will use loop but it is stupid
+
+        for bin in self.bins:
+
+            # TODO: Change above GenerateBins function to use None instead!
+            if(math.isnan(bin.data.iloc[0].x)):
+                continue
+
+            # Get Error Data <-- New function
+            error_array = bin.get_error_data()
+
+            # Get velocity data
+            # TODO: Check if bin.data.v_phi would be faster!
+            velocity_array = bin.get_parameter_data('v_phi')
+
+            # Insert into numerical solver -> Returns best fit sigma
+            MLE_sigma = get_MLE_sigma(velocity_array, error_array)
+            MLE_mu = get_MLE_mu(MLE_sigma, velocity_array, error_array)
+
+            # Add parameters to Bin objects
+            bin.MLE_sigma = MLE_sigma
+            bin.MLE_mu = MLE_mu
+
+            
+
+        return
 
 
     def GetMean(data):

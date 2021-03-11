@@ -237,7 +237,7 @@ df - Imported data from CSV
 '''
 def run_parameter_tests(df, parameter_list):
 
-    from data_analysis import transform_to_galcen, get_transformed_data
+    from .data_analysis import transform_to_galcen, get_transformed_data
 
     # Generating Transformation With Astropy
     galcen_astropy = transform_to_galcen(df)
