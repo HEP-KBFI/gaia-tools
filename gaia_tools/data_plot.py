@@ -7,10 +7,10 @@ import numpy as np
 import mpl_scatter_density
 import astropy
 import pandas as pd
-from data_analysis import generate_vector_mesh
+from .data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
-import BinCollection
+from . import BinCollection
 
 # TODO: Add additional projections: along y- and z-axis
 # TODO: Add options for DataFrame format
@@ -237,7 +237,7 @@ df - Imported data from CSV
 '''
 def run_parameter_tests(df, parameter_list):
 
-    from data_analysis import transform_to_galcen, get_transformed_data
+    from .data_analysis import transform_to_galcen, get_transformed_data
 
     # Generating Transformation With Astropy
     galcen_astropy = transform_to_galcen(df)

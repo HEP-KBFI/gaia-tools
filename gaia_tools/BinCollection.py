@@ -1,4 +1,4 @@
-from Bin import Bin
+from . Bin import Bin
 import numpy as np
 import pandas as pd
 import math
@@ -212,7 +212,7 @@ class BinCollection:
     def GetMLEParameters(self):
 
         # Init numerical solver
-        from num_solver import get_MLE_sigma, get_MLE_mu
+        from . num_solver import get_MLE_sigma, get_MLE_mu
 
         # IDEA: Find out a way to parallelize MLE computation for bins
         # for now I will use loop but it is stupid

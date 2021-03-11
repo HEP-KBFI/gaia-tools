@@ -8,8 +8,8 @@ import astropy.coordinates as coord
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
-from BinCollection import BinCollection
-import transformation_constants
+from . BinCollection import BinCollection
+from . import transformation_constants
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
@@ -148,7 +148,7 @@ def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debu
 
     # TODO: Generalise this!
     if(show_bins == True):
-        from data_plot import display_bins
+        from .data_plot import display_bins
 
         display_bins(bin_collection, 'v_x')
         display_bins(bin_collection, 'v_y')
@@ -400,9 +400,10 @@ def transform_velocities_cylindrical(velocities, phi):
 #endregion
 
 def main():
-    from data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
-    import covariance_generation as cov
+    from .data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
+    from . import covariance_generation as cov
     import time, timeit
+    from .import_functions import import_data
     
     # For finding current module working directory
     #import os 
@@ -413,27 +414,30 @@ def main():
     my_path = "astroquery_test.csv"
     full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Spectroscopic_Data_With_Correlations.csv"
 
-
+    # Get ICRS data
     df = import_data(path = my_path, debug = True)
 
+    # Transform data
     galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
     
     print("\n",galcen2)
 
+    # Get covariance matrices
     cov_df = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True, debug=True)
 
+    # Append covariance matrices to main galactocentric data object
     galcen2['cov_mat'] = cov_df['cov_mat']
 
- 
-    print("START PRINT")
-    
+    print("START PRINT")  
     print(galcen2)
+
+    # Bin data
     bins = bin_data(galcen2, show_bins = False, N_bins = (10, 10))
+
+    from tests import MCMCFunction_Test
 
     # Testing MCMC Functions
     MCMCFunction_Test(df,bins)
-
-    return
 
     display_bins(bins, projection_parameter = 'v_x', mode='index')
     
@@ -442,157 +446,8 @@ def main():
     #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
     print("END OF MAIN")
 
-def MCMCFunction_Test(df,data):
-
-    a = data.bins[65].get_parameter_data('v_phi')
-    print(a)
-
-    b = data.bins[65].get_error_data()
-    print(b)
-
-
-    print("Start MLE!")
-    data.GetMLEParameters()
-    print(data.bins[65].MLE_mu)
-    print(data.bins[65].MLE_sigma)
-    print("Check!")
-
-    print("Start Likelihood Check!")
-
-
-    from functools import reduce
-    n = reduce(lambda x, y: x*y, data.N_bins)
-    likelihood_array = np.zeros(n)
-
-    for i, bin in enumerate(data.bins):
-
-        
-
-        # Get Bin likelihood
-        likelihood_value = bin.get_bin_likelihood()
-        
-        # Add to array
-        likelihood_array[i] = likelihood_value
-    
-        # Square sum likelihoods over all bins
-        likelihood_sum = np.sum(likelihood_array**2)
-
-
-    print(likelihood_sum)
-
-    print("Check!")
-
-    print("Starting MCMC Loop")
-    from mcmc import MCMCLooper
-    import transformation_constants
-    
-    theta_0 = (transformation_constants.R_0, transformation_constants.Z_0, transformation_constants.V_SUN[0][0], transformation_constants.V_SUN[1][0], transformation_constants.V_SUN[2][0])
-
-    looper = MCMCLooper(df, theta_0)
-    result = looper.run_sampler()
-
-    print("Check!")
-
-
-
-
-# Temporary function for Issue no. 18
-def Collapsed_Plot_Test():
-
-    # LOAD DATA
-    #region
-
-    my_path = "astroquery_test.csv"
-    
-    df = import_data(path = my_path)
-
-    #endregion
-
-    galcen = get_transformed_data(df, include_cylindrical = True)
-    #print(galcen.iloc[0:5])
-
-    print("Data Loaded Successfully.")
-
-    bins = get_collapsed_bins(galcen, 100000, 5000, N_bins = (10, 10))
-     
-    #Testing bin method manually
-    #temp = []
-    #for index, row in galcen.iterrows():
-        
-    #    if(row.r >= 0 and row.r < 10000 and row.z >= 0 and row.z < 1000):
-    #        temp.append(row.v_phi)
-
-    #mean = np.mean(temp)
-    #print(mean)
-
-    #print(bins.bins)
-    #print(bins.bins[17].data)
-
-    from .data_plot import plot_collapsed_bins, display_bins
-
-    
-    plot_collapsed_bins(bins, 'v_r', mode='mean')
-
-    print(galcen.index)
-
-
-# Move this to separate test module later
-def Parameter_Test(df):
-
-    from data_plot import run_parameter_tests
-
-    parameter_list = ["x", "y", "z", "v_x", "v_y", "v_z"]
-    run_parameter_tests(df, parameter_list)
-
-# Move this to separate import module later
-def import_data(path, distance = 32000, debug = False):
-    
-    if(debug):
-        import time, timeit
-        tic=timeit.default_timer()
-
-    print("Start import...")
-    df = pd.read_csv(path)
-   
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-    
-    print("Filtering entries that are further than 32 000 pc")
-    df = filter_distance(df, distance)
-    
-    print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
-
-    print("Removing negative parallaxes...")
-    df=df[df.parallax > 0]
-
-    df.reset_index(inplace=True, drop=True)
-    print("Checking indexing... \n")
-
-    if(debug):
-        print(df.head, '\n')
-        toc=timeit.default_timer()
-        print("Time elapsed for data import: {a} sec".format(a=toc-tic))
-        print("<!--------------------------------------------------!> \n")
-
-    return df
-
-'''
-Function for testing the time it takes for Astropy package to convert data in
-to a galactocentric frame of reference.
-'''
-def astropy_timer_benchmark():
-    
-    import time, timeit
-    tic=timeit.default_timer()
-
-    galcen_astropy = transform_to_galcen(df)
-
-    toc=timeit.default_timer()
-
-    print("Time elapsed for data {a} sec".format(a=toc-tic))
-    print("<!----------------------------------------------!>")
-
 if __name__ == "__main__":
 
     main()
-    #Collapsed_Plot_Test()
+
 

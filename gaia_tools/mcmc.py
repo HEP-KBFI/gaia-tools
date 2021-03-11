@@ -1,8 +1,8 @@
 '''
 Class containing neccessary functions for MCMC loop.
 '''
-import data_analysis
-import covariance_generation as cov
+from .import data_analysis
+from . import covariance_generation as cov
 import numpy as np
 import emcee
 from functools import reduce

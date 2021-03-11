@@ -4,7 +4,7 @@ data covariance matrices.
 '''
 
 import numpy as np
-import transformation_constants
+from . import transformation_constants
 import pandas as pd
 import time, timeit
 
