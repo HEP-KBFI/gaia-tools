@@ -1,10 +1,11 @@
 '''
 Class containing neccessary functions for MCMC loop.
 '''
-from . import data_analysis
-from . import covariance_generation as cov
+import data_analysis
+import covariance_generation as cov
 import numpy as np
 import emcee
+from functools import reduce
 
 class MCMCLooper:
 
@@ -13,63 +14,60 @@ class MCMCLooper:
         self.icrs_data = icrs_data
         self.theta_0 = theta_0
         self.debug = debug
-
+        self.iter_step = 0
    
 
-    def log_likelihood(theta):
+    def log_likelihood(self, theta):
 
-
-        # Example likelihood from emcee documentation
-        #m, b, log_f = theta
-        #model = m * x + b
-        #sigma2 = yerr ** 2 + model ** 2 * np.exp(2 * log_f)
-        #return -0.5 * np.sum((y - model) ** 2 / sigma2 + np.log(sigma2))
-        # -----------------------------------------------
-
-        #region Transform Data
+        # Transform Data
+        #region 
 
         '''
         Transfrom from ICRS to Cylindrical galactocentric coordinates 
 
         '''
     
-        galcen_data = data_analysis.get_transformed_data(self.data_icrs, 
+        v_sun = (theta[2], theta[3], theta[4] )
+
+        galcen_data = data_analysis.get_transformed_data(self.icrs_data, 
                                                          include_cylindrical = True, 
-                                                         z_0 = theta.z,
-                                                         r_0 = theta.r,
-                                                         v_sun = theta.v_sun,
-                                                         debug = True, 
+                                                         z_0 = theta[1],
+                                                         r_0 = theta[0],
+                                                         v_sun = v_sun,
+                                                         debug = False, 
                                                          is_source_included = True)
     
-        cov_df = cov.generate_covmatrices(df = self.data_icrs, 
+        cov_df = cov.generate_covmatrices(df = self.icrs_data, 
                                             df_crt = galcen_data, 
                                             transform_to_galcen = False, 
                                             transform_to_cylindrical = True,
-                                            z_0 = theta.z,
-                                            r_0 = theta.r,
-                                            debug=True)
+                                            z_0 = theta[1],
+                                            r_0 = theta[0],
+                                            debug=False)
 
         # Append covariance information to galactocentric data
         galcen_data['cov_mat'] = cov_df['cov_mat']
 
         #endregion 
 
-        #region Bin Data
+        # Bin Data
+        #region
 
         # Declared variable with BinCollection object
-        bins = data_analysis.get_collapsed_bins(galcen_data, BL_r = 100000, BL_z = 5000, N_bins = (10, 10))
+        bin_collection = data_analysis.get_collapsed_bins(galcen_data, BL_r = 100000, BL_z = 5000, N_bins = (10, 10))
 
         # Populates bins with their MLE values of mean and variance
-        bins.GetMLEParameters()
+        bin_collection.GetMLEParameters()
 
         #endregion
 
-        #region Calculate Likelihoods
-    
-        likelihood_array = np.zeros(bins.N_bins)
+        # Calculate Likelihoods
+        #region 
+        n = reduce(lambda x, y: x*y, bin_collection.N_bins)
+        likelihood_array = np.zeros(n)
 
         # Now we need to calculate likelihood values for each bin
-        for i, bin in enumerate(bins):
+        for i, bin in enumerate(bin_collection.bins):
 
             # Get Bin likelihood
             likelihood_value = bin.get_bin_likelihood()
@@ -84,7 +82,7 @@ class MCMCLooper:
 
         return likelihood_sum
 
-    def log_prior(theta):
+    def log_prior(self, theta):
 
         ## Prior assumptions of our parameters
         ## Flat across all parameters at first
@@ -96,17 +94,17 @@ class MCMCLooper:
         return -np.inf
 
 
-    def log_probability(theta):
+    def log_probability(self, theta):
 
-        lp = log_prior(theta)
+        lp = self.log_prior(theta)
 
         if not np.isfinite(lp):
             return -np.inf
 
-        return lp + log_likelihood(theta)
+        return lp + self.log_likelihood(theta)
 
     # TODO: Configure burn in steps!
-    def run_sampler():
+    def run_sampler(self):
 
         nwalkers = 32
         ndim = 5
@@ -115,10 +113,10 @@ class MCMCLooper:
         pos = self.theta_0 + 1e-4 * np.random.randn(nwalkers, ndim)
 
         # Init emcee EnsembleSampler
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.log_probability)
 
         # Run the sampler
-        sampler.run_mcmc(pos, 5000, progress=True);
+        sampler.run_mcmc(pos, 10, progress=True);
 
         print("Sampler done!")
 

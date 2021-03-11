@@ -8,8 +8,8 @@ import astropy.coordinates as coord
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
-from .BinCollection import BinCollection
-from . import transformation_constants
+from BinCollection import BinCollection
+import transformation_constants
 
 '''
 Function for filtering out entries that are further out than some specified distance in pc
@@ -148,7 +148,7 @@ def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debu
 
     # TODO: Generalise this!
     if(show_bins == True):
-        from .data_plot import display_bins
+        from data_plot import display_bins
 
         display_bins(bin_collection, 'v_x')
         display_bins(bin_collection, 'v_y')
@@ -199,7 +199,7 @@ def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10)):
     plottable_df['Bin_index'] = binnumber
 
     # Instantiate a BinCollection object
-    bin_collection = BinCollection(plottable_df, N_bins, XX, YY, YY, mode='r-z', debug=True)
+    bin_collection = BinCollection(plottable_df, N_bins, XX, YY, YY, mode='r-z')
     
     # Generate the bins with respective r-z boundaries
     bin_collection.GenerateBins()
@@ -425,14 +425,15 @@ def main():
     galcen2['cov_mat'] = cov_df['cov_mat']
 
  
-
-    return;
-    
-
     print("START PRINT")
     
     print(galcen2)
-    bins = bin_data(galcen2, show_bins = True, N_bins = (10, 10))
+    bins = bin_data(galcen2, show_bins = False, N_bins = (10, 10))
+
+    # Testing MCMC Functions
+    MCMCFunction_Test(df,bins)
+
+    return
 
     display_bins(bins, projection_parameter = 'v_x', mode='index')
     
@@ -440,6 +441,60 @@ def main():
 
     #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
     print("END OF MAIN")
+
+def MCMCFunction_Test(df,data):
+
+    a = data.bins[65].get_parameter_data('v_phi')
+    print(a)
+
+    b = data.bins[65].get_error_data()
+    print(b)
+
+
+    print("Start MLE!")
+    data.GetMLEParameters()
+    print(data.bins[65].MLE_mu)
+    print(data.bins[65].MLE_sigma)
+    print("Check!")
+
+    print("Start Likelihood Check!")
+
+
+    from functools import reduce
+    n = reduce(lambda x, y: x*y, data.N_bins)
+    likelihood_array = np.zeros(n)
+
+    for i, bin in enumerate(data.bins):
+
+        
+
+        # Get Bin likelihood
+        likelihood_value = bin.get_bin_likelihood()
+        
+        # Add to array
+        likelihood_array[i] = likelihood_value
+    
+        # Square sum likelihoods over all bins
+        likelihood_sum = np.sum(likelihood_array**2)
+
+
+    print(likelihood_sum)
+
+    print("Check!")
+
+    print("Starting MCMC Loop")
+    from mcmc import MCMCLooper
+    import transformation_constants
+    
+    theta_0 = (transformation_constants.R_0, transformation_constants.Z_0, transformation_constants.V_SUN[0][0], transformation_constants.V_SUN[1][0], transformation_constants.V_SUN[2][0])
+
+    looper = MCMCLooper(df, theta_0)
+    result = looper.run_sampler()
+
+    print("Check!")
+
+
+
 
 # Temporary function for Issue no. 18
 def Collapsed_Plot_Test():
