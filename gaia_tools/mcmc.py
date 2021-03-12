@@ -104,7 +104,7 @@ class MCMCLooper:
         return lp + self.log_likelihood(theta)
 
     # TODO: Configure burn in steps!
-    def run_sampler(self):
+    def run_sampler(self, steps = 10):
 
         nwalkers = 32
         ndim = 5
@@ -116,7 +116,7 @@ class MCMCLooper:
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.log_probability)
 
         # Run the sampler
-        sampler.run_mcmc(pos, 10, progress=True);
+        sampler.run_mcmc(pos, steps, progress=True);
 
         print("Sampler done!")
 
@@ -126,7 +126,7 @@ class MCMCLooper:
 
     def drop_burn_in(self, discard = 100, thin = 15, flat=True):
 
-        flat_result = self.result.get_chain(discard = discard, thing = thin, flat = flat)
+        flat_result = self.result.get_chain(discard = discard, thin = thin, flat = flat)
 
         return flat_result
 
