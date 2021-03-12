@@ -23,8 +23,9 @@ The code is all written in python3 and makes substantial use of the standard pan
 
 * [`astropy`](https://www.astropy.org/)
 * [`mpl_scatter_density`](https://anaconda.org/conda-forge/mpl-scatter-density)
-* ['emcee'](https://emcee.readthedocs.io/en/stable/)
-* ['lmfit](https://lmfit.github.io/lmfit-py/examples/example_brute.html)
+* [`emcee`](https://emcee.readthedocs.io/en/stable/)
+* [`lmfit`](https://lmfit.github.io/lmfit-py/examples/example_brute.html)
+* [`corner`](https://corner.readthedocs.io/en/latest/)
 
 
 ## Install package
