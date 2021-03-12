@@ -138,4 +138,9 @@ def MCMCFunction_Test(df, data):
     # To get flat results with burn in discarded
     flat_result = looper.drop_burn_in()
 
+    print("Going to generater corner plot, see return for fig")
+    fig = generate_corner_plot(flat_result, ['r', 'z', 'u', 'v', 'w'])
+
     print("Check!")
+
+    return fig
