@@ -27,6 +27,15 @@ The code is all written in python3 and makes substantial use of the standard pan
 * ['lmfit](https://lmfit.github.io/lmfit-py/examples/example_brute.html)
 
 
+## Install package
+
+To install the project as an importable package do the following:
+
+1) Download as a tar.gz archive
+2) Use pip install 'gaia_tools.tar.gz' or whatever the file name is
+3) Inside code 'import gaia_tools' or other submodules inside the project
+4) Done!
+
 ## Run in manivald
 
 The following steps have to be taken in order to use the code in this repository in manivald:
