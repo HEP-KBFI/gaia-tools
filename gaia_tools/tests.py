@@ -130,6 +130,12 @@ def MCMCFunction_Test(df, data):
     theta_0 = (transformation_constants.R_0, transformation_constants.Z_0, transformation_constants.V_SUN[0][0], transformation_constants.V_SUN[1][0], transformation_constants.V_SUN[2][0])
 
     looper = MCMCLooper(df, theta_0)
-    result = looper.run_sampler()
+    looper.run_sampler()
+
+    from .data_plot import display_walkers
+    display_walkers(looper.result)
+
+    # To get flat results with burn in discarded
+    flat_result = looper.drop_burn_in()
 
     print("Check!")

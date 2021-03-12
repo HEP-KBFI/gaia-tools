@@ -15,8 +15,8 @@ class MCMCLooper:
         self.theta_0 = theta_0
         self.debug = debug
         self.iter_step = 0
-   
-
+        self.result = None
+        
     def log_likelihood(self, theta):
 
         # Transform Data
@@ -120,4 +120,14 @@ class MCMCLooper:
 
         print("Sampler done!")
 
-        return sampler
+        self.result = sampler
+
+        return True
+
+    def drop_burn_in(self, discard = 100, thin = 15, flat=True):
+
+        flat_result = self.result.get_chain(discard = discard, thing = thin, flat = flat)
+
+        return flat_result
+
+
