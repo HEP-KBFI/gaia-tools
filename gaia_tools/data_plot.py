@@ -377,7 +377,7 @@ theta_labels - list of your parameter names [(string)]
 '''
 def generate_corner_plot(flat_samples, theta_labels):
 
-    fig = corner.corner(flat_samples, labels=theta_labelss);
+    fig = corner.corner(flat_samples, labels=theta_labels);
 
     # Fix this in the future, Sven
     return fig
