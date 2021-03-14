@@ -57,7 +57,9 @@ For more info on "singularity images", please visit [this github repository](htt
 
 ### Data
 
-Data is stored in `/scratch/mariacst/`
+Data is stored in `/scratch/mariacst/`  
+
+To run the code properly you need to have in your data some specific parameters. From the Gaia archive these are represented under the following column names: 'source_id', 'ra', 'ra_error', 'dec', 'dec_error', 'parallax', 'parallax_error', 'pmra', 'pmra_error', 'pmdec', 'pmdec_error'. 'ra_dec_corr', 'ra_parallax_corr', 'ra_pmra_corr', 'ra_pmdec_corr', 'dec_parallax_corr', 'dec_pmra_corr', 'dec_pmdec_corr', 'parallax_pmra_corr', 'parallax_pmdec_corr', 'pmra_pmdec_corr', 'radial_velocity', 'radial_velocity_error'
 
 
 ## Tutorials
