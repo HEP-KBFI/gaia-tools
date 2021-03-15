@@ -6,6 +6,7 @@ from . import covariance_generation as cov
 import numpy as np
 import emcee
 from functools import reduce
+import time, timeit
 
 class MCMCLooper:
 
@@ -34,7 +35,7 @@ class MCMCLooper:
                                                          z_0 = theta[1],
                                                          r_0 = theta[0],
                                                          v_sun = v_sun,
-                                                         debug = False, 
+                                                         debug = self.debug, 
                                                          is_source_included = True)
     
         cov_df = cov.generate_covmatrices(df = self.icrs_data, 
@@ -43,7 +44,7 @@ class MCMCLooper:
                                             transform_to_cylindrical = True,
                                             z_0 = theta[1],
                                             r_0 = theta[0],
-                                            debug=False)
+                                            debug=self.debug)
 
         # Append covariance information to galactocentric data
         galcen_data['cov_mat'] = cov_df['cov_mat']
@@ -61,6 +62,9 @@ class MCMCLooper:
 
         #endregion
 
+        if(self.debug):
+            tic=timeit.default_timer()
+
         # Calculate Likelihoods
         #region 
         n = reduce(lambda x, y: x*y, bin_collection.N_bins)
@@ -77,6 +81,10 @@ class MCMCLooper:
     
         # Square sum likelihoods over all bins
         likelihood_sum = np.sum(likelihood_array**2)
+
+        if(self.debug):
+            toc=timeit.default_timer()
+            print("Time elapsed for likelihoods computation section: {a} sec".format(a=toc-tic))
 
         #endregion
 
