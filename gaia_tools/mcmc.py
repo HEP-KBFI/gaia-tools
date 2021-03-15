@@ -1,7 +1,7 @@
 '''
 Class containing neccessary functions for MCMC loop.
 '''
-from .import data_analysis
+from . import data_analysis
 from . import covariance_generation as cov
 import numpy as np
 import emcee
@@ -129,5 +129,35 @@ class MCMCLooper:
         flat_result = self.result.get_chain(discard = discard, thin = thin, flat = flat)
 
         return flat_result
+
+
+    def run_sampler_multicore(self, steps = 10, processes = 4):
+        import os
+
+        from multiprocessing import Pool
+        from multiprocessing import cpu_count
+
+        ncpu = cpu_count()
+        print("{0} CPUs".format(ncpu))
+        
+        nwalkers = 32
+        ndim = 5
+        # Init starting point for all walkers
+        pos = self.theta_0 + 1e-4 * np.random.randn(nwalkers, ndim)
+
+        with Pool(processes) as pool:
+
+
+            # Init emcee EnsembleSampler
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.log_probability, pool = pool)
+
+            # Run the sampler
+            sampler.run_mcmc(pos, steps, progress=True);
+
+            print("Sampler done!")
+
+            self.result = sampler
+
+            return True
 
 

@@ -11,7 +11,7 @@ import corner
 from .data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
-from . import BinCollection
+from .BinCollection import BinCollection
 
 # TODO: Add additional projections: along y- and z-axis
 # TODO: Add options for DataFrame format
@@ -378,6 +378,7 @@ theta_labels - list of your parameter names [(string)]
 def generate_corner_plot(flat_samples, theta_labels):
 
     fig = corner.corner(flat_samples, labels=theta_labels);
+    plt.show()
 
     # Fix this in the future, Sven
     return fig

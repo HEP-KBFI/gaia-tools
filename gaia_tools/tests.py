@@ -81,6 +81,7 @@ df - DataFrame with ICRS data for mcmc looper object.
 '''
 
 def MCMCFunction_Test(df, data):
+     
 
     # Check get_parameter_data function
     a = data.bins[65].get_parameter_data('v_phi')
@@ -132,15 +133,42 @@ def MCMCFunction_Test(df, data):
     looper = MCMCLooper(df, theta_0)
     looper.run_sampler()
 
-    from .data_plot import display_walkers
+    from .data_plot import display_walkers, generate_corner_plot
     display_walkers(looper.result)
 
     # To get flat results with burn in discarded
     flat_result = looper.drop_burn_in()
 
-    print("Going to generater corner plot, see return for fig")
+    print("Going to generate corner plot, see return for fig")
     fig = generate_corner_plot(flat_result, ['r', 'z', 'u', 'v', 'w'])
 
     print("Check!")
 
     return fig
+
+
+if __name__ == "__main__":
+
+    from . import transformation_constants
+
+    # Get ICRS data
+    df = import_data(path = "astroquery_test.csv", debug = True)
+
+    # This section right here is an example how to use the module elsewhere.
+    theta_0 = (transformation_constants.R_0, transformation_constants.Z_0, transformation_constants.V_SUN[0][0], transformation_constants.V_SUN[1][0], transformation_constants.V_SUN[2][0])
+
+
+    from .mcmc import MCMCLooper
+    looper = MCMCLooper(df, theta_0)
+    looper.run_sampler()
+
+    from .data_plot import display_walkers, generate_corner_plot
+    display_walkers(looper.result)
+
+    # To get flat results with burn in discarded
+    #flat_result = looper.drop_burn_in(discard = 2)
+
+    print("Going to generate corner plot, see return for fig")
+    fig = generate_corner_plot(flat_result, ['r', 'z', 'u', 'v', 'w'])
+
+    print("Check!")
