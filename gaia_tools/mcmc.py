@@ -1,7 +1,7 @@
 '''
 Class containing neccessary functions for MCMC loop.
 '''
-from .import data_analysis
+from . import data_analysis
 from . import covariance_generation as cov
 import numpy as np
 import emcee
@@ -15,8 +15,8 @@ class MCMCLooper:
         self.theta_0 = theta_0
         self.debug = debug
         self.iter_step = 0
-   
-
+        self.result = None
+        
     def log_likelihood(self, theta):
 
         # Transform Data
@@ -104,7 +104,7 @@ class MCMCLooper:
         return lp + self.log_likelihood(theta)
 
     # TODO: Configure burn in steps!
-    def run_sampler(self):
+    def run_sampler(self, steps = 10):
 
         nwalkers = 32
         ndim = 5
@@ -116,8 +116,48 @@ class MCMCLooper:
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.log_probability)
 
         # Run the sampler
-        sampler.run_mcmc(pos, 10, progress=True);
+        sampler.run_mcmc(pos, steps, progress=True);
 
         print("Sampler done!")
 
-        return sampler
+        self.result = sampler
+
+        return True
+
+    def drop_burn_in(self, discard = 100, thin = 15, flat=True):
+
+        flat_result = self.result.get_chain(discard = discard, thin = thin, flat = flat)
+
+        return flat_result
+
+
+    def run_sampler_multicore(self, steps = 10, processes = 4):
+        import os
+
+        from multiprocessing import Pool
+        from multiprocessing import cpu_count
+
+        ncpu = cpu_count()
+        print("{0} CPUs".format(ncpu))
+        
+        nwalkers = 32
+        ndim = 5
+        # Init starting point for all walkers
+        pos = self.theta_0 + 1e-4 * np.random.randn(nwalkers, ndim)
+
+        with Pool(processes) as pool:
+
+
+            # Init emcee EnsembleSampler
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.log_probability, pool = pool)
+
+            # Run the sampler
+            sampler.run_mcmc(pos, steps, progress=True);
+
+            print("Sampler done!")
+
+            self.result = sampler
+
+            return True
+
+

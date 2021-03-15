@@ -7,10 +7,11 @@ import numpy as np
 import mpl_scatter_density
 import astropy
 import pandas as pd
+import corner
 from .data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
-from . import BinCollection
+from .BinCollection import BinCollection
 
 # TODO: Add additional projections: along y- and z-axis
 # TODO: Add options for DataFrame format
@@ -340,6 +341,49 @@ def arrowed_spines(fig, ax):
     ax.arrow(0, 0, 0., (ymin-ymax)/2, fc='k', ec='k', lw = lw, 
              head_width=yhw, head_length=yhl, overhang = ohg, 
              length_includes_head= True, clip_on = False)
+
+
+
+'''
+Input - result of MCMCLooper.run_sampler() which is the emcee sampler object
+'''
+def display_walkers(looper_result, 
+                    theta_labels = ['r', 'z', 'u', 'v', 'w']):
+
+    # Get data from emcee sampler
+    samples_data = looper_result.get_chain()
+
+    num_parameters = len(theta_labels)
+
+    fig, axes = plt.subplots(num_parameters, figsize=(10, 7), sharex=True)
+    
+    labels = theta_labels
+
+    for i in range(num_parameters):
+        ax = axes[i]
+        ax.plot(samples_data[:, :, i], "k", alpha=0.3)
+        ax.set_xlim(0, len(samples_data))
+        ax.set_ylabel(labels[i])
+        ax.yaxis.set_label_coords(-0.1, 0.5)
+
+    axes[-1].set_xlabel("Step number");
+
+    plt.show()
+
+'''
+flat_samples - result from mcmclooper but result is flattened. See mcmclooper class.
+
+theta_labels - list of your parameter names [(string)]
+'''
+def generate_corner_plot(flat_samples, theta_labels):
+
+    fig = corner.corner(flat_samples, labels=theta_labels);
+    plt.show()
+
+    # Fix this in the future, Sven
+    return fig
+
+
 
 
 
