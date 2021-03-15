@@ -10,10 +10,12 @@ import time, timeit
 
 class MCMCLooper:
 
-    def __init__(self, icrs_data, theta_0, debug = False):
+    def __init__(self, icrs_data, theta_0, nwalkers=16, ndim=5, debug = False):
 
         self.icrs_data = icrs_data
         self.theta_0 = theta_0
+        self.nwalkers = nwalkers
+        self.ndim = ndim
         self.debug = debug
         self.iter_step = 0
         self.result = None
@@ -114,8 +116,8 @@ class MCMCLooper:
     # TODO: Configure burn in steps!
     def run_sampler(self, steps = 10):
 
-        nwalkers = 32
-        ndim = 5
+        nwalkers = self.nwalkers
+        ndim = self.ndim
 
         # Init starting point for all walkers
         pos = self.theta_0 + 1e-4 * np.random.randn(nwalkers, ndim)
@@ -148,8 +150,8 @@ class MCMCLooper:
         ncpu = cpu_count()
         print("{0} CPUs".format(ncpu))
         
-        nwalkers = 32
-        ndim = 5
+        nwalkers = self.nwalkers
+        ndim = self.ndim
         # Init starting point for all walkers
         pos = self.theta_0 + 1e-4 * np.random.randn(nwalkers, ndim)
 
