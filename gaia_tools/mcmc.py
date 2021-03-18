@@ -42,7 +42,7 @@ class MCMCLooper:
     
         cov_df = cov.generate_covmatrices(df = self.icrs_data, 
                                             df_crt = galcen_data, 
-                                            transform_to_galcen = False, 
+                                            transform_to_galcen = True, 
                                             transform_to_cylindrical = True,
                                             z_0 = theta[1],
                                             r_0 = theta[0],
@@ -57,7 +57,7 @@ class MCMCLooper:
         #region
 
         # Declared variable with BinCollection object
-        bin_collection = data_analysis.get_collapsed_bins(galcen_data, BL_r = 100000, BL_z = 5000, N_bins = (10, 10))
+        bin_collection = data_analysis.get_collapsed_bins(galcen_data, BL_r = 100000, BL_z = 5000, N_bins = (10, 10), debug = self.debug)
 
         # Populates bins with their MLE values of mean and variance
         bin_collection.GetMLEParameters()
