@@ -166,7 +166,7 @@ data - dataframe with data
 N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
-def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10)):
+def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10), debug=False):
     
     # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
@@ -174,6 +174,11 @@ def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10)):
     if not 'r' or 'phi' in data.index:
         print("No cylindrical coordinates found!")
         return
+
+    if(debug):
+        import time, timeit
+        tic=timeit.default_timer()
+        print("Binning data from galactocentric input data...")
 
     # Fix for newly developed method
     plottable_df = data
@@ -203,6 +208,10 @@ def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10)):
     
     # Generate the bins with respective r-z boundaries
     bin_collection.GenerateBins()
+
+    if(debug):
+        toc=timeit.default_timer()
+        print("Time elapsed for binning data with collapsed bins: {a} sec".format(a=toc-tic))
     
     return bin_collection
 
