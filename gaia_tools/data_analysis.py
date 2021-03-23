@@ -454,3 +454,167 @@ if __name__ == "__main__":
     main()
 
 
+'''
+OLD CODE FROM UNOPTIMISED VERSION
+
+
+
+'''
+
+#def get_transformed_data(df, 
+#                         include_cylindrical = False, 
+#                         z_0 = transformation_constants.Z_0, 
+#                         r_0 = transformation_constants.R_0,
+#                         v_sun = transformation_constants.V_SUN,
+#                         debug = False,
+#                         is_source_included = False):
+
+#    if(debug):
+#        import timeit, time
+#        tic=timeit.default_timer()
+    
+#        print("Starting galactocentric transformation loop over all data points.. ")
+
+#    #region Loop over all data points
+
+#    coords_list = []
+#    velocities_list = []
+#    coords_cyl_list = []
+#    velocities_cyl_list = []
+
+#    for row in df.itertuples():
+
+        
+#        if(debug):
+#            print("Finding coordinates and velocities of {0}".format(row.Index))
+
+#        # Coordinate vector in galactocentric frame in xyz
+#        coords = transform_coordinates_galactocentric(row.ra, 
+#                                                      row.dec, 
+#                                                      row.parallax, 
+#                                                      z_0, 
+#                                                      r_0)
+
+#        coords_list.append(coords)     
+
+#        # Velocity vector in galactocentric frame in xyz
+#        velocities = transform_velocities_galactocentric(row.ra, 
+#                                                         row.dec, 
+#                                                         row.parallax, 
+#                                                         row.pmra, 
+#                                                         row.pmdec, 
+#                                                         row.radial_velocity, 
+#                                                         z_0, 
+#                                                         r_0, 
+#                                                         v_sun)
+#        velocities_list.append(velocities)
+        
+        
+#        if(include_cylindrical):
+
+#            phi = coords_list[row.Index][1]/coords_list[row.Index][0]
+#            vel_cyl = transform_velocities_cylindrical(velocities, phi)
+
+#            coords_cyl_list.append( (np.sqrt(coords_list[row.Index][0]**2 + coords_list[row.Index][1]**2), np.arctan(phi)))
+
+#            velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
+    
+#    #endregion
+
+        
+    
+#    coords_df = pd.DataFrame(coords_list, columns="x y z".split())
+#    velocities_df = pd.DataFrame(velocities_list, columns="v_x v_y v_z".split())
+
+#    galcen_df = pd.concat([coords_df, velocities_df], axis=1)
+
+#    if(include_cylindrical):
+#        coords_df = pd.DataFrame(coords_cyl_list, columns="r phi".split())
+#        velocities_df = pd.DataFrame(velocities_cyl_list, columns="v_r v_phi".split())
+#        df_1 = pd.concat([coords_df, velocities_df], axis=1)
+#        galcen_df = pd.concat([galcen_df, df_1], axis=1)
+     
+#    if(is_source_included):
+
+#        if not 'source_id' in df.columns:
+#            print("Error! Source ID column not found in input DataFrame!")
+        
+#        galcen_df['source_id'] = df.source_id
+
+       
+#    if(debug):
+#        toc=timeit.default_timer()
+#        print("Time elapsed for data coordinate transformation: {a} sec".format(a=toc-tic))
+    
+#    # Returns transformed data as Pandas DataFrame   
+#    return galcen_df
+
+#def transform_coordinates_galactocentric(ra, dec, w, z_0, r_0):
+
+#    #TODO: Add ASSERT checks on function input parameters.
+#    # ra dec can only be in a specific range
+
+#    # Going from DEG -> RAD
+#    ra = np.deg2rad(ra)
+#    dec = np.deg2rad(dec)
+
+#    # from kpc -> pc
+#    k1 = transformation_constants.k1
+
+#    # Declaring constants to reduce process time
+#    c1 = k1/w
+#    cosdec = np.cos(dec)
+
+#    # Initial cartesian coordinate vector in ICRS
+#    coordxyz_ICRS = np.array([[(c1)*np.cos(ra)*cosdec],
+#                      [(c1)*np.sin(ra)*cosdec],
+#                       [(c1)*np.sin(dec)]])
+
+#    # Using M1, M2, M3 for transparency in case of bugs
+#    M1 = transformation_constants.A @ coordxyz_ICRS
+#    M2 = M1 - np.array([[r_0], 
+#                        [0], 
+#                        [0]])
+#    M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
+
+#    result = (M3[0][0], M3[1][0], M3[2][0])
+
+#    return result
+
+#def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0, v_sun):
+    
+#    # Going from DEG -> RAD
+#    ra = np.deg2rad(ra)
+#    dec = np.deg2rad(dec)
+
+#    # from 1/yr -> km/s
+#    k2 = transformation_constants.k2
+
+#    # Declaring constants to reduce process time
+#    c2 = k2/w
+
+#    # Initial velocity vector in ICRS in units km/s
+#    v_ICRS = np.array([[v_r],
+#                      [(c2)*mu_ra],
+#                      [(c2)*mu_dec]])
+
+#    B = transformation_constants.get_b_matrix(ra, dec)
+
+#    # Using M1, M2, M3, .. for transparency in case of bugs
+#    M1 = B @ v_ICRS
+#    M2 = transformation_constants.A @ M1
+#    M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
+#    M4 = M3 + v_sun
+
+#    result = (M4[0][0], M4[1][0], M4[2][0])
+
+#    return result
+
+#def transform_velocities_cylindrical(velocities, phi):
+
+#    v_cylindrical = transformation_constants.get_cylindrical_velocity_matrix(phi) @ velocities
+
+#    return v_cylindrical
+
+
+
