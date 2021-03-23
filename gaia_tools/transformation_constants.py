@@ -65,26 +65,37 @@ def get_H_matrix(Z_0, R_0):
 
 def get_b_matrix(ra, dec):
 
+    n = len(ra)
+
     # Defining constants to reduce process time
     cosra = np.cos(ra)
     cosdec = np.cos(dec)
     sinra = np.sin(ra)
     sindec = np.sin(dec)
 
-
     B = np.array([[cosra*cosdec, -sinra, -cosra*sindec],
              [sinra*cosdec, cosra, -sinra*sindec],
-             [sindec, 0, cosdec]])
+             [sindec, np.zeros(n), cosdec]])
+
+    B = B.T.reshape(n,3,3, order = 'A').swapaxes(1,2)
+
+    # Returns array of B matrices - one for each data point
     return B
 
 def get_cylindrical_velocity_matrix(phi):
    
-    sin_phi = np.sin(phi)
-    cos_phi = np.cos(phi)
+    n = len(phi)
 
-    M = np.array([[cos_phi, sin_phi, 0],
-             [-sin_phi, cos_phi, 0],
-             [0, 0, 1]])
+    sin_phi = np.sin(phi).ravel()
+    cos_phi = np.cos(phi).ravel()
+
+    M = np.array([[cos_phi, sin_phi, np.zeros(n)],
+         [-sin_phi, cos_phi, np.zeros(n)],
+         [np.zeros(n), np.zeros(n), np.ones(n)]])
+
+    M = M.T.reshape(n,3,3, order = 'A').swapaxes(1,2)
+
+    # Returns array of matrices - one for each data point
     return M
 
 
