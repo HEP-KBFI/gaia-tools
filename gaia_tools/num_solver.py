@@ -17,27 +17,15 @@ def objective_function(params, v_i, s_i):
     
     n = len(v_i)
     
-    def sub_sum():
+    denom_array = (sigma**2 + s_i**2)**(-1)
 
-        a = np.array([v_i[i]*denom_sum(i) for i in range(n)]).sum()
+    a = (v_i*denom_array).sum()
+    b = denom_array.sum()
 
-        b = np.array([denom_sum(i) for i in range(n)]).sum()
+    result_1 = (((v_i-a/b)**2)*(denom_array)**2).sum()
 
-        return a, b
-
-
-    def denom_sum(i):
-
-        sum_component = 1/(sigma**2 + s_i[i]**2)
-
-        return sum_component
-    
-    a, b = sub_sum()
-    
-    result_1 = np.array([ ((v_i[i] - a/b)**2)/((sigma**2 + s_i[i]**2))**2 for i in range(n)]).sum()
-    
     result_2 = b
-    
+
     return -result_1 + result_2
 
 
@@ -56,14 +44,9 @@ def get_MLE_mu(sigma, v_i, s_i):
     
     n = len(v_i)
     
-    def denom_sum(i):
+    denom_array = (sigma**2 + s_i**2)**(-1)
 
-        sum_component = 1/(sigma**2 + s_i[i]**2)
-
-        return sum_component
-    
-    a = np.array([v_i[i]*denom_sum(i) for i in range(n)]).sum()
-
-    b = np.array([denom_sum(i) for i in range(n)]).sum()
+    a = (v_i*denom_array).sum()
+    b = denom_array.sum()
     
     return a/b
