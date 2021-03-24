@@ -99,7 +99,7 @@ def get_cylindrical_velocity_matrix(phi):
     return M
 
 
-def get_jacobian_new(df, coordinate_system, Z_0, R_0):
+def get_jacobian(df, coordinate_system, Z_0, R_0):
 
     n = len(df)
     

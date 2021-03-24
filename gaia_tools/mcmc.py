@@ -193,7 +193,12 @@ class MCMCLooper:
 
         '''
     
-        v_sun = (theta[2], theta[3], theta[4] )
+        
+
+        v_sun = np.array([[theta[2]], 
+                          [theta[3]], 
+                          [theta[4]]])
+
 
         galcen_data = data_analysis.get_transformed_data(self.icrs_data, 
                                                          include_cylindrical = True, 
@@ -295,7 +300,7 @@ class MCMCLooper:
 
         self.result = sampler
 
-        return True
+        return sampler
 
     def drop_burn_in(self, discard = 100, thin = 15, flat=True):
 
@@ -315,6 +320,7 @@ class MCMCLooper:
         
         nwalkers = self.nwalkers
         ndim = self.ndim
+
         # Init starting point for all walkers
         pos = self.theta_0 + 1e-4 * np.random.randn(nwalkers, ndim)
 
@@ -331,6 +337,6 @@ class MCMCLooper:
 
             self.result = sampler
 
-            return True
+            return sampler
 
 

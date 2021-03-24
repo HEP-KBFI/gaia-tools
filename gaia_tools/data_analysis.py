@@ -287,7 +287,8 @@ def get_transformed_data(data_icrs,
 
     #endregion
 
-        
+    
+
     
     coords_df = pd.DataFrame(np.squeeze(coords, axis=2), columns="x y z".split())
     velocities_df = pd.DataFrame(np.squeeze(velocities, axis=2), columns="v_x v_y v_z".split())
@@ -390,6 +391,8 @@ def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constant
     M1 = B @ v_ICRS
     M2 = transformation_constants.A @ M1
     M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
+
+    # Return is a np.array of shape (n,3,1)
     M4 = M3 + v_sun
 
     return M4
@@ -420,6 +423,11 @@ def main():
     # Get ICRS data
     df = import_data(path = my_path, debug = True)
 
+    # Testing MCMC Functions
+    from tests import MCMCFunction_Test
+    MCMCFunction_Test(df)
+    return 
+
     # Transform data
     galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
     
@@ -437,10 +445,8 @@ def main():
     # Bin data
     bins = bin_data(galcen2, show_bins = False, N_bins = (10, 10))
 
-    from tests import MCMCFunction_Test
 
-    # Testing MCMC Functions
-    MCMCFunction_Test(df,bins)
+    
 
     display_bins(bins, projection_parameter = 'v_x', mode='index')
     

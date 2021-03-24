@@ -132,7 +132,7 @@ def generate_covmat(df):
 def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0):
 
     # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).
-    J = get_jacobian_new(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
+    J = transformation_constants.get_jacobian(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
  
     J_trunc= J.reshape(len(df),6,6, order = 'A').swapaxes(1,2)
 
