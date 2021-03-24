@@ -273,7 +273,7 @@ def get_transformed_data(data_icrs,
     #region Transforming
 
     # Coordinate vector in galactocentric frame in xyz
-    coords = coordinate_transform(data_icrs, z_0, r_0)
+    coords =  transform_coordinates_galactocentric(data_icrs, z_0, r_0)
 
     # Velocity vector in galactocentric frame in xyz
     velocities = transform_velocities_galactocentric(data_icrs, z_0, r_0, v_sun) 
