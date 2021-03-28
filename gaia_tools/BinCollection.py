@@ -2,6 +2,8 @@ from .Bin import Bin
 import numpy as np
 import pandas as pd
 import math
+import time, timeit
+
 '''
 A collection of spatially binned ("Bin") objects.
 
@@ -34,13 +36,16 @@ class BinCollection:
         self.bins = []
         self.N_bins = N_bins
         self.mode = mode
+
         if(mode == 'xyz'):
             self.bin_boundaries = XX, YY, ZZ
+
         if(mode == 'r-z'):
             self.bin_boundaries = XX, YY
 
         self.bin_num_set = set(data.Bin_index)
         self.debug = debug
+        self.load_bin_boundaries()
         
 
     '''
@@ -94,17 +99,27 @@ class BinCollection:
             self.bins.append(Bin(data_subset))
             row_count += 1
             bin_index += 1
-               
+           
         # END Bin Generating
 
-        '''
-        Assign boundaries to pre-loaded bins from bottom -> top column wise
 
-        XX - 2D array mapping out x-coordinate values for each step of y-coordinates.
-        YY - 2D array mapping out y-coordinate values for each step of x-coordinates.
 
-        XX and YY both have shape (nrows, ncols)
-        '''
+
+    '''
+    Assign boundaries to pre-loaded bins from bottom -> top column wise
+
+    XX - 2D array mapping out x-coordinate values for each step of y-coordinates.
+    YY - 2D array mapping out y-coordinate values for each step of x-coordinates.
+
+    XX and YY both have shape (nrows, ncols)
+    '''
+    def load_bin_boundaries(self):
+
+
+        if(self.debug):
+            print("Loading bin collection boundaries.")
+            tic=timeit.default_timer()
+
         XX = self.bin_boundaries[0]
         YY = self.bin_boundaries[1]
         
@@ -139,7 +154,11 @@ class BinCollection:
                     if(self.mode == 'xyz'):
                         self.bins[count].z_boundaries = temp_z
 
-                    count = count + 1  
+                    count = count + 1
+
+        if(self.debug):
+            toc=timeit.default_timer()
+            print("Bin collection boundaries loaded in {a}.".format(a=toc-tic))
                
     '''
     Calculates a value inside each bin and returns a numpy array which can be plotted using 

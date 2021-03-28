@@ -65,31 +65,44 @@ def get_H_matrix(Z_0, R_0):
 
 def get_b_matrix(ra, dec):
 
+    n = len(ra)
+
     # Defining constants to reduce process time
     cosra = np.cos(ra)
     cosdec = np.cos(dec)
     sinra = np.sin(ra)
     sindec = np.sin(dec)
 
-
     B = np.array([[cosra*cosdec, -sinra, -cosra*sindec],
              [sinra*cosdec, cosra, -sinra*sindec],
-             [sindec, 0, cosdec]])
+             [sindec, np.zeros(n), cosdec]])
+
+    B = B.T.reshape(n,3,3, order = 'A').swapaxes(1,2)
+
+    # Returns array of B matrices - one for each data point
     return B
 
 def get_cylindrical_velocity_matrix(phi):
    
-    sin_phi = np.sin(phi)
-    cos_phi = np.cos(phi)
+    n = len(phi)
 
-    M = np.array([[cos_phi, sin_phi, 0],
-             [-sin_phi, cos_phi, 0],
-             [0, 0, 1]])
+    sin_phi = np.sin(phi).ravel()
+    cos_phi = np.cos(phi).ravel()
+
+    M = np.array([[cos_phi, sin_phi, np.zeros(n)],
+         [-sin_phi, cos_phi, np.zeros(n)],
+         [np.zeros(n), np.zeros(n), np.ones(n)]])
+
+    M = M.T.reshape(n,3,3, order = 'A').swapaxes(1,2)
+
+    # Returns array of matrices - one for each data point
     return M
 
 
-def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
+def get_jacobian(df, coordinate_system, Z_0, R_0):
 
+    n = len(df)
+    
     if(coordinate_system == "Cartesian"):
 
         if(Z_0/R_0 is None):
@@ -100,12 +113,12 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
 
         # TODO: Implement exception handling!
 
-        ra = sub_df.ra
-        dec = sub_df.dec
-        parallax = sub_df.parallax
-        mu_ra = sub_df.pmra
-        mu_dec = sub_df.pmdec
-        v_r = sub_df.radial_velocity
+        ra = df.ra
+        dec = df.dec
+        parallax = df.parallax
+        mu_ra = df.pmra
+        mu_dec = df.pmdec
+        v_r = df.radial_velocity
 
         # Constants to improve readability
         c1 = k1/parallax
@@ -129,23 +142,23 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
         J11 = c1*(-sin_ra*(A[0,0]*cos_theta + A[2,0]*sin_theta) + cos_ra*(A[0,1]*cos_theta + A[2,1]*sin_theta))
         J12 = c1*(cos_dec*(A[0,2]*cos_theta + A[2,2]*sin_theta) - cos_dec*(cos_ra*(A[0,0]*cos_theta + A[2,0]*sin_theta) + sin_ra*(A[0,1]*cos_theta + A[2,1]*sin_theta)))
         J13 = c2*(cos_ra*cos_dec*(A[0,0]*cos_theta + A[2,0]*sin_theta) + sin_ra*cos_dec*(A[0,1]*cos_theta + A[2,1]*sin_theta) + cos_dec*(A[0,2]*cos_theta + A[2,2]*sin_theta))
-        J14 = 0
-        J15 = 0
-        J16 = 0
+        J14 = np.zeros(n)
+        J15 = np.zeros(n)
+        J16 = np.zeros(n)
     
         J21 = c1*(-A[1,0]*sin_ra + A[1,1]*cos_ra) 
         J22 = c1*(-cos_dec*(A[1,0]*cos_ra + A[1,1]*sin_ra) + A[1,2]*cos_dec)
         J23 = c2*(cos_dec*(A[1,0]*cos_ra + A[1,1]*sin_ra) + A[1,2]*cos_dec)
-        J24 = 0
-        J25 = 0
-        J26 = 0
+        J24 = np.zeros(n)
+        J25 = np.zeros(n)
+        J26 = np.zeros(n)
 
         J31 = c1*(-sin_theta*(A[0,1]*cos_ra - A[0,0]*sin_ra) + cos_theta*(A[2,1]*cos_ra - A[2,0]*sin_ra))
         J32 = -c1*(cos_dec*(cos_ra*(A[0,0]*sin_theta - A[2,0]*cos_theta) + sin_ra*(A[0,1]*sin_theta - A[2,1]*cos_theta)) + cos_dec*(A[2,2]*cos_theta - A[0,2]*sin_theta))
         J33 = c2*(cos_ra*cos_dec*(A[2,0]*cos_theta - A[0,0]*sin_theta) + sin_ra*cos_dec*(A[2,1]*cos_theta - A[0,1]*sin_theta) + cos_dec*(A[2,2]*cos_theta - A[0,2]*sin_theta))
-        J34 = 0
-        J35 = 0
-        J36 = 0
+        J34 = np.zeros(n)
+        J35 = np.zeros(n)
+        J36 = np.zeros(n)
 
         J41 = (sin_ra*(-cos_dec*v_r + cos_dec*c3*mu_dec) - cos_ra*c3*mu_ra)*(A[0,0]*cos_theta + A[2,0]*sin_theta) + (cos_ra*(cos_dec*v_r - cos_dec*c3*mu_dec) - sin_ra*c3*mu_ra)*(A[0,1]*cos_theta + A[2,1]*sin_theta)
         J42 = cos_ra*(-cos_dec*v_r - cos_dec*c3*mu_dec)*(A[0,0]*cos_theta + A[2,0]*sin_theta) + sin_ra*(-cos_dec*v_r - cos_dec*c3*mu_dec)*(A[0,1]*cos_theta + A[2,1]*sin_theta) + (cos_dec*v_r - cos_dec*c3*mu_dec)*(A[0,2]*cos_theta + A[2,2]*sin_theta)
@@ -174,6 +187,9 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
                         [J41, J42, J43, J44, J45, J46],
                         [J51, J52, J53, J54, J55, J56],
                         [J61, J62, J63, J64, J65, J66]])
+        
+        J = J.T.reshape(n,6,6, order = 'A').swapaxes(1,2)
+        
 
     elif(coordinate_system == "Cylindrical"):
 
@@ -181,12 +197,12 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
 
 
 
-        x = sub_df.x
-        y = sub_df.y
-        r = sub_df.r
-        phi = sub_df.phi
-        v_r = sub_df.v_r
-        v_phi = sub_df.v_phi
+        x = df.x
+        y = df.y
+        r = df.r
+        phi = df.phi
+        v_r = df.v_r
+        v_phi = df.v_phi
 
     
         c1 = x/(r**2)
@@ -198,45 +214,45 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
 
         J11 = x/r
         J12 = y/r
-        J13 = 0
-        J14 = 0
-        J15 = 0
-        J16 = 0
+        J13 = np.zeros(n)
+        J14 = np.zeros(n)
+        J15 = np.zeros(n)
+        J16 = np.zeros(n)
     
         J21 = -c2 
         J22 = c1
-        J23 = 0
-        J24 = 0
-        J25 = 0
-        J26 = 0
+        J23 = np.zeros(n)
+        J24 = np.zeros(n)
+        J25 = np.zeros(n)
+        J26 = np.zeros(n)
 
-        J31 = 0
-        J32 = 0
-        J33 = 1
-        J34 = 0
-        J35 = 0
-        J36 = 0
+        J31 = np.zeros(n)
+        J32 = np.zeros(n)
+        J33 = np.ones(n)
+        J34 = np.zeros(n)
+        J35 = np.zeros(n)
+        J36 = np.zeros(n)
 
         J41 = -v_phi*c2
         J42 = v_phi*c1
-        J43 = 0 
+        J43 = np.zeros(n)
         J44 = cos_phi
         J45 = sin_phi
-        J46 = 0
+        J46 = np.zeros(n)
 
         J51 = v_r*c2
         J52 = -v_r*c1
-        J53 = 0 
+        J53 = np.zeros(n) 
         J54 = -sin_phi
         J55 = cos_phi
-        J56 = 0
+        J56 = np.zeros(n)
 
-        J61 = 0
-        J62 = 0
-        J63 = 0
-        J64 = 0
-        J65 = 0
-        J66 = 1
+        J61 = np.zeros(n)
+        J62 = np.zeros(n)
+        J63 = np.zeros(n)
+        J64 = np.zeros(n)
+        J65 = np.zeros(n)
+        J66 = np.ones(n)
         
         J = np.array([[J11, J12, J13, J14, J15, J16],
                         [J21, J22, J23, J24, J25, J26],
@@ -244,5 +260,8 @@ def get_jacobian(sub_df, coordinate_system, Z_0, R_0):
                         [J41, J42, J43, J44, J45, J46],
                         [J51, J52, J53, J54, J55, J56],
                         [J61, J62, J63, J64, J65, J66]])
+        
+        
+        J = J.T.reshape(n,6,6, order = 'A').swapaxes(1,2)
 
     return J

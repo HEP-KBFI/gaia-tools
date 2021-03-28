@@ -1,7 +1,9 @@
 '''
 A module containing various testing and benchmark functions.
 '''
-
+from .mcmc import MCMCLooper
+from . import transformation_constants
+from .data_plot import display_walkers, generate_corner_plot
 from .import_functions import import_data
 from .data_analysis import *
 
@@ -72,16 +74,7 @@ def astropy_timer_benchmark():
     print("<!----------------------------------------------!>")
 
 
-
-'''
-MCMC loop test function.
-
-Expects a BinCollection object as data!
-df - DataFrame with ICRS data for mcmc looper object.
-'''
-
-def MCMCFunction_Test(df, data):
-     
+def MLE_Function_Test(df, data):
 
     # Check get_parameter_data function
     a = data.bins[65].get_parameter_data('v_phi')
@@ -123,28 +116,62 @@ def MCMCFunction_Test(df, data):
 
     print("Check!")
 
+'''
+MCMC loop test function.
+
+Expects a BinCollection object as data!
+df - DataFrame with ICRS data for mcmc looper object.
+'''
+
+def MCMCFunction_Test(df):
+     
+
     print("Starting MCMC Loop")
-    from .mcmc import MCMCLooper
-    from . import transformation_constants
+    
     
     # This section right here is an example how to use the module elsewhere.
     theta_0 = (transformation_constants.R_0, transformation_constants.Z_0, transformation_constants.V_SUN[0][0], transformation_constants.V_SUN[1][0], transformation_constants.V_SUN[2][0])
 
-    looper = MCMCLooper(df, theta_0)
+    looper = MCMCLooper(df, theta_0, nwalkers=16, ndim=5, debug = True)
     looper.run_sampler()
 
-    from .data_plot import display_walkers, generate_corner_plot
+    #looper.run_sampler_multicore(processes = 16)
+
     display_walkers(looper.result)
 
     # To get flat results with burn in discarded
     flat_result = looper.drop_burn_in()
 
     print("Going to generate corner plot, see return for fig")
-    fig = generate_corner_plot(flat_result, ['r', 'z', 'u', 'v', 'w'])
+    #fig = generate_corner_plot(flat_result, ['r', 'z', 'u', 'v', 'w'])
 
     print("Check!")
 
-    return fig
+    return
+
+
+def MCMCFunction_Test_Multi(df):
+     
+
+    print("Starting MCMC Loop")
+ 
+    # This section right here is an example how to use the module elsewhere.
+    theta_0 = (transformation_constants.R_0, transformation_constants.Z_0, transformation_constants.V_SUN[0][0], transformation_constants.V_SUN[1][0], transformation_constants.V_SUN[2][0])
+
+    looper = MCMCLooper(df, theta_0, nwalkers=16, ndim=5, debug = True)
+    looper.run_sampler()
+
+    looper.run_sampler_multicore(processes = 16)
+
+    # To get flat results with burn in discarded
+    flat_result = looper.drop_burn_in()
+
+    print("Going to generate corner plot, see return for fig")
+    #fig = generate_corner_plot(flat_result, ['r', 'z', 'u', 'v', 'w'])
+
+    print("Check!")
+
+    return
 
 
 if __name__ == "__main__":
