@@ -192,6 +192,9 @@ class BinCollection:
                     elif(mode =='index'):
                         temp_val = self.bins[count].bin_num
 
+                    elif(mode == 'count'):
+                        temp_val = len(self.bins[count].data)
+
                     else:
                         print("Mode not given!")
                     
