@@ -84,7 +84,7 @@ class Bin:
         except:
             if(debug):
                 print("No error data was found inside bin!")
-            return 0.0
+            return -np.inf
 
         assert sig != None, "No variance found in bin, oh no!"
         assert mu != None, "No mean found in bin, oh no!"
