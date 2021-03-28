@@ -45,7 +45,7 @@ class BinCollection:
 
         self.bin_num_set = set(data.Bin_index)
         self.debug = debug
-        self.load_bin_boundaries()
+        
         
 
     '''
@@ -113,52 +113,52 @@ class BinCollection:
 
     XX and YY both have shape (nrows, ncols)
     '''
-    def load_bin_boundaries(self):
+    
 
 
-        if(self.debug):
-            print("Loading bin collection boundaries.")
-            tic=timeit.default_timer()
+    if(self.debug):
+        print("Loading bin collection boundaries.")
+        tic=timeit.default_timer()
 
-        XX = self.bin_boundaries[0]
-        YY = self.bin_boundaries[1]
-        
-        if(self.mode == 'xyz'):
-            # Get slice of data height in terms of z-coordinate span
-            temp_z = self.bin_boundaries[2]
+    XX = self.bin_boundaries[0]
+    YY = self.bin_boundaries[1]
+    
+    if(self.mode == 'xyz'):
+        # Get slice of data height in terms of z-coordinate span
+        temp_z = self.bin_boundaries[2]
 
-        count = 0
+    count = 0
 
-        # For j in range of columns: -1 because we look at binwise not edgewise
-        for j in range(XX.shape[1]-1):
+    # For j in range of columns: -1 because we look at binwise not edgewise
+    for j in range(XX.shape[1]-1):
 
-                # For i in range of rows: again binwise
-                for i in range(YY.shape[0]-1):
+            # For i in range of rows: again binwise
+            for i in range(YY.shape[0]-1):
 
 
-                    # Grabs adjacent bin edges in the x-direction
-                    temp_x = (XX[0][j], XX[0][j+1])
+                # Grabs adjacent bin edges in the x-direction
+                temp_x = (XX[0][j], XX[0][j+1])
 
-                    # Grabs adjacent bin edges in the y-direction
-                    temp_y = (YY.T[0][i], YY.T[0][i+1])
+                # Grabs adjacent bin edges in the y-direction
+                temp_y = (YY.T[0][i], YY.T[0][i+1])
 
-                    # Assign boundaries to bin objects
-                    if(self.mode == 'r-z'):
-                        self.bins[count].r_boundaries = temp_x
-                        self.bins[count].z_boundaries = temp_y
+                # Assign boundaries to bin objects
+                if(self.mode == 'r-z'):
+                    self.bins[count].r_boundaries = temp_x
+                    self.bins[count].z_boundaries = temp_y
 
-                    else:
-                        self.bins[count].x_boundaries = temp_x
-                        self.bins[count].y_boundaries = temp_y
+                else:
+                    self.bins[count].x_boundaries = temp_x
+                    self.bins[count].y_boundaries = temp_y
 
-                    if(self.mode == 'xyz'):
-                        self.bins[count].z_boundaries = temp_z
+                if(self.mode == 'xyz'):
+                    self.bins[count].z_boundaries = temp_z
 
-                    count = count + 1
+                count = count + 1
 
-        if(self.debug):
-            toc=timeit.default_timer()
-            print("Bin collection boundaries loaded in {a}.".format(a=toc-tic))
+    if(self.debug):
+        toc=timeit.default_timer()
+        print("Bin collection boundaries loaded in {a}.".format(a=toc-tic))
                
     '''
     Calculates a value inside each bin and returns a numpy array which can be plotted using 
