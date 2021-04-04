@@ -110,12 +110,18 @@ def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n
 '''
 A function that displays the specific numerical values inside each bin.
 '''
-def display_values(XX, YY, H):
+def display_values(XX, YY, H, mode):
     for i in range(YY.shape[0]-1):
         for j in range(XX.shape[1]-1):
-            plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
-                 horizontalalignment='center',
-                 verticalalignment='center')
+            
+            if mode != 'count':
+                plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
+                     horizontalalignment='center',
+                     verticalalignment='center')
+            else:
+                plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.0f' % H.T[i, j],
+                     horizontalalignment='center',
+                     verticalalignment='center')
 
 '''
 A plot which enables the user to see the bins created by the 'bin_data' functions in the 
@@ -159,27 +165,43 @@ def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = Tr
     parameter = projection_parameter
 
     XX, YY = bin_collection.bin_boundaries[0:2]
-
+    
     values = bin_collection.CalculateValues(parameter, mode = mode)
 
 
-    fig = plt.figure(figsize = (10,10))
+    fig = plt.figure(figsize = (20,10))
     ax1=plt.subplot(111)
     plot1 = ax1.pcolormesh(XX,YY,values.T)
     
     if(showBinValues):
-        display_values(XX, YY, values)
+        display_values(XX, YY, values, mode)
 
     # Fix unit displaying later on!
+    #cbar = plt.colorbar(plot1,ax=ax1, 
+                        #pad = .015, 
+                        #aspect=20, 
+                        #label='R-Z Bins {0} [{1}]'.format(parameter, 'a.u.'))
+
     cbar = plt.colorbar(plot1,ax=ax1, 
                         pad = .015, 
                         aspect=20, 
-                        label='R-Z Bins {0} [{1}]'.format(parameter, 'a.u.'))
-
+                        label='Count in r-z bin')
+    
+    plt.xticks(XX[0])
+    plt.yticks(YY.T[0])
+    
+    
+    #plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    #plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    #ax1.set_xlabel('$r$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
+    #ax1.set_ylabel('$z$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
+    
+    
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-    ax1.set_xlabel('$r$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
-    ax1.set_ylabel('$z$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
+    ax1.set_xlabel('r - R0 [pc]' , fontdict={'fontsize': 18})
+    ax1.set_ylabel('z [pc]', fontdict={'fontsize': 18})
+    
     
     plt.title("Collapsed Bins in r-z Plane", pad=20, fontdict={'fontsize': 20})
 
@@ -306,7 +328,7 @@ def arrowed_spines(fig, ax):
     xmin, xmax = ax.get_xlim() 
     ymin, ymax = ax.get_ylim()
 
-    ax.spines["left"].set_position(("data", 0.))
+    ax.spines["left"].set_position(("data", xmin))
     ax.spines["right"].set_position(("data", xmax))
     
     # removing the default axis on all sides:
@@ -330,15 +352,15 @@ def arrowed_spines(fig, ax):
     yhl = hl/(xmax-xmin)*(ymax-ymin)* width/height
 
     # draw x and y axis
-    ax.arrow(0., 0., xmax-xmin, 0., fc='black', ec='black', lw = lw, 
+    ax.arrow(xmin, 0., xmax-xmin, 0., fc='black', ec='black', lw = lw, 
              head_width=hw, head_length=hl, overhang = ohg, 
              length_includes_head= True, clip_on = False) 
 
-    ax.arrow(0, 0, 0., (ymax-ymin)/2, fc='k', ec='k', lw = lw, 
+    ax.arrow(xmin, 0, 0., (ymax-ymin)/2, fc='k', ec='k', lw = lw, 
              head_width=yhw, head_length=yhl, overhang = ohg, 
              length_includes_head= True, clip_on = False)
     
-    ax.arrow(0, 0, 0., (ymin-ymax)/2, fc='k', ec='k', lw = lw, 
+    ax.arrow(xmin, 0, 0., (ymin-ymax)/2, fc='k', ec='k', lw = lw, 
              head_width=yhw, head_length=yhl, overhang = ohg, 
              length_includes_head= True, clip_on = False)
 

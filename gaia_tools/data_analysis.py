@@ -167,7 +167,7 @@ data - dataframe with data
 N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
-def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10), debug=False):
+def get_collapsed_bins(data, theta, BL_r_min, BL_r_max,  BL_z, N_bins = (10, 10), r_drift = False, debug=False):
     
     # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
@@ -180,24 +180,46 @@ def get_collapsed_bins(data, BL_r, BL_z, N_bins = (10, 10), debug=False):
         import time, timeit
         tic=timeit.default_timer()
         print("Binning data from galactocentric input data...")
+        print("Max r value in DataFrame {0}".format(np.max(data.r)))
 
     # Fix for newly developed method
     plottable_df = data
-
-    # Define spatial limits.
-    plottable_df = plottable_df[(plottable_df.r >= -BL_r) & (plottable_df.r <= BL_r)]
-    plottable_df = plottable_df[(plottable_df.z >= -BL_z) & (plottable_df.z <= BL_z)]
-
-    # r and z parameters of points loaded into Series
-    r = plottable_df.r
-    z = plottable_df.z
+    
+    # Setup adimensional binning
+    if(r_drift):
+        
+        # r and z parameters of points loaded into Series
+        r = plottable_df.r - theta[0]
+        z = plottable_df.z
+        
+        if(debug):
+            
+            excluded_df = plottable_df[plottable_df.r - theta[0] > BL_r_max]
+            print("Points drifted in r + direction {0}".format(len(excluded_df)))
+            
+            excluded_df2 = plottable_df[plottable_df.r - theta[0] < BL_r_min]
+            print("Points drifted in r - direction {0}".format(len(excluded_df2)))
+            
+            excluded_df2 = plottable_df[plottable_df.z < -BL_z]
+            print("Points drifted in z - direction {0}".format(len(excluded_df2)))
+            
+            excluded_df2 = plottable_df[plottable_df.z > BL_z]
+            print("Points drifted in z - direction {0}".format(len(excluded_df2)))
+            
+    else:
+        
+        # r and z parameters of points loaded into Series
+        r = plottable_df.r
+        z = plottable_df.z
 
     # Velocity projections of points: NOT NEEDED
     c = plottable_df.v_phi
 
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[0, BL_r], [-BL_z, BL_z]], bins=N_bins, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[BL_r_min, BL_r_max], [-BL_z, BL_z]], bins=N_bins, statistic='mean')
 
+    print(binnumber.shape)
+    
     # Create a meshgrid from the vertices: X, Y -> R, Z
     XX, YY = np.meshgrid(xedges, yedges)
     
