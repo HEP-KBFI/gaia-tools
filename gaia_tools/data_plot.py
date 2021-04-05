@@ -406,6 +406,18 @@ def generate_corner_plot(flat_samples, theta_labels):
     return fig
 
 
+def display_polar_coordinates(phi, r):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='polar')
+    c = ax.scatter(phi, r, cmap='hsv', alpha=0.5)
+
+    plt.title("Polar Coordinates", pad=20, fontdict={'fontsize': 20})
+    plt.show()
+
+    return fig
+
+
 
 
 

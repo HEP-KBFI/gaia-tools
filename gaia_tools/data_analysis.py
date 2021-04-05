@@ -167,7 +167,7 @@ data - dataframe with data
 N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
-def get_collapsed_bins(data, theta, BL_r_min, BL_r_max,  BL_z, N_bins = (10, 10), r_drift = False, debug=False):
+def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z, N_bins = (10, 10), r_drift = False, debug=False):
     
     # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
@@ -302,16 +302,14 @@ def get_transformed_data(data_icrs,
     
     if(include_cylindrical):
 
-        phi = coords[:,1]/coords[:,0]
+        # Using arctan2 which is defined in range [-pi ; pi]
+        phi = np.arctan2(coords[:,1],coords[:,0])
         vel_cyl = transform_velocities_cylindrical(velocities, phi)
 
         cyl_coords = (np.sqrt(coords[:,0]**2 + coords[:,1]**2), np.arctan(phi))
 
     #endregion
 
-    
-
-    
     coords_df = pd.DataFrame(np.squeeze(coords, axis=2), columns="x y z".split())
     velocities_df = pd.DataFrame(np.squeeze(velocities, axis=2), columns="v_x v_y v_z".split())
 
