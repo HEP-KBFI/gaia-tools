@@ -419,5 +419,48 @@ def display_polar_coordinates(phi, r):
 
 
 
+def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000):
+
+    from astropy.visualization.mpl_normalize import ImageNormalize
+    from astropy.visualization import LogStretch
+
+    # Init Data
+    phi = galcen_data.phi
+    r = galcen_data.r
+
+    # Init Bins
+    rbins = np.linspace(0,r.max(), n_bins)
+    abins = np.linspace(-np.pi,np.pi, n_bins)
+
+    norm_hist2d = ImageNormalize(vmin=0., vmax=norm_max, stretch=LogStretch())
+
+    fig = plt.figure(figsize=(10, 10), facecolor='white')
+    
+    ax = fig.add_subplot(111, projection='polar')
+    plt.hist2d(phi, r, bins=(abins, rbins), norm = norm_hist2d)
+
+    plt.title("Polar Plot of Data Density", pad=20, fontdict={'fontsize': 20})
+    
+    plt.ylim(0, 12000)
+
+    # Set r label background color to black
+    plt.setp(ax.get_yticklabels(), backgroundcolor="black")
+
+    # Set r label font color to white
+    ax.tick_params(axis="y", colors="white")
+
+    # Configure angle labels
+    ax.set_thetamin(360)
+    ax.set_thetamax(0)
+
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel('Number of stars in bin')
+
+    plt.grid()
+    plt.show()
+    
+    return fig
+
+
 
 
