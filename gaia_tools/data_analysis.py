@@ -306,7 +306,7 @@ def get_transformed_data(data_icrs,
         phi = np.arctan2(coords[:,1],coords[:,0])
         vel_cyl = transform_velocities_cylindrical(velocities, phi)
 
-        cyl_coords = (np.sqrt(coords[:,0]**2 + coords[:,1]**2), np.arctan(phi))
+        cyl_coords = (np.sqrt(coords[:,0]**2 + coords[:,1]**2), phi)
 
     #endregion
 
