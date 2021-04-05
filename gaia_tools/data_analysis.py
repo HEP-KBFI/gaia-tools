@@ -218,7 +218,6 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z, N_bins = (10, 10),
     # Calling the actual binning function
     H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[BL_r_min, BL_r_max], [-BL_z, BL_z]], bins=N_bins, statistic='mean')
 
-    print(binnumber.shape)
     
     # Create a meshgrid from the vertices: X, Y -> R, Z
     XX, YY = np.meshgrid(xedges, yedges)
