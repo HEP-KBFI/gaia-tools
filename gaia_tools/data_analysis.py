@@ -167,7 +167,7 @@ data - dataframe with data
 N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
-def get_collapsed_bins(data, theta, BL_r_min, BL_r_max,  BL_z, N_bins = (10, 10), r_drift = False, debug=False):
+def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z, N_bins = (10, 10), r_drift = False, debug=False):
     
     # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
