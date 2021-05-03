@@ -89,14 +89,13 @@ class Bin:
         assert sig != None, "No variance found in bin, oh no!"
         assert mu != None, "No mean found in bin, oh no!"
 
-        def sum_func(i):
-    
-            sum_result = np.log(sig**2 + error_array[i]) - ((velocity_array[i] - mu)**2)/((sig**2 + error_array[i]))
-            
-            return sum_result
-    
-        result = -0.5 * np.array([sum_func(i) for i in range(0, n)]).sum()
-    
+        denom_array = (sig**2 + error_array**2)**(-1)
+
+        add1 = (np.log(denom_array**(-1))).sum()
+
+        add2 = (((velocity_array - mu)**2)*denom_array).sum()
+
+        result = -0.5*(add1 + add2)
         
 
         return result

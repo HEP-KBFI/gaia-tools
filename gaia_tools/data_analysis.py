@@ -167,7 +167,7 @@ data - dataframe with data
 N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
-def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z, N_bins = (10, 10), r_drift = False, debug=False):
+def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bins = (10, 10), r_drift = False, debug=False):
     
     # This assertion doesnt make sense, fix it later 
     assert len(data.shape) > 0, "No data!"
@@ -190,7 +190,7 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z, N_bins = (10, 10),
         
         # r and z parameters of points loaded into Series
         r = plottable_df.r - theta[0]
-        z = plottable_df.z
+        z = plottable_df.z - theta[1]
         
         if(debug):
             
@@ -200,10 +200,10 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z, N_bins = (10, 10),
             excluded_df2 = plottable_df[plottable_df.r - theta[0] < BL_r_min]
             print("Points drifted in r - direction {0}".format(len(excluded_df2)))
             
-            excluded_df2 = plottable_df[plottable_df.z < -BL_z]
+            excluded_df2 = plottable_df[plottable_df.z - theta[1] < BL_z_min]
             print("Points drifted in z - direction {0}".format(len(excluded_df2)))
             
-            excluded_df2 = plottable_df[plottable_df.z > BL_z]
+            excluded_df2 = plottable_df[plottable_df.z - theta[1] > BL_z_max]
             print("Points drifted in z - direction {0}".format(len(excluded_df2)))
             
     else:
@@ -216,7 +216,7 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z, N_bins = (10, 10),
     c = plottable_df.v_phi
 
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[BL_r_min, BL_r_max], [-BL_z, BL_z]], bins=N_bins, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[BL_r_min, BL_r_max], [BL_z_min, BL_z_max]], bins=N_bins, statistic='mean')
 
     print(binnumber.shape)
     
