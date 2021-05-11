@@ -110,7 +110,7 @@ def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n
 '''
 A function that displays the specific numerical values inside each bin.
 '''
-def display_values(XX, YY, H, mode):
+def display_values(XX, YY, H, mode = None):
     for i in range(YY.shape[0]-1):
         for j in range(XX.shape[1]-1):
             
