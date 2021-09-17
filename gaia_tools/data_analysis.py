@@ -281,7 +281,8 @@ def get_transformed_data(data_icrs,
                          r_0 = transformation_constants.R_0,
                          v_sun = transformation_constants.V_SUN,
                          debug = False,
-                         is_source_included = False):
+                         is_source_included = False,
+                         is_bayes = False):
 
     if(debug):     
         tic=timeit.default_timer()
@@ -294,10 +295,10 @@ def get_transformed_data(data_icrs,
     #region Transforming
 
     # Coordinate vector in galactocentric frame in xyz
-    coords =  transform_coordinates_galactocentric(data_icrs, z_0, r_0)
+    coords =  transform_coordinates_galactocentric(data_icrs, z_0, r_0, is_bayes)
 
     # Velocity vector in galactocentric frame in xyz
-    velocities = transform_velocities_galactocentric(data_icrs, z_0, r_0, v_sun) 
+    velocities = transform_velocities_galactocentric(data_icrs, z_0, r_0, v_sun, is_bayes) 
     
     if(include_cylindrical):
 
