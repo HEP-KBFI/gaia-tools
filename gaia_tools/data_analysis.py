@@ -281,7 +281,8 @@ def get_transformed_data(data_icrs,
                          r_0 = transformation_constants.R_0,
                          v_sun = transformation_constants.V_SUN,
                          debug = False,
-                         is_source_included = False):
+                         is_source_included = False,
+                         is_bayes = False):
 
     if(debug):     
         tic=timeit.default_timer()
@@ -294,10 +295,10 @@ def get_transformed_data(data_icrs,
     #region Transforming
 
     # Coordinate vector in galactocentric frame in xyz
-    coords =  transform_coordinates_galactocentric(data_icrs, z_0, r_0)
+    coords =  transform_coordinates_galactocentric(data_icrs, z_0, r_0, is_bayes)
 
     # Velocity vector in galactocentric frame in xyz
-    velocities = transform_velocities_galactocentric(data_icrs, z_0, r_0, v_sun) 
+    velocities = transform_velocities_galactocentric(data_icrs, z_0, r_0, v_sun, is_bayes) 
     
     if(include_cylindrical):
 
@@ -343,7 +344,7 @@ def get_transformed_data(data_icrs,
 '''
 This function uses input ICRS data and outputs data in cartesian (x,y,z) coordinates and in galactocentric frame of reference.
 '''
-def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0):
+def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, is_bayes = False):
 
     #TODO: Add ASSERT checks on function input parameters.
     # ra dec can only be in a specific range
@@ -355,11 +356,20 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
     ra = np.deg2rad(data_icrs.ra)
     dec = np.deg2rad(data_icrs.dec)
 
-    # from kpc -> pc
-    k1 = transformation_constants.k1
+    
+    if(is_bayes):
 
-    # Declaring constants to reduce process time
-    c1 = k1/data_icrs.parallax
+        c1 = data_icrs.rest
+    
+    else:
+
+        # from kpc -> pc
+        k1 = transformation_constants.k1
+
+        # Declaring constants to reduce process time
+        c1 = k1/data_icrs.parallax
+    
+    
     cosdec = np.cos(dec)
 
     # Initial cartesian coordinate vector in ICRS
@@ -382,7 +392,7 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
 '''
 This function uses input ICRS data and outputs data in cartesian (v_x,v_y,v_z) velocity vector components and in galactocentric frame of reference.
 '''
-def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, v_sun = transformation_constants.V_SUN):
+def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, v_sun = transformation_constants.V_SUN, is_bayes = False):
     
     # Number of data points
     n = len(data_icrs)
@@ -394,8 +404,16 @@ def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constant
     # from 1/yr -> km/s
     k2 = transformation_constants.k2
 
-    # Declaring constants to reduce process time
-    c2 = k2/data_icrs.parallax
+    if(is_bayes):
+
+        # Assign r estiamtes to c2
+        c2 = data_icrs.rest
+        c2 = k2*(data_icrs.rest/1000)
+
+    else:
+
+        # Declaring constants to reduce process time
+        c2 = k2/data_icrs.parallax
 
     # Initial velocity vector in ICRS in units km/s
     v_ICRS = np.array([[data_icrs.radial_velocity],
