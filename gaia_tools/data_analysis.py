@@ -359,7 +359,7 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
     
     if(is_bayes):
 
-        c1 = data_icrs.rest
+        c1 = data_icrs.r_est
     
     else:
 
@@ -407,8 +407,8 @@ def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constant
     if(is_bayes):
 
         # Assign r estiamtes to c2
-        c2 = data_icrs.rest
-        c2 = k2*(data_icrs.rest/1000)
+        c2 = data_icrs.r_est
+        c2 = k2*(data_icrs.r_est/1000)
 
     else:
 
