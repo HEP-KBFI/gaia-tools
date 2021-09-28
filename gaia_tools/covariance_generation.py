@@ -48,10 +48,11 @@ def generate_covmatrices(df,
     
     # TODO: Implement exception handling in the future
     # EXAMPLE: If cylindrical coordinates not found give an error.
+    # EXAMPLE: If data_array not numpy array -> Exception 
     if(transform_to_cylindrical is True):
 
         data_array = df_crt[["x", "y","r","phi","v_r","v_phi"]].to_numpy()
-        C = transform_cov_matrix(C, df_crt, "Cylindrical", Z_0, R_0)
+        C = transform_cov_matrix(C, data_array, "Cylindrical", Z_0, R_0)
 
     # Unpack covariance matrices to list
     # TODO: Figure out a more efficient way to do this!! 
