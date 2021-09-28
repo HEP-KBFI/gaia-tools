@@ -4,7 +4,7 @@ a different frame of reference.
 '''
 
 import numpy as np
-from numba import njit
+from numba import njit, jit
 
 #region CONSTANTS
 
