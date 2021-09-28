@@ -42,7 +42,7 @@ def import_data(path, distance = 32000, is_bayes = True, filter_distance = False
     
         print("The dimensions of the data: (rows, columns) -> {}".format(df.shape))
 
-    if(!is_bayes):
+    if(is_bayes == False):
        
         print("Removing negative parallaxes...")
         df=df[df.parallax > 0]
