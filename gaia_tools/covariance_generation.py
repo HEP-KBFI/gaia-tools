@@ -66,7 +66,7 @@ def generate_covmatrices(df,
 
     # Unpack covariance matrices to list
     # TODO: Figure out a more efficient way to do this!! 
-    cov_list = [C[i] for i in range(C.shape[0])]
+    cov_list = list(C)
        
     d = {"source_id": df.source_id, "cov_mat": cov_list}
     cov_df = pd.DataFrame(d)
