@@ -62,24 +62,42 @@ def get_H_matrix(Z_0, R_0):
 
     return H
 
+'''
+Get B matric for velocity transformations.
 
-
+Expects ra, dec as NumPy arrays.
+'''
+@jit(nopython=True)
 def get_b_matrix(ra, dec):
 
+    #B = np.array([[cosra*cosdec, -sinra, -cosra*sindec],
+    #         [sinra*cosdec, cosra, -sinra*sindec],
+    #         [sindec, np.zeros(n), cosdec]])
+    
+    
+    # Add check if ra == dec
+    
     n = len(ra)
 
+    B = np.zeros((n, 3, 3))
+    
     # Defining constants to reduce process time
     cosra = np.cos(ra)
     cosdec = np.cos(dec)
     sinra = np.sin(ra)
     sindec = np.sin(dec)
 
-    B = np.array([[cosra*cosdec, -sinra, -cosra*sindec],
-             [sinra*cosdec, cosra, -sinra*sindec],
-             [sindec, np.zeros(n), cosdec]])
-
-    B = B.T.reshape(n,3,3, order = 'A').swapaxes(1,2)
-
+    B[:, 0, 0] = cosra*cosdec
+    B[:, 0, 1] = -sinra
+    B[:, 0, 2] = -cosra*sindec
+    
+    B[:, 1, 0] = sinra*cosdec
+    B[:, 1, 1] = cosra
+    B[:, 1, 2] = -sinra*sindec
+    
+    B[:, 2, 0] = sindec
+    B[:, 2, 2] = cosdec
+    
     # Returns array of B matrices - one for each data point
     return B
 
