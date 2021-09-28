@@ -41,7 +41,12 @@ def generate_covmatrices(df,
     if(transform_to_galcen is True):
 
         data_array = df[["ra", "dec","parallax","pmra","pmdec","radial_velocity"]].to_numpy()
-        C = transform_cov_matrix(C, data_array, "Cartesian", Z_0, R_0)
+
+        if isinstance(data_array, np.ndarray):
+            C = transform_cov_matrix(C, data_array, "Cartesian", Z_0, R_0)
+        else: 
+            print("Data is not a numpy array!")
+            return
 
     # Transforms to cylindrical coordinate system. Can only be done if coordinates are in galactocentric frame.
     # Expects DF with parameters in Cartesian.
@@ -52,7 +57,12 @@ def generate_covmatrices(df,
     if(transform_to_cylindrical is True):
 
         data_array = df_crt[["x", "y","r","phi","v_r","v_phi"]].to_numpy()
-        C = transform_cov_matrix(C, data_array, "Cylindrical", Z_0, R_0)
+
+        if isinstance(data_array, np.ndarray):
+            C = transform_cov_matrix(C, data_array, "Cylindrical", Z_0, R_0)
+        else: 
+            print("Data is not a numpy array!")
+            return
 
     # Unpack covariance matrices to list
     # TODO: Figure out a more efficient way to do this!! 
