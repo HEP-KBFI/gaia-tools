@@ -422,7 +422,8 @@ def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constant
 
     v_ICRS = v_ICRS.T.reshape(n,3,1, order = 'A')
 
-    B = transformation_constants.get_b_matrix(ra, dec)
+    B = transformation_constants.get_b_matrix(ra.to_numpy(), dec.to_numpy())
+    B = B.reshape(n,3,3, order = 'A')
 
     # Using M1, M2, M3, .. for transparency in case of bugs
     M1 = B @ v_ICRS
