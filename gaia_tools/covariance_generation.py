@@ -6,7 +6,7 @@ data covariance matrices.
 import numpy as np
 from . import transformation_constants
 import pandas as pd
-import time, timeit
+import timeit
 
 ERROR_NAMES = ['ra_error', 'dec_error', 'parallax_error', 'pmra_error', 'pmdec_error']
 
@@ -39,7 +39,9 @@ def generate_covmatrices(df,
     C = generate_covmat(df)
 
     if(transform_to_galcen is True):
-        C = transform_cov_matrix(C, df, "Cartesian", Z_0, R_0)
+
+        data_array = df[["ra", "dec","parallax","pmra","pmdec","radial_velocity"]].to_numpy()
+        C = transform_cov_matrix(C, data_array, "Cartesian", Z_0, R_0)
 
     # Transforms to cylindrical coordinate system. Can only be done if coordinates are in galactocentric frame.
     # Expects DF with parameters in Cartesian.
@@ -48,6 +50,7 @@ def generate_covmatrices(df,
     # EXAMPLE: If cylindrical coordinates not found give an error.
     if(transform_to_cylindrical is True):
 
+        data_array = df_crt[["x", "y","r","phi","v_r","v_phi"]].to_numpy()
         C = transform_cov_matrix(C, df_crt, "Cylindrical", Z_0, R_0)
 
     # Unpack covariance matrices to list
@@ -133,7 +136,9 @@ def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constant
 
     # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).
     J = transformation_constants.get_jacobian(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
- 
+    
+    J = J.T.reshape(len(df), 6, 6, order = 'A').swapaxes(1,2)
+
     J_trunc= J.reshape(len(df),6,6, order = 'A').swapaxes(1,2)
 
     C_transformed = J @ C @ J_trunc
