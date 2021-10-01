@@ -107,10 +107,18 @@ def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n
 
 
 
-'''
-A function that displays the specific numerical values inside each bin.
-'''
+
 def display_values(XX, YY, H, mode = None):
+    """A function that displays the specific numerical values inside each bin.
+
+    Args:
+        XX (array): Bin boundaries in the x-axis.
+        YY (array): Bin boundaries in the y-axis.
+        H (asarray): The values inside the bins.
+        mode (str, optional): The statistic used in the bin. Defaults to None.
+    """    
+
+
     for i in range(YY.shape[0]-1):
         for j in range(XX.shape[1]-1):
             
@@ -161,7 +169,15 @@ def display_bins(bin_collection, projection_parameter, mode = 'mean', showBinVal
 
 
 def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = True, mode = 'mean'):
+    """A plot to display the bins collapsed along the angular position coordinate phi.
 
+    Args:
+        bin_collection (BinCollection obj): Generated BinCollectino object.
+        projection_parameter (str): The physical parameter to be observed.
+        showBinValues (bool, optional): Shows numerical values in bins. Defaults to True.
+        mode (str, optional): The statistic used on the parameter. Defaults to 'mean'.
+    """    
+    
     parameter = projection_parameter
 
     XX, YY = bin_collection.bin_boundaries[0:2]
