@@ -441,7 +441,18 @@ def display_polar_coordinates(phi, r):
 
 
 def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits = (), title = "Polar Plot"):
+    """A plot which displays a polar histogram of the stars in a galactocentric frame of reference.
 
+    Args:
+        galcen_data (Pandas DataFrame): The galactocentric data.
+        n_bins (int, optional): Number of bins used in the plot. Defaults to 100.
+        norm_max (int, optional): Colormap saturation limit for each bin. Defaults to 1000.
+        r_limits (tuple, optional): Minimum and maximum edge of plotted area in r. If empty, it defaults to min, max r in data. Defaults to ().
+        title (str, optional): The title string. Defaults to "Polar Plot".
+
+    Returns:
+        fig: The returned figure.
+    """
     from astropy.visualization.mpl_normalize import ImageNormalize
     from astropy.visualization import LogStretch
 
