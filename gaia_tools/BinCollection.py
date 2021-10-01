@@ -214,6 +214,12 @@ class BinCollection:
                     elif(mode == 'count'):
                         temp_val = len(self.bins[count].data)
 
+                    elif(mode == 'MLE_std'):
+                        temp_val = self.bins[count].MLE_sigma
+
+                    elif(mode == 'MLE_mu'):
+                        temp_val = self.bins[count].MLE_mu
+
                     else:
                         print("Mode not given!")
                     

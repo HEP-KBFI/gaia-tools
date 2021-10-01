@@ -419,30 +419,39 @@ def display_polar_coordinates(phi, r):
 
 
 
-def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000):
+def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits = (), title = "Polar Plot"):
 
     from astropy.visualization.mpl_normalize import ImageNormalize
     from astropy.visualization import LogStretch
 
+    fig= plt.figure(figsize=(10, 10), facecolor='white')
+    
     # Init Data
     phi = galcen_data.phi
     r = galcen_data.r
 
+    if not r_limits:
+        min_r = np.min(galcen_data.r)
+        max_r = np.max(galcen_data.r)     
+    else:
+        min_r = r_limits[0]
+        max_r = r_limits[1]
+        
+    plt.ylim(min_r, max_r)
+    
     # Init Bins
-    rbins = np.linspace(0,r.max(), n_bins)
+    rbins = np.linspace(0, max_r, n_bins)
     abins = np.linspace(-np.pi,np.pi, n_bins)
 
     norm_hist2d = ImageNormalize(vmin=0., vmax=norm_max, stretch=LogStretch())
 
-    fig = plt.figure(figsize=(10, 10), facecolor='white')
+    
     
     ax = fig.add_subplot(111, projection='polar')
     plt.hist2d(phi, r, bins=(abins, rbins), norm = norm_hist2d)
 
-    plt.title("Polar Plot of Data Density", pad=20, fontdict={'fontsize': 20})
+    plt.title(title, pad=20, fontdict={'fontsize': 20})
     
-    plt.ylim(0, 12000)
-
     # Set r label background color to black
     plt.setp(ax.get_yticklabels(), backgroundcolor="black")
 
@@ -457,7 +466,7 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000):
     cbar.ax.set_ylabel('Number of stars in bin')
 
     plt.grid()
-    plt.show()
+    #plt.show()
     
     return fig
 
