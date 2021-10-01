@@ -182,10 +182,14 @@ def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = Tr
                         #aspect=20, 
                         #label='R-Z Bins {0} [{1}]'.format(parameter, 'a.u.'))
 
+
+    if(mode == 'MLE_std' or mode == 'MLE_mu'):
+        projection_parameter = 'v_phi'
+
     cbar = plt.colorbar(plot1,ax=ax1, 
                         pad = .015, 
-                        aspect=20, 
-                        label='Count in r-z bin')
+                        aspect = 20, 
+                        label = 'Value in r-z bin: {0} {1}'.format(projection_parameter, mode))
     
     plt.xticks(XX[0])
     plt.yticks(YY.T[0])
@@ -199,7 +203,8 @@ def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = Tr
     
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
-    ax1.set_xlabel('r - R0 [pc]' , fontdict={'fontsize': 18})
+
+    ax1.set_xlabel('r [pc]' , fontdict={'fontsize': 18})
     ax1.set_ylabel('z [pc]', fontdict={'fontsize': 18})
     
     
