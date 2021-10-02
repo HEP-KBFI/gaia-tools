@@ -137,13 +137,7 @@ def get_jacobian(df, coordinate_system, Z_0, R_0, is_bayes = True):
         if(is_bayes):
 
             # DF -> ["ra", "dec","r_est","pmra","pmdec","radial_velocity"]
-
-            ra = df[:,0]
-            dec = df[:,1]
             r_est = df[:,2]
-            mu_ra = df[:,3]
-            mu_dec = df[:,4]
-            v_r = df[:,5]
 
             c1 = r_est
             c2 = 1
@@ -154,19 +148,19 @@ def get_jacobian(df, coordinate_system, Z_0, R_0, is_bayes = True):
         else:
 
             # DF -> ["ra", "dec","parallax","pmra","pmdec","radial_velocity"]
-            
-            ra = df[:,0]
-            dec = df[:,1]
             parallax = df[:,2]
-            mu_ra = df[:,3]
-            mu_dec = df[:,4]
-            v_r = df[:,5]
 
             # Constants to improve readability
             c1 = k1/parallax
             c2 = -k1/(parallax**2)
             c3 = k2/parallax
             c4 = k2/(parallax**2)
+
+        ra = df[:,0]
+        dec = df[:,1]
+        mu_ra = df[:,3]
+        mu_dec = df[:,4]
+        v_r = df[:,5]
 
         # deg -> radians
         ra = np.deg2rad(ra)
