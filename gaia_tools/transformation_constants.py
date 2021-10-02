@@ -119,34 +119,54 @@ def get_cylindrical_velocity_matrix(phi):
 
 
 @jit(nopython=True)
-def get_jacobian(df, coordinate_system, Z_0, R_0):
+def get_jacobian(df, coordinate_system, Z_0, R_0, is_bayes = True):
 
     n = len(df)
     
     if(coordinate_system == "Cartesian"):
 
-        # DF -> ["ra", "dec","parallax","pmra","pmdec","radial_velocity"]
-        
         if(Z_0/R_0 is None):
-            print("Something went wrong! No values for either Z_0 or R_0 were found!")
-            return
-   
+                print("Something went wrong! No values for either Z_0 or R_0 were found!")
+                return
+    
         THETA_0 = np.arcsin(Z_0/R_0)
 
         # TODO: Implement exception handling!
 
-        ra = df[:,0]
-        dec = df[:,1]
-        parallax = df[:,2]
-        mu_ra = df[:,3]
-        mu_dec = df[:,4]
-        v_r = df[:,5]
 
-        # Constants to improve readability
-        c1 = k1/parallax
-        c2 = -k1/(parallax**2)
-        c3 = k2/parallax
-        c4 = k2/(parallax**2)
+        if(is_bayes):
+
+            # DF -> ["ra", "dec","r_est","pmra","pmdec","radial_velocity"]
+
+            ra = df[:,0]
+            dec = df[:,1]
+            r_est = df[:,2]
+            mu_ra = df[:,3]
+            mu_dec = df[:,4]
+            v_r = df[:,5]
+
+            c1 = r_est
+            c2 = 1
+            c3 = k2*(r_est/1000)
+            c4 = -k2/1000
+
+
+        else:
+
+            # DF -> ["ra", "dec","parallax","pmra","pmdec","radial_velocity"]
+            
+            ra = df[:,0]
+            dec = df[:,1]
+            parallax = df[:,2]
+            mu_ra = df[:,3]
+            mu_dec = df[:,4]
+            v_r = df[:,5]
+
+            # Constants to improve readability
+            c1 = k1/parallax
+            c2 = -k1/(parallax**2)
+            c3 = k2/parallax
+            c4 = k2/(parallax**2)
 
         # deg -> radians
         ra = np.deg2rad(ra)

@@ -23,6 +23,7 @@ def generate_covmatrices(df,
                          transform_to_cylindrical = False,
                          z_0 = transformation_constants.Z_0, 
                          r_0 = transformation_constants.R_0,
+                         is_bayes = False,
                          debug = False):
 
     Z_0 = z_0
@@ -40,10 +41,15 @@ def generate_covmatrices(df,
 
     if(transform_to_galcen is True):
 
-        data_array = df[["ra", "dec","parallax","pmra","pmdec","radial_velocity"]].to_numpy()
+        if(is_bayes == True):
+            data_array = df[["ra", "dec","r_est","pmra","pmdec","radial_velocity"]].to_numpy()
+
+        else:
+            data_array = df[["ra", "dec","parallax","pmra","pmdec","radial_velocity"]].to_numpy()
+
 
         if isinstance(data_array, np.ndarray):
-            C = transform_cov_matrix(C, data_array, "Cartesian", Z_0, R_0)
+            C = transform_cov_matrix(C, data_array, "Cartesian", Z_0, R_0, is_bayes=is_bayes)
         else: 
             print("Data is not a numpy array!")
             return
@@ -143,10 +149,10 @@ def generate_covmat(df):
     return C
 
 
-def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0):
+def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, is_bayes = False):
 
     # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).
-    J = transformation_constants.get_jacobian(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
+    J = transformation_constants.get_jacobian(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0, is_bayes = is_bayes)
     
     J = J.T.reshape(len(df), 6, 6, order = 'A').swapaxes(1,2)
 
