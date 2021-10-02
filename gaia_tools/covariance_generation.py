@@ -151,8 +151,13 @@ def generate_covmat(df):
 
 def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, is_bayes = False):
 
-    # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).
-    J = transformation_constants.get_jacobian(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0, is_bayes = is_bayes)
+
+    if(is_bayes == True):
+        # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).
+        J = transformation_constants.get_jacobian_bayes(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
+    else:
+        # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).
+        J = transformation_constants.get_jacobian(df, coordinate_system, Z_0 = transformation_constants.Z_0, R_0 = transformation_constants.R_0)
     
     J = J.T.reshape(len(df), 6, 6, order = 'A').swapaxes(1,2)
 
