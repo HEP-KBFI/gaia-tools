@@ -237,77 +237,7 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         
         J = np.stack((J1, J2, J3, J4, J5, J6))
 
-    elif(coordinate_system == "Cylindrical"):
-
-        # TODO: Implement exception handling!
-
-        # DF -> ["x", "y","r","phi","v_r","v_phi"]
-
-        x = df[:,0]
-        y = df[:,1]
-        r = df[:,2]
-        phi = df[:,3]
-        v_r = df[:,4]
-        v_phi = df[:,5]
-
     
-        c1 = x/(r**2)
-        c2 = y/(r**2)
-        
-        # Declaring variables to reduce number of computations 
-        sin_phi = np.sin(phi)
-        cos_phi = np.cos(phi)
-
-        J11 = x/r
-        J12 = y/r
-        J13 = np.zeros(n)
-        #J14 = np.zeros(n)
-        #J15 = np.zeros(n)
-        #J16 = np.zeros(n)
-    
-        J21 = -c2 
-        J22 = c1
-        #J23 = np.zeros(n)
-        #J24 = np.zeros(n)
-        #J25 = np.zeros(n)
-        #J26 = np.zeros(n)
-
-        #J31 = np.zeros(n)
-        #J32 = np.zeros(n)
-        J33 = np.ones(n)
-        #J34 = np.zeros(n)
-        #J35 = np.zeros(n)
-        #J36 = np.zeros(n)
-
-        J41 = -v_phi*c2
-        J42 = v_phi*c1
-        #J43 = np.zeros(n)
-        J44 = cos_phi
-        J45 = sin_phi
-        #J46 = np.zeros(n)
-
-        J51 = v_r*c2
-        J52 = -v_r*c1
-        #J53 = np.zeros(n) 
-        J54 = -sin_phi
-        J55 = cos_phi
-        #J56 = np.zeros(n)
-
-        #J61 = np.zeros(n)
-        #J62 = np.zeros(n)
-        #J63 = np.zeros(n)
-        #J64 = np.zeros(n)
-        #J65 = np.zeros(n)
-        #J66 = np.ones(n)
-               
-        J1 = np.stack((J11, J12, J13, J13, J13, J13))
-        J2 = np.stack((J21, J22, J13, J13, J13, J13))
-        J3 = np.stack((J13, J13, J33, J13, J13, J13))
-        J4 = np.stack((J41, J42, J13, J44, J45, J13))
-        J5 = np.stack((J51, J52, J13, J54, J55, J13))
-        J6 = np.stack((J13, J13, J13, J13, J13, J33))
-        
-        J = np.stack((J1, J2, J3, J4, J5, J6))
         
         
     return J
