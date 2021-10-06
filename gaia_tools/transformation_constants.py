@@ -176,13 +176,16 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         sinra_sindec = sin_ra*sin_dec
 
         expr_1 = cos_dec*v_r - sin_dec*c3*mu_dec
-        expr_2 = -cos_dec*v_r + sin_dec*c3*mu_dec
+        #expr_2 = -cos_dec*v_r + sin_dec*c3*mu_dec
         expr_3 = -sin_dec*v_r - cos_dec*c3*mu_dec
         expr_4 = sin_ra*c4*mu_ra + cosra_sindec*c4*mu_dec
-        expr_5 = cos_ra*c3*mu_ra
-        expr_6 = sin_ra*c3*mu_ra
+        #expr_5 = cos_ra*c3*mu_ra
+        #expr_6 = sin_ra*c3*mu_ra
         expr_7 = -cos_ra*c4*mu_ra + sinra_sindec*c4*mu_dec
-        
+        expr_8 = -sin_ra*v_r + c3*(cos_dec**(-1))*(-cos_ra*mu_ra + sinra_sindec*mu_dec)
+        expr_9 = cos_ra*v_r - c3*(cos_dec**(-1))*(sin_ra*mu_ra + cosra_sindec*mu_dec)
+
+
         J11 = c1*(-sin_ra*(A_1) + cos_ra*(A_2))
         J12 = c1*(cos_dec*(A_3) - sin_dec*(cos_ra*(A_1) + sin_ra*(A_2)))
         J13 = c2*(cosra_cosdec*(A_1) + sinra_cosdec*(A_2) + sin_dec*(A_3))
@@ -199,28 +202,33 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         # J25 = np.zeros(n)
         # J26 = np.zeros(n)
 
-        J31 = c1*(-sin_theta*(A[0,1]*cos_ra - A[0,0]*sin_ra) + cos_theta*(A[2,1]*cos_ra - A[2,0]*sin_ra))
+        #J31 = c1*(-sin_theta*(A[0,1]*cos_ra - A[0,0]*sin_ra) + cos_theta*(A[2,1]*cos_ra - A[2,0]*sin_ra))
+        J31 = c1*(-sin_ra*(A_7) + cos_ra*(A_8))
         J32 = -c1*(sin_dec*(cos_ra*(A[0,0]*sin_theta - A[2,0]*cos_theta) + sin_ra*(A[0,1]*sin_theta - A[2,1]*cos_theta)) + cos_dec*(A_6))
-        J33 = c2*(cosra_cosdec*(A_7) + sinra_cosdec*(A_8) + sin_dec*(A_6))
+        J33 = c2*(cosra_cosdec*(A_7) + sinra_cosdec*(A_8) + sin_dec*(A_6))     
         # J34 = np.zeros(n)
         # J35 = np.zeros(n)
         # J36 = np.zeros(n)
 
-        J41 = (sin_ra*(expr_2) - expr_5)*(A_1) + (cos_ra*(expr_1) - expr_6)*(A_2)
+        #J41 = (sin_ra*(expr_2) - expr_5)*(A_1) + (cos_ra*(expr_1) - expr_6)*(A_2)
+
+        J41 = (expr_8)*(A_1) + (expr_9)*(A_2)
         J42 = cos_ra*(expr_3)*(A_1) + sin_ra*(expr_3)*(A_2) + (expr_1)*(A_3)
         J43 = (expr_4)*(A_1) + (expr_7)*(A_2) + (-cos_dec*c4*mu_dec)*(A_3)
         J44 = -sin_ra*c3*(A_1) + cos_ra*c3*(A_2)
         J45 = (-cosra_sindec*c3)*(A_1) + (-sinra_sindec*c3)*(A_2) + (cos_dec*c3)*(A_3)
         J46 = cosra_cosdec*(A_1) + sinra_cosdec*(A_2) + sin_dec*(A_3)
 
-        J51 = A[1,0]*(-sinra_cosdec*v_r - expr_5 + sinra_sindec*c3*mu_dec) + A[1,1]*(cosra_cosdec*v_r - expr_6- cosra_sindec*c3*mu_dec)
+        #J51 = A[1,0]*(-sinra_cosdec*v_r - expr_5 + sinra_sindec*c3*mu_dec) + A[1,1]*(cosra_cosdec*v_r - expr_6- cosra_sindec*c3*mu_dec)
+        J51 = A[1,0]*(expr_8) + A[1,1]*(expr_9)
         J52 = A[1,0]*cos_ra*(expr_3) + A[1,1]*sin_ra*(expr_3) + A[1,2]*(expr_1)
         J53 = A[1,0]*(expr_4) + A[1,1]*(expr_7) + A[1,2]*(-cos_dec*c4*mu_dec)
         J54 = c3*(A_4)
         J55 = c3*(-A[1,0]*cosra_sindec- A[1,1]*sinra_sindec + A[1,2]*cos_dec)
         J56 = (A[1,0]*cos_ra + A[1,1]*sin_ra)*cos_dec + A[1,2]*sin_dec
 
-        J61 = (sin_ra*(expr_2) - expr_5)*(A_7) + (cos_ra*(expr_1) - expr_6)*(A_8)
+        #J61 = (sin_ra*(expr_2) - expr_5)*(A_7) + (cos_ra*(expr_1) - expr_6)*(A_8)
+        J61 = (expr_8)*(A_7) + (expr_9)*(A_8)
         J62 = cos_ra*(expr_3)*(A_7) + sin_ra*(expr_3)*(A_8) + (expr_1)*(A_6)
         J63 = c4*((sin_ra*mu_ra + cosra_sindec*mu_dec)*(A_7) + (-cos_ra*mu_ra + sinra_sindec*mu_dec)*(A_8) - cos_dec*mu_dec*(A_6))
         J64 = c3*(-sin_ra*(A_7) + cos_ra*(A_8))
@@ -242,7 +250,7 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         
     return J
 
-
+# TODO: Fix partial derivatives w.r.t alpha*
 @jit(nopython=True)
 def get_jacobian(df, coordinate_system, Z_0, R_0):
 
