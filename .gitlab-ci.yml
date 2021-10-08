@@ -29,7 +29,7 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install pandas
-  - pip install scipy
+  - pip install scipy==1.4.1
   - pip install astropy
 
 
