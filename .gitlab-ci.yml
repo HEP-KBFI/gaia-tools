@@ -35,6 +35,7 @@ before_script:
   - pip install numba
   - pip install mpl_scatter_density
   - pip install emcee
+  - pip install corner
 
 
 
