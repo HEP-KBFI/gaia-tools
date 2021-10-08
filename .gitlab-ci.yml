@@ -28,6 +28,14 @@ before_script:
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
+  - pip install pandas
+  - pip install astropy
+  - pip install emcee
+  - pip install lmfit
+  - pip install corner
+  - pip install numba
+  - pip install mpl_scatter_density
+
 
 test:
   script:
