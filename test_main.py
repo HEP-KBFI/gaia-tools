@@ -19,7 +19,7 @@ class gaiaTests(unittest.TestCase):
                                             is_bayes = False, 
                                             is_source_included = True)
 
-        self.assertIs(galcen_data.source_id.iloc[0], np.int64)
+        self.assertIsInstance(galcen_data.source_id.iloc[0], np.int64)
 
     def test_source_id_is_match(self):
 
