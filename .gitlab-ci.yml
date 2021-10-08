@@ -1,0 +1,12 @@
+
+test:pylint:
+    image: python:3.6
+    script:
+        - pip install pylint --quiet
+        - pylint --ignored-classes=_socketobject *.py
+
+test:pytest:
+  image: python:3.6
+  script:
+    - pip install pytest --quiet
+    - pytest
