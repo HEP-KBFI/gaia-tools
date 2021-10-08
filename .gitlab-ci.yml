@@ -32,6 +32,9 @@ before_script:
   - pip install pandas
   - pip install astropy
   - pip install scipy
+  - pip install numba
+  - pip install mpl_scatter_density
+  - pip install emcee
 
 
 
