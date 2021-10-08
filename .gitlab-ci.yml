@@ -34,5 +34,5 @@ before_script:
 
 test:
   script:
-    - python3 -m unittest
+    - python3 -m unittest test_main
 
