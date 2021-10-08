@@ -1,7 +1,7 @@
 import unittest
 
-from gaia_tools.data_analysis import*
-from gaia_tools.import_functions import *
+from gaia_tools.data_analysis import get_transformed_data
+from gaia_tools.import_functions import import_data
 
 
 class gaiaTests(unittest.TestCase):
