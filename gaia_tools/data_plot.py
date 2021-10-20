@@ -21,7 +21,7 @@ Input parameters:
     galcen - SkyCoord object in galactocentric frame
 '''
 def distribution_hist(galcen):
-    
+
     fig = plt.figure(figsize=(10, 10))
 
     plt.hist(-galcen.x.value, bins=np.linspace(-10000, 10000, 32))
@@ -47,19 +47,19 @@ Input parameters
 '''
 # CURRENTLY BROKEN
 def point_density(galcen, vmax):
-    
+
     norm = ImageNormalize(vmin=0., vmax=10, stretch=LogStretch())
 
     x_coord = -galcen.x.value
     y_coord = galcen.y.value
-   
+
     fig = plt.figure(figsize=(7.5, 6))
     ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
-    
+
     density = ax.scatter_density(x_coord, y_coord, norm=norm, dpi = 200, cmap=plt.cm.jet)
-    
+
     fig.colorbar(density, label='Number of sources per pixel')
-    
+
     plt.title("Point Source Density (Galactocentric)", pad=20, fontdict={'fontsize': 20})
     plt.grid()
 
@@ -71,14 +71,14 @@ def point_density(galcen, vmax):
     ax.set_ylabel('$y$ [{0:latex_inline}]'.format(galcen.y.unit))
 
     plt.show()
-   
+
 '''
 A 2D histogram to depict point source density in different regions using 2D bins.
 Using this to replace the currently broken 'point_density' plot.
 
 '''
 def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n_bins = 200):
-    
+
     # Check if data is in DataFrame or Astropy SkyCoords object
     if isinstance(galcen, pd.DataFrame):
         x_coord = [-x for x in galcen.x]
@@ -88,11 +88,11 @@ def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n
         y_coord = [y for y in galcen.y.value]
 
     norm_hist2d = ImageNormalize(vmin=0., vmax=vmax, stretch=LogStretch())
-    
+
     fig = plt.figure(figsize=(10, 10))
-    
+
     plt.hist2d(x_coord, y_coord, bins=np.linspace(bin_start, bin_end, n_bins), norm = norm_hist2d)
-    
+
     plt.xlabel('x [pc]', fontsize=15)
     plt.ylabel('y [pc]', fontsize=15)
     plt.title("2D Histograms of Data Sources", pad=20, fontdict={'fontsize': 20})
@@ -116,12 +116,12 @@ def display_values(XX, YY, H, mode = None):
         YY (array): Bin boundaries in the y-axis.
         H (asarray): The values inside the bins.
         mode (str, optional): The statistic used in the bin. Defaults to None.
-    """    
+    """
 
 
     for i in range(YY.shape[0]-1):
         for j in range(XX.shape[1]-1):
-            
+
             if mode != 'count':
                 plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
                      horizontalalignment='center',
@@ -132,8 +132,8 @@ def display_values(XX, YY, H, mode = None):
                      verticalalignment='center')
 
 '''
-A plot which enables the user to see the bins created by the 'bin_data' functions in the 
-data analysis module. It takes in the histogram data and does a colormesh with colours 
+A plot which enables the user to see the bins created by the 'bin_data' functions in the
+data analysis module. It takes in the histogram data and does a colormesh with colours
 mapped to the value inside the 2D bin.
 '''
 def display_bins(bin_collection, projection_parameter, mode = 'mean', showBinValues = True):
@@ -151,9 +151,9 @@ def display_bins(bin_collection, projection_parameter, mode = 'mean', showBinVal
     if(showBinValues):
         display_values(XX, YY, values)
 
-    cbar = plt.colorbar(plot1,ax=ax1, 
-                        pad = .015, 
-                        aspect=10, 
+    cbar = plt.colorbar(plot1,ax=ax1,
+                        pad = .015,
+                        aspect=10,
                         label='2D Bins Velocity V{0}[{1}]'.format(parameter, 'km/s'))
 
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
@@ -163,7 +163,7 @@ def display_bins(bin_collection, projection_parameter, mode = 'mean', showBinVal
     ax1.set_ylabel('$y$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
 
     plt.title("2D Bins Velocity V{0}".format(parameter), pad=20, fontdict={'fontsize': 20})
-    
+
     plt.show()
 
 
@@ -176,67 +176,165 @@ def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = Tr
         projection_parameter (str): The physical parameter to be observed.
         showBinValues (bool, optional): Shows numerical values in bins. Defaults to True.
         mode (str, optional): The statistic used on the parameter. Defaults to 'mean'.
-    """    
-    
+    """
+
     parameter = projection_parameter
 
     XX, YY = bin_collection.bin_boundaries[0:2]
-    
+
     values = bin_collection.CalculateValues(parameter, mode = mode)
 
 
     fig = plt.figure(figsize = (20,10))
     ax1=plt.subplot(111)
     plot1 = ax1.pcolormesh(XX,YY,values.T)
-    
+
     if(showBinValues):
         display_values(XX, YY, values, mode)
 
     # Fix unit displaying later on!
-    #cbar = plt.colorbar(plot1,ax=ax1, 
-                        #pad = .015, 
-                        #aspect=20, 
+    #cbar = plt.colorbar(plot1,ax=ax1,
+                        #pad = .015,
+                        #aspect=20,
                         #label='R-Z Bins {0} [{1}]'.format(parameter, 'a.u.'))
 
 
     if(mode == 'MLE_std' or mode == 'MLE_mu'):
         projection_parameter = 'v_phi'
 
-    cbar = plt.colorbar(plot1,ax=ax1, 
-                        pad = .015, 
-                        aspect = 20, 
+    cbar = plt.colorbar(plot1,ax=ax1,
+                        pad = .015,
+                        aspect = 20,
                         label = 'Value in r-z bin: {0} {1}'.format(projection_parameter, mode))
-    
+
     plt.xticks(XX[0])
     plt.yticks(YY.T[0])
-    
-    
+
+
     #plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     #plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
     #ax1.set_xlabel('$r$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
     #ax1.set_ylabel('$z$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
-    
-    
+
+
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
     plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
 
     ax1.set_xlabel('r [pc]' , fontdict={'fontsize': 18})
     ax1.set_ylabel('z [pc]', fontdict={'fontsize': 18})
-    
-    
+
+
     plt.title("Collapsed Bins in r-z Plane", pad=20, fontdict={'fontsize': 20})
 
     arrowed_spines(fig, ax1)
     plt.show()
-   
+
+
+def Velocity_Field_Imshow(bin_collection,
+                          title_string = "",
+                          arg_notes="",
+                          interpolation_type = "gaussian",
+                          radii = [0],
+                          display_arrows = False,
+                          plot_circles=False,
+                          save = False):
+    """Creates a velocity heatmap from binned data
+
+    Args:
+        bin_collection (BinCollection): Binned data returned from the 'bin_data' function in 'data_analysis'
+        title_string (str, optional): The title of the plot. Defaults to "".
+        arg_notes (str, optional): Subtitle of  the plot. Defaults to "".
+        interpolation_type(str, optional): Set the interpolation of the bin values. Defaults to "gaussian".
+        radii (list, optional): A list of concentric circle radii which is plotted if 'plot_circles' is set to True. Defaults to [0].
+        display_arrows (bool, optional): If True, plots the velocity vector in each bin. Defaults to False.
+        plot_circles (bool, optional): If True, plots concentric circles around the Galactic centre. Defaults to False.
+        save (bool, optional): If True, saves the figure to disk in '.png' using the 'title_string' as  the file name. Defaults to False.
+    """
+
+
+    H = bin_collection.CalculateValues('v_x')
+    H2 = bin_collection.CalculateValues('v_y')
+
+    XX = bin_collection.bin_boundaries[0]
+    YY = bin_collection.bin_boundaries[1]
+
+
+
+
+    # Gets the vector coordinates
+    VEC_XX, VEC_YY = generate_vector_mesh(bin_collection.bin_boundaries[0], bin_collection.bin_boundaries[1])
+
+    fig, ax = plt.subplots(figsize = (10,10))
+    ax.set_xlabel(r'$x$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 15}, labelpad = 25)
+    ax.set_ylabel(r'$y$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 15}, labelpad = 25)
+
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+    # Gives the hypotenuse of vectors
+    M = np.hypot(H.T, H2.T)
+
+    BIN_X_EDGES = bin_collection.bin_boundaries[0][0]
+    BIN_Y_EDGES = bin_collection.bin_boundaries[1].T[0]
+
+    dx = (BIN_X_EDGES[0]-BIN_X_EDGES[1])/2.
+    dy = (BIN_Y_EDGES[0]-BIN_Y_EDGES[1])/2.
+    extent = [BIN_X_EDGES[0], BIN_X_EDGES[-1], BIN_Y_EDGES[0], BIN_Y_EDGES[-1]]
+
+    plt.xticks(XX[0])
+    plt.yticks(YY.T[0])
+
+
+    c = plt.imshow(M, extent = extent, interpolation = interpolation_type, cmap='jet')
+
+    if(display_arrows):
+        # The quiver plot with normalised vector lengths
+        q = ax.quiver(VEC_XX, VEC_YY, H.T, H2.T, M, cmap=plt.cm.magma_r)
+
+
+    ax.plot(0, 0, "x", color='red')
+    ax.plot(-8178, 0, "*", markersize=20, color='red')
+
+    plt.title(title_string, pad = 45, fontdict={'fontsize': 20})
+    plt.suptitle(arg_notes, y=0.93, fontsize=15)
+
+    cbar = plt.colorbar(c, ax=ax, pad = 0.05)
+    cbar.set_label(label ='Velocity in bin [km/s]', labelpad= 30, size = 15)
+
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+
+    # Plot Circles
+    if(plot_circles):
+        angle = np.linspace( 0 , 2 * np.pi , 150 )
+
+        for i, radius in enumerate(radii):
+
+            radius = radii[i]
+            x = radius * np.cos( angle )
+            y = radius * np.sin( angle )
+            ax.plot( x, y , label='{0} pc'.format(radius))
+
+
+    plt.legend(loc='upper left')
+    plt.grid()
+
+    current_cmap = mpl.cm.get_cmap('jet')
+    print(current_cmap)
+    current_cmap.set_bad(color='grey')
+
+    if(save):
+        plt.savefig(title_string +'.png', dpi=300, format='png')
+
 
 '''
 Generates a velocity vector field from binned data.
 Input parameters:
     binned_dict - A dictionary containing all requisite data for displaying the vector field
 '''
-def generate_velocity_map(bin_collection):
- 
+def generate_velocity_vector_map(bin_collection):
+
 
     H = bin_collection.CalculateValues('v_x')
     H2 = bin_collection.CalculateValues('v_y')
@@ -271,7 +369,7 @@ def generate_velocity_map(bin_collection):
 
     ax.set_xlabel('$x$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
     ax.set_ylabel('$y$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
-    
+
     plt.grid()
     plt.show()
 
@@ -285,7 +383,7 @@ def run_parameter_tests(df, parameter_list):
 
     # Generating Transformation With Astropy
     galcen_astropy = transform_to_galcen(df)
-    
+
     # Using our method
     galcen_my = get_transformed_data(df, include_cylindrical = True)
 
@@ -296,7 +394,7 @@ def run_parameter_tests(df, parameter_list):
 
 
 def parameter_test_plot(galcen_astropy, galcen_my, test_parameter):
-    
+
     # Check if data is in DataFrame or Astropy SkyCoords object
     if isinstance(galcen_astropy, pd.DataFrame):
         x_coord = galcen_my[test_parameter]
@@ -321,7 +419,7 @@ def parameter_test_plot(galcen_astropy, galcen_my, test_parameter):
         elif(test_parameter == 'v_z'):
             y_coord = galcen_astropy.v_z.value
 
-    
+
     # Right-hand transformation
     if(test_parameter == 'x' or test_parameter == 'v_x'):
         x_coord = [-x for x in x_coord]
@@ -346,43 +444,43 @@ def parameter_test_plot(galcen_astropy, galcen_my, test_parameter):
 # Displays arrows on plot
 def arrowed_spines(fig, ax):
 
-    xmin, xmax = ax.get_xlim() 
+    xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
 
     ax.spines["left"].set_position(("data", xmin))
     ax.spines["right"].set_position(("data", xmax))
-    
+
     # removing the default axis on all sides:
     for side in ['bottom','top']:
         ax.spines[side].set_visible(False)
 
-    # get width and height of axes object to compute 
+    # get width and height of axes object to compute
     # matching arrowhead length and width
     dps = fig.dpi_scale_trans.inverted()
     bbox = ax.get_window_extent().transformed(dps)
     width, height = bbox.width, bbox.height
 
     # manual arrowhead width and length
-    hw = 1./30.*(ymax-ymin) 
+    hw = 1./30.*(ymax-ymin)
     hl = 1./30.*(xmax-xmin)
     lw = 1 # axis line width
     ohg = 0 # arrow overhang
 
     # compute matching arrowhead length and width
-    yhw = hw/(ymax-ymin)*(xmax-xmin)* height/width 
+    yhw = hw/(ymax-ymin)*(xmax-xmin)* height/width
     yhl = hl/(xmax-xmin)*(ymax-ymin)* width/height
 
     # draw x and y axis
-    ax.arrow(xmin, 0., xmax-xmin, 0., fc='black', ec='black', lw = lw, 
-             head_width=hw, head_length=hl, overhang = ohg, 
-             length_includes_head= True, clip_on = False) 
-
-    ax.arrow(xmin, 0, 0., (ymax-ymin)/2, fc='k', ec='k', lw = lw, 
-             head_width=yhw, head_length=yhl, overhang = ohg, 
+    ax.arrow(xmin, 0., xmax-xmin, 0., fc='black', ec='black', lw = lw,
+             head_width=hw, head_length=hl, overhang = ohg,
              length_includes_head= True, clip_on = False)
-    
-    ax.arrow(xmin, 0, 0., (ymin-ymax)/2, fc='k', ec='k', lw = lw, 
-             head_width=yhw, head_length=yhl, overhang = ohg, 
+
+    ax.arrow(xmin, 0, 0., (ymax-ymin)/2, fc='k', ec='k', lw = lw,
+             head_width=yhw, head_length=yhl, overhang = ohg,
+             length_includes_head= True, clip_on = False)
+
+    ax.arrow(xmin, 0, 0., (ymin-ymax)/2, fc='k', ec='k', lw = lw,
+             head_width=yhw, head_length=yhl, overhang = ohg,
              length_includes_head= True, clip_on = False)
 
 
@@ -390,7 +488,7 @@ def arrowed_spines(fig, ax):
 '''
 Input - result of MCMCLooper.run_sampler() which is the emcee sampler object
 '''
-def display_walkers(looper_result, 
+def display_walkers(looper_result,
                     theta_labels = ['r', 'z', 'u', 'v', 'w']):
 
     # Get data from emcee sampler
@@ -399,7 +497,7 @@ def display_walkers(looper_result,
     num_parameters = len(theta_labels)
 
     fig, axes = plt.subplots(num_parameters, figsize=(10, 7), sharex=True)
-    
+
     labels = theta_labels
 
     for i in range(num_parameters):
@@ -457,33 +555,33 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits =
     from astropy.visualization import LogStretch
 
     fig= plt.figure(figsize=(10, 10), facecolor='white')
-    
+
     # Init Data
     phi = galcen_data.phi
     r = galcen_data.r
 
     if not r_limits:
         min_r = np.min(galcen_data.r)
-        max_r = np.max(galcen_data.r)     
+        max_r = np.max(galcen_data.r)
     else:
         min_r = r_limits[0]
         max_r = r_limits[1]
-        
+
     plt.ylim(min_r, max_r)
-    
+
     # Init Bins
     rbins = np.linspace(0, max_r, n_bins)
     abins = np.linspace(-np.pi,np.pi, n_bins)
 
     norm_hist2d = ImageNormalize(vmin=0., vmax=norm_max, stretch=LogStretch())
 
-    
-    
+
+
     ax = fig.add_subplot(111, projection='polar')
     plt.hist2d(phi, r, bins=(abins, rbins), norm = norm_hist2d)
 
     plt.title(title, pad=20, fontdict={'fontsize': 20})
-    
+
     # Set r label background color to black
     plt.setp(ax.get_yticklabels(), backgroundcolor="black")
 
@@ -499,7 +597,7 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits =
 
     plt.grid()
     #plt.show()
-    
+
     return fig
 
 

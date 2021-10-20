@@ -18,7 +18,7 @@ Function for filtering out entries that are further out than some specified dist
 NOTE! Distance from Solar System!
 '''
 def filter_distance(df, dist, *args, **kwargs):
-    
+
     #TODO: Assert parallax_lower type and value
     df['distance'] = 1/df.parallax
 
@@ -66,12 +66,12 @@ def get_SkyCoord_object(df):
     c = coord.SkyCoord(ra=df['ra']*u.degree,
                    dec=df['dec']*u.degree,
                    radial_velocity=df['radial_velocity']*[u.km/u.s],
-                   distance=dist,   
+                   distance=dist,
                    pm_ra_cosdec=df['pmra']*[u.mas/u.yr],
                    pm_dec=df['pmdec']*[u.mas/u.yr],
                    frame = 'icrs')
 
-    return c 
+    return c
 
 # Currently expect data to be in DataFrame format
 # TODO: Allow for varying of positional parameters of the Sun
@@ -79,13 +79,13 @@ def get_SkyCoord_object(df):
 '''
 OLD ASTROPY FUNCTION
 
-Function for transforming data into a galactocentric reference frame using SkyCoord objects and 
+Function for transforming data into a galactocentric reference frame using SkyCoord objects and
 the 'transform_to' function.
 
 Returns a SkyCoord object
 '''
 def transform_to_galcen(df, z_sun=17*u.pc, galcen_distance=8.178*u.kpc):
-    
+
     c = get_SkyCoord_object(df)
     c = c.transform_to(coord.Galactocentric(z_sun=z_sun, galcen_distance=galcen_distance))
 
@@ -98,13 +98,13 @@ Input parameters:
     BL - Bin Limit (The edges of the xyz boundary)
 '''
 def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debug = False):
-   
+
     if(debug):
         import time, timeit
         tic=timeit.default_timer()
         print("Binning data from galactocentric input data...")
 
-    
+
     # DEPRECATED
     # Map values to temporary data frame.
     #plottable_df = pd.DataFrame({'x': galcen_data.x.value,
@@ -123,17 +123,17 @@ def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debu
     plottable_df = plottable_df[(plottable_df.z >= -BL) & (plottable_df.z <= BL)]
 
     # x, y coordinates of the points
-    x = -plottable_df.x
+    x = plottable_df.x
     y = plottable_df.y
 
     # Velocity projections of points
-    z = -plottable_df.v_x
+    z = plottable_df.v_x
     z2 = plottable_df.v_y
 
     # Calling the actual binning function
     H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = N_bins, statistic='mean')
 
-    # Create a meshgrid from the vertices   
+    # Create a meshgrid from the vertices
     XX, YY = np.meshgrid(xedges, yedges)
 
     ZZ = (np.min(plottable_df.z), np.max(plottable_df.z))
@@ -153,7 +153,7 @@ def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debu
 
         display_bins(bin_collection, 'v_x')
         display_bins(bin_collection, 'v_y')
-        
+
     if(debug):
         toc=timeit.default_timer()
         print("Time elapsed for binning data: {a} sec".format(a=toc-tic))
@@ -168,8 +168,8 @@ N_bins - number of bins in R direction
 XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
 '''
 def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bins = (10, 10), r_drift = False, debug=False):
-    
-    # This assertion doesnt make sense, fix it later 
+
+    # This assertion doesnt make sense, fix it later
     assert len(data.shape) > 0, "No data!"
 
     if not 'r' or 'phi' in data.index:
@@ -184,30 +184,30 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bi
 
     # Fix for newly developed method
     plottable_df = data
-    
+
     # Setup adimensional binning
     if(r_drift):
-        
+
         # r and z parameters of points loaded into Series
         r = plottable_df.r - theta[0]
         z = plottable_df.z - theta[1]
-        
+
         if(debug):
-            
+
             excluded_df = plottable_df[plottable_df.r - theta[0] > BL_r_max]
             print("Points drifted in r + direction {0}".format(len(excluded_df)))
-            
+
             excluded_df2 = plottable_df[plottable_df.r - theta[0] < BL_r_min]
             print("Points drifted in r - direction {0}".format(len(excluded_df2)))
-            
+
             excluded_df2 = plottable_df[plottable_df.z - theta[1] < BL_z_min]
             print("Points drifted in z - direction {0}".format(len(excluded_df2)))
-            
+
             excluded_df2 = plottable_df[plottable_df.z - theta[1] > BL_z_max]
             print("Points drifted in z - direction {0}".format(len(excluded_df2)))
-            
+
     else:
-        
+
         # r and z parameters of points loaded into Series
         r = plottable_df.r
         z = plottable_df.z
@@ -218,30 +218,30 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bi
     # Calling the actual binning function
     H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[BL_r_min, BL_r_max], [BL_z_min, BL_z_max]], bins=N_bins, statistic='mean')
 
-    
+
     # Create a meshgrid from the vertices: X, Y -> R, Z
     XX, YY = np.meshgrid(xedges, yedges)
-    
+
     # Assign a binnumber for each data entry
     plottable_df['Bin_index'] = binnumber
 
     # Instantiate a BinCollection object
     bin_collection = BinCollection(plottable_df, N_bins, XX, YY, YY, mode='r-z')
-    
+
     # Generate the bins with respective r-z boundaries
     bin_collection.GenerateBins()
 
     if(debug):
         toc=timeit.default_timer()
         print("Time elapsed for binning data with collapsed bins: {a} sec".format(a=toc-tic))
-    
+
     return bin_collection
 
-    
+
 
 
 '''
-Function for finding center points of bins in binned data and then 
+Function for finding center points of bins in binned data and then
 creating a meshgrid out of all the point coordinates. The center points of bins
 are the origin points for the vectors.
 '''
@@ -258,7 +258,7 @@ def generate_vector_mesh(XX, YY):
 
     # We create a meshgrid out of all the vector locations
     VEC_XX, VEC_YY = np.meshgrid(vec_x, vec_y)
-    
+
     return VEC_XX, VEC_YY
 
 
@@ -275,16 +275,16 @@ is_source_included - adds the source_id column if True
 debug - debug printing if True
 
 '''
-def get_transformed_data(data_icrs, 
-                         include_cylindrical = False, 
-                         z_0 = transformation_constants.Z_0, 
+def get_transformed_data(data_icrs,
+                         include_cylindrical = False,
+                         z_0 = transformation_constants.Z_0,
                          r_0 = transformation_constants.R_0,
                          v_sun = transformation_constants.V_SUN,
                          debug = False,
                          is_source_included = False,
                          is_bayes = False):
 
-    if(debug):     
+    if(debug):
         tic=timeit.default_timer()
         print("Starting galactocentric transformation loop over all data points.. ")
 
@@ -298,8 +298,8 @@ def get_transformed_data(data_icrs,
     coords =  transform_coordinates_galactocentric(data_icrs, z_0, r_0, is_bayes)
 
     # Velocity vector in galactocentric frame in xyz
-    velocities = transform_velocities_galactocentric(data_icrs, z_0, r_0, v_sun, is_bayes) 
-    
+    velocities = transform_velocities_galactocentric(data_icrs, z_0, r_0, v_sun, is_bayes)
+
     if(include_cylindrical):
 
         # Using arctan2 which is defined in range [-pi ; pi]
@@ -318,26 +318,26 @@ def get_transformed_data(data_icrs,
     if(include_cylindrical):
         d = {"r": np.squeeze(cyl_coords[0], axis=1), "phi": np.squeeze(cyl_coords[1], axis=1)}
         coords_df = pd.DataFrame(d)
-        
+
         # Removing one column because already have v_z
         velocities_df = pd.DataFrame(np.squeeze(vel_cyl[:,0:2], axis=2), columns="v_r v_phi".split())
 
         df_1 = pd.concat([coords_df, velocities_df], axis=1)
         galcen_df = pd.concat([galcen_df, df_1], axis=1)
-     
+
     if(is_source_included):
 
         if not 'source_id' in data_icrs.columns:
             print("Error! Source ID column not found in input DataFrame!")
-        
+
         galcen_df['source_id'] = data_icrs.source_id
 
-       
+
     if(debug):
         toc=timeit.default_timer()
         print("Time elapsed for data coordinate transformation: {a} sec".format(a=toc-tic))
-    
-    # Returns transformed data as Pandas DataFrame   
+
+    # Returns transformed data as Pandas DataFrame
     return galcen_df
 
 
@@ -356,11 +356,11 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
     ra = np.deg2rad(data_icrs.ra)
     dec = np.deg2rad(data_icrs.dec)
 
-    
+
     if(is_bayes):
 
         c1 = data_icrs.r_est
-    
+
     else:
 
         # from kpc -> pc
@@ -368,8 +368,8 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
 
         # Declaring constants to reduce process time
         c1 = k1/data_icrs.parallax
-    
-    
+
+
     cosdec = np.cos(dec)
 
     # Initial cartesian coordinate vector in ICRS
@@ -381,8 +381,8 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
 
     # Using M1, M2, M3 for transparency in case of bugs
     M1 = transformation_constants.A @ coordxyz_ICRS
-    M2 = M1 - np.array([[r_0], 
-                        [0], 
+    M2 = M1 - np.array([[r_0],
+                        [0],
                         [0]])
     M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
 
@@ -393,7 +393,7 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
 This function uses input ICRS data and outputs data in cartesian (v_x,v_y,v_z) velocity vector components and in galactocentric frame of reference.
 '''
 def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, v_sun = transformation_constants.V_SUN, is_bayes = False):
-    
+
     # Number of data points
     n = len(data_icrs)
 
@@ -448,9 +448,9 @@ def main():
     from . import covariance_generation as cov
     import time, timeit
     from .import_functions import import_data
-    
+
     # For finding current module working directory
-    #import os 
+    #import os
     #dir_path = os.path.dirname(os.path.realpath(__file__))
     #print(dir_path)
 
@@ -464,11 +464,11 @@ def main():
     # Testing MCMC Functions
     from tests import MCMCFunction_Test
     MCMCFunction_Test(df)
-    return 
+    return
 
     # Transform data
     galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
-    
+
     print("\n",galcen2)
 
     # Get covariance matrices
@@ -477,17 +477,17 @@ def main():
     # Append covariance matrices to main galactocentric data object
     galcen2['cov_mat'] = cov_df['cov_mat']
 
-    print("START PRINT")  
+    print("START PRINT")
     print(galcen2)
 
     # Bin data
     bins = bin_data(galcen2, show_bins = False, N_bins = (10, 10))
 
 
-    
+
 
     display_bins(bins, projection_parameter = 'v_x', mode='index')
-    
+
     generate_velocity_map(bins)
 
     #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
@@ -505,9 +505,9 @@ OLD CODE FROM UNOPTIMISED VERSION
 
 '''
 
-#def get_transformed_data(df, 
-#                         include_cylindrical = False, 
-#                         z_0 = transformation_constants.Z_0, 
+#def get_transformed_data(df,
+#                         include_cylindrical = False,
+#                         z_0 = transformation_constants.Z_0,
 #                         r_0 = transformation_constants.R_0,
 #                         v_sun = transformation_constants.V_SUN,
 #                         debug = False,
@@ -516,7 +516,7 @@ OLD CODE FROM UNOPTIMISED VERSION
 #    if(debug):
 #        import timeit, time
 #        tic=timeit.default_timer()
-    
+
 #        print("Starting galactocentric transformation loop over all data points.. ")
 
 #    #region Loop over all data points
@@ -528,32 +528,32 @@ OLD CODE FROM UNOPTIMISED VERSION
 
 #    for row in df.itertuples():
 
-        
+
 #        if(debug):
 #            print("Finding coordinates and velocities of {0}".format(row.Index))
 
 #        # Coordinate vector in galactocentric frame in xyz
-#        coords = transform_coordinates_galactocentric(row.ra, 
-#                                                      row.dec, 
-#                                                      row.parallax, 
-#                                                      z_0, 
+#        coords = transform_coordinates_galactocentric(row.ra,
+#                                                      row.dec,
+#                                                      row.parallax,
+#                                                      z_0,
 #                                                      r_0)
 
-#        coords_list.append(coords)     
+#        coords_list.append(coords)
 
 #        # Velocity vector in galactocentric frame in xyz
-#        velocities = transform_velocities_galactocentric(row.ra, 
-#                                                         row.dec, 
-#                                                         row.parallax, 
-#                                                         row.pmra, 
-#                                                         row.pmdec, 
-#                                                         row.radial_velocity, 
-#                                                         z_0, 
-#                                                         r_0, 
+#        velocities = transform_velocities_galactocentric(row.ra,
+#                                                         row.dec,
+#                                                         row.parallax,
+#                                                         row.pmra,
+#                                                         row.pmdec,
+#                                                         row.radial_velocity,
+#                                                         z_0,
+#                                                         r_0,
 #                                                         v_sun)
 #        velocities_list.append(velocities)
-        
-        
+
+
 #        if(include_cylindrical):
 
 #            phi = coords_list[row.Index][1]/coords_list[row.Index][0]
@@ -562,11 +562,11 @@ OLD CODE FROM UNOPTIMISED VERSION
 #            coords_cyl_list.append( (np.sqrt(coords_list[row.Index][0]**2 + coords_list[row.Index][1]**2), np.arctan(phi)))
 
 #            velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
-    
+
 #    #endregion
 
-        
-    
+
+
 #    coords_df = pd.DataFrame(coords_list, columns="x y z".split())
 #    velocities_df = pd.DataFrame(velocities_list, columns="v_x v_y v_z".split())
 
@@ -577,20 +577,20 @@ OLD CODE FROM UNOPTIMISED VERSION
 #        velocities_df = pd.DataFrame(velocities_cyl_list, columns="v_r v_phi".split())
 #        df_1 = pd.concat([coords_df, velocities_df], axis=1)
 #        galcen_df = pd.concat([galcen_df, df_1], axis=1)
-     
+
 #    if(is_source_included):
 
 #        if not 'source_id' in df.columns:
 #            print("Error! Source ID column not found in input DataFrame!")
-        
+
 #        galcen_df['source_id'] = df.source_id
 
-       
+
 #    if(debug):
 #        toc=timeit.default_timer()
 #        print("Time elapsed for data coordinate transformation: {a} sec".format(a=toc-tic))
-    
-#    # Returns transformed data as Pandas DataFrame   
+
+#    # Returns transformed data as Pandas DataFrame
 #    return galcen_df
 
 #def transform_coordinates_galactocentric(ra, dec, w, z_0, r_0):
@@ -616,8 +616,8 @@ OLD CODE FROM UNOPTIMISED VERSION
 
 #    # Using M1, M2, M3 for transparency in case of bugs
 #    M1 = transformation_constants.A @ coordxyz_ICRS
-#    M2 = M1 - np.array([[r_0], 
-#                        [0], 
+#    M2 = M1 - np.array([[r_0],
+#                        [0],
 #                        [0]])
 #    M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
 
@@ -626,7 +626,7 @@ OLD CODE FROM UNOPTIMISED VERSION
 #    return result
 
 #def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0, v_sun):
-    
+
 #    # Going from DEG -> RAD
 #    ra = np.deg2rad(ra)
 #    dec = np.deg2rad(dec)
