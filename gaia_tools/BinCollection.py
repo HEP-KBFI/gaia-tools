@@ -9,16 +9,16 @@ A collection of spatially binned ("Bin") objects.
 
 Instance variables
 ------------------
-data : DataFrame 
+data : DataFrame
         The original reference-transformed DataFrame.
 
 bins : list[]
         A list of 'Bin' class objects.
 
-N_bins : int 
+N_bins : int
         Number of bins along main and secondary axis.
 
-bin_boundaries : ndarray 
+bin_boundaries : ndarray
         A meshgrid of bin vertices in terms of x- and y-coordinates.
 
 bin_num_set : set()
@@ -29,9 +29,9 @@ debug : bool()
         Enable debug mode to print additional information to console.
 '''
 class BinCollection:
-    
+
     def __init__(self, data, N_bins, XX, YY, ZZ, mode='xyz', debug = False):
-        
+
         self.data = data
         self.bins = []
         self.N_bins = N_bins
@@ -45,8 +45,8 @@ class BinCollection:
 
         self.bin_num_set = set(data.Bin_index)
         self.debug = debug
-        
-        
+
+
 
     '''
     Collect all bins provided parameters from the 'binned_statistic_2d' function
@@ -54,52 +54,52 @@ class BinCollection:
     '''
     def GenerateBins(self):
         N_bins = self.N_bins
-        max_bin_index = ((N_bins[1]+1) + N_bins[0]*N_bins[1] +2*N_bins[0])     
+        max_bin_index = ((N_bins[1]+1) + N_bins[0]*N_bins[1] +2*N_bins[0])
         bin_index = N_bins[1] + 3
         row_count = 0
-        
+
         # START Bin Generating
         while bin_index < max_bin_index + 1:
-            
-            # If reaches end of column will skip 2 next index numbers 
+
+            # If reaches end of column will skip 2 next index numbers
             if(row_count == N_bins[1]):
-                
+
                 if(self.debug):
                     print("Skipping bin: {} and {}!".format(bin_index, bin_index+1))
-               
+
                 row_count = 0
-                bin_index = bin_index + 2		
+                bin_index = bin_index + 2
                 continue
 
             # If no data is inside bin, will return Bin with empty DataFrame
             # It basically means that no data entries were found in that spatial bin
             if(bin_index not in self.bin_num_set):
-                
+
                 if(self.debug):
                     print("Empty bin: {}!".format(bin_index))
-                    
+
                 columns= self.data.columns
                 data_subset=pd.DataFrame(columns=columns)
-                
+
                 mock_data = []
                 for col in columns:
                     mock_data.append(np.nan)
-                
+
                 data_subset.loc[0] = mock_data
                 data_subset.iloc[0].Bin_index = bin_index
-                
+
                 self.bins.append(Bin(data_subset))
-                
+
                 row_count = row_count + 1
                 bin_index += 1
                 continue
-            
+
             # Adds Bin object to list of bins with correct data
             data_subset = self.data[self.data.Bin_index == bin_index]
             self.bins.append(Bin(data_subset))
             row_count += 1
             bin_index += 1
-           
+
         # END Bin Generating
 
 
@@ -113,7 +113,7 @@ class BinCollection:
 
         XX and YY both have shape (nrows, ncols)
         '''
-        
+
 
 
         if(self.debug):
@@ -122,7 +122,7 @@ class BinCollection:
 
         XX = self.bin_boundaries[0]
         YY = self.bin_boundaries[1]
-        
+
         if(self.mode == 'xyz'):
             # Get slice of data height in terms of z-coordinate span
             temp_z = self.bin_boundaries[2]
@@ -159,54 +159,54 @@ class BinCollection:
         if(self.debug):
             toc=timeit.default_timer()
             print("Bin collection boundaries loaded in {a}.".format(a=toc-tic))
-               
+
     '''
-    Calculates a value inside each bin and returns a numpy array which can be plotted using 
+    Calculates a value inside each bin and returns a numpy array which can be plotted using
     'pcolormesh' function.
-    
-    TODO: The idea here would be to generalise this function so you could use any arbitrary calculation 
+
+    TODO: The idea here would be to generalise this function so you could use any arbitrary calculation
     function inside each bin.
 
     parameter - DataFrame column name in the form of a string. For example: 'v_x', v_y', 'v_z'
 
     mode - the statistic to be calculated of the chosen parameter in data
 
-    '''        
+    '''
     def CalculateValues(self, parameter, mode = 'mean'):
-        
+
         assert len(self.bins) > 0, "No bins inside BinCollection! Did you forget to use GenerateBins()?"
 
 
 
         # 2D list of values
         values = []
-        
+
         # Bin boundaries in x- and y-directions
         XX = self.bin_boundaries[0]
         YY = self.bin_boundaries[1]
-        
+
         count = 0
 
         # For j in range of columns: -1 because we look at binwise not edgewise
         for j in range(XX.shape[1]-1):
-               
+
                 # Empty list for a particular column
                 rows = []
-               
+
                 # For i in range of rows: again binwise
                 for i in range(YY.shape[0]-1):
 
                     # Value to be calculated
 
                     if(parameter == 'v_x' and mode == 'mean'):
-                        temp_val = (-1)*np.mean(self.bins[count].data[parameter])
+                        temp_val = np.mean(self.bins[count].data[parameter])
 
                     elif(mode == 'mean'):
                         temp_val = np.mean(self.bins[count].data[parameter])
 
                     elif(mode == 'std'):
                         temp_val = np.std(self.bins[count].data[parameter])
-                    
+
                     # Mode to check bin indexing
                     elif(mode =='index'):
                         temp_val = self.bins[count].bin_num
@@ -222,17 +222,17 @@ class BinCollection:
 
                     else:
                         print("Mode not given!")
-                    
+
                     rows.append(temp_val)
-                    count = count + 1  
-                    
+                    count = count + 1
+
                 values.append(rows)
-                
-        # Convert to a numpy array and return        
+
+        # Convert to a numpy array and return
         return np.asarray(values)
 
     '''
-    Function which calculates MLE parameters for each bin inside BinCollection according to 
+    Function which calculates MLE parameters for each bin inside BinCollection according to
     the data model specified by us.
 
     Uses v_phi velocity component and its errors from covariances matrices to do this.
@@ -266,7 +266,7 @@ class BinCollection:
             bin.MLE_sigma = MLE_sigma
             bin.MLE_mu = MLE_mu
 
-            
+
 
         return
 
