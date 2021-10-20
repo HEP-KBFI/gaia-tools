@@ -97,7 +97,7 @@ Function for binning data in 2 dimensions. Used to plot vector maps of velocitie
 Input parameters:
     BL - Bin Limit (The edges of the xyz boundary)
 '''
-def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debug = False):
+def bin_data(galcen_data, show_bins = False, BL_x = 10000, BL_y = 10000, BL_z = 10000 , N_bins = (10, 10), debug = False):
 
     if(debug):
         import time, timeit
@@ -118,9 +118,9 @@ def bin_data(galcen_data, show_bins = False, BL = 20000, N_bins = (10, 10), debu
     plottable_df = galcen_data
 
     # Define spatial limits.
-    plottable_df = plottable_df[(plottable_df.x >= -BL) & (plottable_df.x <= BL)]
-    plottable_df = plottable_df[(plottable_df.y >= -BL) & (plottable_df.y <= BL)]
-    plottable_df = plottable_df[(plottable_df.z >= -BL) & (plottable_df.z <= BL)]
+    plottable_df = plottable_df[(plottable_df.x >= -BL_x) & (plottable_df.x <= BL_x)]
+    plottable_df = plottable_df[(plottable_df.y >= -BL_y) & (plottable_df.y <= BL_y)]
+    plottable_df = plottable_df[(plottable_df.z >= -BL_z) & (plottable_df.z <= BL_z)]
 
     # x, y coordinates of the points
     x = plottable_df.x
