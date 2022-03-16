@@ -2,22 +2,23 @@
 '''
 MCMC to run in the cluster for: R0, U_odot, V_odot
 '''
-
-from gaia_tools import data_analysis
-from gaia_tools import covariance_generation as cov
-from gaia_tools.import_functions import import_data
+import sys
+sys.path.append("../gaia_tools/")
+import data_analysis
+import covariance_generation as cov
+from import_functions import import_data
 import numpy as np
 import emcee
 from functools import reduce
 import time, timeit
-from gaia_tools import transformation_constants
-from gaia_tools.mcmc import *
+import transformation_constants
+#from gaia_tools.mcmc import *
 import datetime as dt
 
 # Start import section
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "GaiaData/Gaia_Data_5_12_kpc.csv"
+my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
 
 # Writing new import section for faster debugging!
 start = time.time()
@@ -43,14 +44,16 @@ def log_likelihood(theta):
 
    '''
 
-   v_sun = np.array([theta[2], theta[3], [transformation_constants.V_SUN[2][0]]])
+   v_sun = np.array([[theta[1]],
+                     [theta[2]],
+                     [transformation_constants.V_SUN[2][0]]])
 
    galcen_data = data_analysis.get_transformed_data(icrs_data,
                                                        include_cylindrical = True,
-
                                                        r_0 = theta[0],
                                                        v_sun = v_sun,
                                                        debug = False,
+                                                       is_bayes = True,
                                                        is_source_included = True)
 
    cov_df = cov.generate_covmatrices(df = icrs_data,
@@ -59,6 +62,7 @@ def log_likelihood(theta):
                                        transform_to_cylindrical = True,
                                        z_0 = theta[1],
                                        r_0 = theta[0],
+                                       is_bayes = True,
                                        debug=False)
 
    # append covariance information to galactocentric data
@@ -77,9 +81,9 @@ def log_likelihood(theta):
                                                       theta = (theta[0], theta[1]),
                                                       BL_r_min = min_val - 1,
                                                       BL_r_max = max_val + 1,
-                                                      BL_z_min = -75,
-                                                      BL_z_max = 75,
-                                                      N_bins = (80, 1),
+                                                      BL_z_min = -1200,
+                                                      BL_z_max = 1200,
+                                                      N_bins = (10, 4),
                                                       r_drift = False,
                                                       debug = False)
 
@@ -135,21 +139,19 @@ def log_probability(theta):
    if not np.isfinite(lp):
        return -np.inf
 
-
-
    return lp + log_likelihood(theta)
-
 
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = cpu_count()
+ncpu = 6
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
-nwalkers = 50
+nwalkers = 25
 ndim = 3
+nsteps = 500
 
 theta_0 = (transformation_constants.R_0 + 300, transformation_constants.V_SUN[0][0] + 5, transformation_constants.V_SUN[1][0] + 5)
 
@@ -159,19 +161,18 @@ pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
 print(pos)
 
 # Setup saving results to output file
-filename = "sampler_{a}.h5".format(a=start_datetime)
+filename = "../out/sampler_{a}.h5".format(a=start_datetime)
 backend = emcee.backends.HDFBackend(filename)
 backend.reset(nwalkers, ndim)
-
 
 with Pool(ncpu) as pool:
 
    # Init emcee EnsembleSampler
    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, pool = pool, backend=backend)
 
-   print("Starting sampling. Walkers = {a}, Steps = 500, CPU = 16".format(a=nwalkers))
+   print("Starting sampling. Walkers = {}, Steps = {}, CPU = {}".format(nwalkers, nsteps, ncpu))
    # Run the sampler
-   sampler.run_mcmc(pos, 500, progress=True)
+   sampler.run_mcmc(pos, nsteps, progress=True)
 
    print("Sampler done!")
 
