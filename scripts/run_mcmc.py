@@ -103,10 +103,10 @@ def log_likelihood(theta):
    for i, bin in enumerate(bin_collection.bins):
 
       # get bin likelihood
-      likelihood_value = bin.get_bin_likelihood(debug=True)
+      likelihood_value = bin.get_bin_likelihood(debug=False)
 
-      if(likelihood_value == 0):
-         print(theta)
+      # if(likelihood_value == 0):
+      #    print(theta)
 
       likelihood_array[i] = likelihood_value
 
@@ -149,7 +149,7 @@ ncpu = 6
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
-nwalkers = 25
+nwalkers = 50
 ndim = 3
 nsteps = 500
 
