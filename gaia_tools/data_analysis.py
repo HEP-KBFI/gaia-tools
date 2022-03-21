@@ -97,52 +97,50 @@ Function for binning data in 2 dimensions. Used to plot vector maps of velocitie
 Input parameters:
     BL - Bin Limit (The edges of the xyz boundary)
 '''
-def bin_data(galcen_data, show_bins = False, BL_x = 10000, BL_y = 10000, BL_z = 10000 , N_bins = (10, 10), debug = False):
+def bin_data(galcen_data,
+            show_bins = False,
+            BL_x = (-10000, 10000),
+            BL_y = (-10000, 10000),
+            BL_z = (-10000, 10000),
+            N_bins = (10, 10),
+            debug = False):
 
     if(debug):
         import time, timeit
         tic=timeit.default_timer()
         print("Binning data from galactocentric input data...")
 
-
-    # DEPRECATED
-    # Map values to temporary data frame.
-    #plottable_df = pd.DataFrame({'x': galcen_data.x.value,
-    #                        'y':galcen_data.y.value,
-    #                        'z':galcen_data.z.value,
-    #                        'v_x':galcen_data.v_x.value,
-    #                        'v_y':galcen_data.v_y.value,
-    #                        'v_z':galcen_data.v_z.value})
-
-    # Fix for newly developed method
-    plottable_df = galcen_data
-
     # Define spatial limits.
-    plottable_df = plottable_df[(plottable_df.x >= -BL_x) & (plottable_df.x <= BL_x)]
-    plottable_df = plottable_df[(plottable_df.y >= -BL_y) & (plottable_df.y <= BL_y)]
-    plottable_df = plottable_df[(plottable_df.z >= -BL_z) & (plottable_df.z <= BL_z)]
+    galcen_data = galcen_data[(galcen_data.x >= BL_x[0]) & (galcen_data.x <= BL_x[1])]
+    galcen_data = galcen_data[(galcen_data.y >= BL_y[0]) & (galcen_data.y <= BL_y[1])]
+    galcen_data = galcen_data[(galcen_data.z >= BL_z[0]) & (galcen_data.z <= BL_z[1])]
 
     # x, y coordinates of the points
-    x = plottable_df.x
-    y = plottable_df.y
+    x = galcen_data.x
+    y = galcen_data.y
 
     # Velocity projections of points
-    z = plottable_df.v_x
-    z2 = plottable_df.v_y
+    z = galcen_data.v_x
+    z2 = galcen_data.v_y
 
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x, y, values = z, bins = N_bins, statistic='mean')
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(x,
+                                                            y,
+                                                            values = z,
+                                                            bins = N_bins,
+                                                            range=[[BL_x[0], BL_x[1]], [BL_y[0], BL_y[1]]],
+                                                            statistic='mean')
 
     # Create a meshgrid from the vertices
     XX, YY = np.meshgrid(xedges, yedges)
 
-    ZZ = (np.min(plottable_df.z), np.max(plottable_df.z))
+    ZZ = (np.min(galcen_data.z), np.max(galcen_data.z))
 
     # Assign a binnumber for each data entry
-    plottable_df['Bin_index'] = binnumber
+    galcen_data['Bin_index'] = binnumber
 
     # Instantiate a BinCollection object
-    bin_collection = BinCollection(plottable_df, N_bins, XX, YY, ZZ)
+    bin_collection = BinCollection(galcen_data, N_bins, XX, YY, ZZ)
 
     # Generate the bins with respective x-y boundaries
     bin_collection.GenerateBins()
