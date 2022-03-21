@@ -123,13 +123,16 @@ def display_values(XX, YY, H, mode = None):
         for j in range(XX.shape[1]-1):
 
             if mode != 'count':
-                plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
+                txt = plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.2f' % H.T[i, j],
                      horizontalalignment='center',
-                     verticalalignment='center')
+                     verticalalignment='center',
+                     backgroundcolor='w')
+
             else:
-                plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.0f' % H.T[i, j],
+                txt = plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.0f' % H.T[i, j],
                      horizontalalignment='center',
-                     verticalalignment='center')
+                     verticalalignment='center', backgroundcolor='w')
+
 
 '''
 A plot which enables the user to see the bins created by the 'bin_data' functions in the
@@ -184,6 +187,8 @@ def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = Tr
 
     values = bin_collection.CalculateValues(parameter, mode = mode)
 
+    if values.dtype == 'object':
+        values = values.astype('float64')
 
     fig = plt.figure(figsize = (20,10))
     ax1=plt.subplot(111)
@@ -217,8 +222,8 @@ def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = Tr
     #ax1.set_ylabel('$z$ [{0:latex_inline}]'.format(astropy.units.core.Unit('pc')), fontdict={'fontsize': 18})
 
 
-    plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
-    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(3,3))
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(3,3))
 
     ax1.set_xlabel('r [pc]' , fontdict={'fontsize': 18})
     ax1.set_ylabel('z [pc]', fontdict={'fontsize': 18})
