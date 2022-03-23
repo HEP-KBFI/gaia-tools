@@ -265,9 +265,6 @@ def generate_vector_mesh(XX, YY):
     return VEC_XX, VEC_YY
 
 
-
-#region Manual Coordinate Transformation
-
 def get_transformed_data(data_icrs,
                         include_cylindrical = False,
                         z_0 = transformation_constants.Z_0,
@@ -310,8 +307,7 @@ def get_transformed_data(data_icrs,
 
         cyl_coords = (np.sqrt(coords[:,0]**2 + coords[:,1]**2), phi)
 
-    #endregion
-
+    # Declare DataFrames
     coords_df = pd.DataFrame(np.squeeze(coords, axis=2), columns="x y z".split())
     velocities_df = pd.DataFrame(np.squeeze(velocities, axis=2), columns="v_x v_y v_z".split())
 
@@ -339,7 +335,6 @@ def get_transformed_data(data_icrs,
         toc=timeit.default_timer()
         print("Time elapsed for data coordinate transformation: {a} sec".format(a=toc-tic))
 
-    # Returns transformed data as Pandas DataFrame
     return galcen_df
 
 
@@ -366,19 +361,15 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
     ra = np.deg2rad(data_icrs.ra)
     dec = np.deg2rad(data_icrs.dec)
 
-
     if(is_bayes):
-
         c1 = data_icrs.r_est
 
     else:
-
         # from kpc -> pc
         k1 = transformation_constants.k1
 
         # Declaring constants to reduce process time
         c1 = k1/data_icrs.parallax
-
 
     cosdec = np.cos(dec)
 
