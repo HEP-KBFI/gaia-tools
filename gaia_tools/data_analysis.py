@@ -12,14 +12,19 @@ from BinCollection import BinCollection
 import transformation_constants
 import timeit, time
 
-'''
-Function for filtering out entries that are further out than some specified distance in pc
-
-NOTE! Distance from Solar System!
-'''
 def filter_distance(df, dist, *args, **kwargs):
+    """Function for filtering out entries that are further out than some specified distance [pc]
+        from Sun's position.
 
-    #TODO: Assert parallax_lower type and value
+    Args:
+        df (DataFrame): Data in ICRS
+        dist (float): Max distance
+
+    Returns:
+        DataFrame: Filtered DataFrame
+    """
+
+    #TODO: Add Bayesian estimate version
     df['distance'] = 1/df.parallax
 
     # Distance given in pc
@@ -27,16 +32,6 @@ def filter_distance(df, dist, *args, **kwargs):
     df.reset_index(inplace=True, drop=True)
 
     return df
-
-
-'''
-Generalised filtering function
-'''
-# TODO: Function with a passible dictionary of parameter restrictions
-def filter_value(df, *args, **kwargs):
-
-    #TODO: Use inplace functions from pandas
-    pass
 
 
 '''
@@ -91,12 +86,6 @@ def transform_to_galcen(df, z_sun=17*u.pc, galcen_distance=8.178*u.kpc):
 
     return c
 
-# TODO: Implement binning in all projections -> x, y, z. (Currently only on x-y plane)
-'''
-Function for binning data in 2 dimensions. Used to plot vector maps of velocities.
-Input parameters:
-    BL - Bin Limit (The edges of the xyz boundary)
-'''
 def bin_data(galcen_data,
             show_bins = False,
             BL_x = (-10000, 10000),
@@ -104,6 +93,12 @@ def bin_data(galcen_data,
             BL_z = (-10000, 10000),
             N_bins = (10, 10),
             debug = False):
+
+    """Function for binning data in xyz coordinates. Useful for plotting velocity fields.
+
+    Returns:
+        BinCollection: A collection of Bin type objects.
+    """
 
     if(debug):
         import time, timeit
@@ -158,14 +153,24 @@ def bin_data(galcen_data,
 
     return bin_collection
 
-'''
-Returns bins in terms of R - Z. (Cylindrical)
 
-data - dataframe with data
-N_bins - number of bins in R direction
-XX, YY, ZZ - spatial boundaries in the form: [-x ; +x], [-y ; +y], [-z ; +z],
-'''
 def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bins = (10, 10), r_drift = False, debug=False):
+    """Returns bin in r - z
+
+    Args:
+        data (DataFrame): Data in galactocentric coordinates
+        theta (tuple): Tuple of R0 and z0. Used to mitigate data drift.
+        BL_r_min (float): Min r edge
+        BL_r_max (float): Max r edge
+        BL_z_min (float): Min z edge
+        BL_z_max (float): Max z edge
+        N_bins (tuple, optional): Number of bins in the r-z plane. Defaults to (10, 10).
+        r_drift (bool, optional): Try to prevent drift of data along r-z axes. Defaults to False.
+        debug (bool, optional): Verbose option. Defaults to False.
+
+    Returns:
+        BinCollection: Collection of Bin objects.
+    """
 
     # This assertion doesnt make sense, fix it later
     assert len(data.shape) > 0, "No data!"
@@ -236,18 +241,18 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bi
     return bin_collection
 
 
-
-
-'''
-Function for finding center points of bins in binned data and then
-creating a meshgrid out of all the point coordinates. The center points of bins
-are the origin points for the vectors.
-'''
 def generate_vector_mesh(XX, YY):
     vec_x = []
     vec_y = []
     vec_z = []
 
+    """Function for finding center points of bins in binned data and then
+        creating a meshgrid out of all the point coordinates. The center
+        points of bins are the origin points for the vectors.
+
+    Returns:
+        tuple: Tuple of x and y arrays
+    """
     for i in range(XX.shape[1]-1):
         vec_x.append((XX[0][i+1]+XX[0][i])/2)
 
@@ -262,35 +267,34 @@ def generate_vector_mesh(XX, YY):
 
 
 #region Manual Coordinate Transformation
-'''
-Main function for transforming coordinates to galactocentric frame of reference.
 
-z_0 - the distance above galactic midplane in pc
-r_0 - the distance to the galctic centre in pc
-v_sun - velocity vector of the Sun. Of type 3x1 np.array
-z_0, r_0, v_sun default to Astropy values if not given to function explicitly
-is_source_included - adds the source_id column if True
-debug - debug printing if True
-
-'''
 def get_transformed_data(data_icrs,
-                         include_cylindrical = False,
-                         z_0 = transformation_constants.Z_0,
-                         r_0 = transformation_constants.R_0,
-                         v_sun = transformation_constants.V_SUN,
-                         debug = False,
-                         is_source_included = False,
-                         is_bayes = False):
+                        include_cylindrical = False,
+                        z_0 = transformation_constants.Z_0,
+                        r_0 = transformation_constants.R_0,
+                        v_sun = transformation_constants.V_SUN,
+                        debug = False,
+                        is_source_included = False,
+                        is_bayes = False):
+    """Main function for transforming ICRS data to galactocentric frame.
+
+    Args:
+        data_icrs (DataFrame): Gaia data in ICRS
+        include_cylindrical (bool, optional): Flag whether to add cylindrical coordinates. Defaults to False.
+        z_0 (float, optional): Sun's position over Galactic plane. Defaults to transformation_constants.Z_0.
+        r_0 (float, optional): Sun's Galactocentric distance. Defaults to transformation_constants.R_0.
+        v_sun (tuple, optional): Sun's velocity vector. Defaults to transformation_constants.V_SUN.
+        debug (bool, optional): Verbose flag. Defaults to False.
+        is_source_included (bool, optional): Flag to carry Gaia's 'source_id' parameter with data. Defaults to False.
+        is_bayes (bool, optional): Flag to use Bayesian distance estimates. Defaults to False.
+
+    Returns:
+        DataFrame: (Gaia) data in galactocentric frame.
+    """
 
     if(debug):
         tic=timeit.default_timer()
         print("Starting galactocentric transformation loop over all data points.. ")
-
-
-    # IDEA #
-    # Before using coordinate and velocity transformation, perhaps create a sub_DataFrame which only has the required columns.
-
-    #region Transforming
 
     # Coordinate vector in galactocentric frame in xyz
     coords =  transform_coordinates_galactocentric(data_icrs, z_0, r_0, is_bayes)
@@ -339,10 +343,18 @@ def get_transformed_data(data_icrs,
     return galcen_df
 
 
-'''
-This function uses input ICRS data and outputs data in cartesian (x,y,z) coordinates and in galactocentric frame of reference.
-'''
 def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, is_bayes = False):
+    """This function uses input ICRS data and outputs data in cartesian (x,y,z) coordinates and in galactocentric frame of reference.
+
+    Args:
+        data_icrs (DataFrame): DataFrame of ICRS coordinates
+        z_0 (float, optional): Sun's height over Galactic plane. Defaults to transformation_constants.Z_0.
+        r_0 (float, optional): Sun's Galactocentric distance. Defaults to transformation_constants.R_0.
+        is_bayes (bool, optional): Flag for using pre-computed (Bayesian) distance estimates. Defaults to False.
+
+    Returns:
+        ndarray: Array of Cartesian coordinates of shape (n,3,1).
+    """
 
     #TODO: Add ASSERT checks on function input parameters.
     # ra dec can only be in a specific range
@@ -391,7 +403,18 @@ def transform_coordinates_galactocentric(data_icrs, z_0 = transformation_constan
 This function uses input ICRS data and outputs data in cartesian (v_x,v_y,v_z) velocity vector components and in galactocentric frame of reference.
 '''
 def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, v_sun = transformation_constants.V_SUN, is_bayes = False):
+    """Function for transforming proper motions with radial velocities to Cartesian velocity vector components in galactocentric frame.
 
+    Args:
+        data_icrs (DataFrame): DataFrame in ICRS
+        z_0 (float, optional): Sun's position over Galactic plane. Defaults to transformation_constants.Z_0.
+        r_0 (float, optional): Sun's Galactocentric distance. Defaults to transformation_constants.R_0.
+        v_sun (tuple, optional): Sun's velocity vector. Defaults to transformation_constants.V_SUN.
+        is_bayes (bool, optional): Flag for using pre-computed (Bayesian) distance estimates. Defaults to False.
+
+    Returns:
+        ndarray: Cartesian velocity components of shape (n,3,1)
+    """
     # Number of data points
     n = len(data_icrs)
 
@@ -434,7 +457,15 @@ def transform_velocities_galactocentric(data_icrs, z_0 = transformation_constant
     return M4
 
 def transform_velocities_cylindrical(velocities_xyz, phi):
+    """Transforms Cartesian velocities to cylindrical
 
+    Args:
+        velocities_xyz (np.array): Cartesian velocity array
+        phi (np.array): Array of phi coordinates
+
+    Returns:
+        np.array: Array of cylindrical velocity components.
+    """
     v_cylindrical = transformation_constants.get_cylindrical_velocity_matrix(phi) @ velocities_xyz
 
     return v_cylindrical
@@ -494,169 +525,6 @@ def main():
 if __name__ == "__main__":
 
     main()
-
-
-'''
-OLD CODE FROM UNOPTIMISED VERSION
-
-
-
-'''
-
-#def get_transformed_data(df,
-#                         include_cylindrical = False,
-#                         z_0 = transformation_constants.Z_0,
-#                         r_0 = transformation_constants.R_0,
-#                         v_sun = transformation_constants.V_SUN,
-#                         debug = False,
-#                         is_source_included = False):
-
-#    if(debug):
-#        import timeit, time
-#        tic=timeit.default_timer()
-
-#        print("Starting galactocentric transformation loop over all data points.. ")
-
-#    #region Loop over all data points
-
-#    coords_list = []
-#    velocities_list = []
-#    coords_cyl_list = []
-#    velocities_cyl_list = []
-
-#    for row in df.itertuples():
-
-
-#        if(debug):
-#            print("Finding coordinates and velocities of {0}".format(row.Index))
-
-#        # Coordinate vector in galactocentric frame in xyz
-#        coords = transform_coordinates_galactocentric(row.ra,
-#                                                      row.dec,
-#                                                      row.parallax,
-#                                                      z_0,
-#                                                      r_0)
-
-#        coords_list.append(coords)
-
-#        # Velocity vector in galactocentric frame in xyz
-#        velocities = transform_velocities_galactocentric(row.ra,
-#                                                         row.dec,
-#                                                         row.parallax,
-#                                                         row.pmra,
-#                                                         row.pmdec,
-#                                                         row.radial_velocity,
-#                                                         z_0,
-#                                                         r_0,
-#                                                         v_sun)
-#        velocities_list.append(velocities)
-
-
-#        if(include_cylindrical):
-
-#            phi = coords_list[row.Index][1]/coords_list[row.Index][0]
-#            vel_cyl = transform_velocities_cylindrical(velocities, phi)
-
-#            coords_cyl_list.append( (np.sqrt(coords_list[row.Index][0]**2 + coords_list[row.Index][1]**2), np.arctan(phi)))
-
-#            velocities_cyl_list.append( (vel_cyl[0], vel_cyl[1]))
-
-#    #endregion
-
-
-
-#    coords_df = pd.DataFrame(coords_list, columns="x y z".split())
-#    velocities_df = pd.DataFrame(velocities_list, columns="v_x v_y v_z".split())
-
-#    galcen_df = pd.concat([coords_df, velocities_df], axis=1)
-
-#    if(include_cylindrical):
-#        coords_df = pd.DataFrame(coords_cyl_list, columns="r phi".split())
-#        velocities_df = pd.DataFrame(velocities_cyl_list, columns="v_r v_phi".split())
-#        df_1 = pd.concat([coords_df, velocities_df], axis=1)
-#        galcen_df = pd.concat([galcen_df, df_1], axis=1)
-
-#    if(is_source_included):
-
-#        if not 'source_id' in df.columns:
-#            print("Error! Source ID column not found in input DataFrame!")
-
-#        galcen_df['source_id'] = df.source_id
-
-
-#    if(debug):
-#        toc=timeit.default_timer()
-#        print("Time elapsed for data coordinate transformation: {a} sec".format(a=toc-tic))
-
-#    # Returns transformed data as Pandas DataFrame
-#    return galcen_df
-
-#def transform_coordinates_galactocentric(ra, dec, w, z_0, r_0):
-
-#    #TODO: Add ASSERT checks on function input parameters.
-#    # ra dec can only be in a specific range
-
-#    # Going from DEG -> RAD
-#    ra = np.deg2rad(ra)
-#    dec = np.deg2rad(dec)
-
-#    # from kpc -> pc
-#    k1 = transformation_constants.k1
-
-#    # Declaring constants to reduce process time
-#    c1 = k1/w
-#    cosdec = np.cos(dec)
-
-#    # Initial cartesian coordinate vector in ICRS
-#    coordxyz_ICRS = np.array([[(c1)*np.cos(ra)*cosdec],
-#                      [(c1)*np.sin(ra)*cosdec],
-#                       [(c1)*np.sin(dec)]])
-
-#    # Using M1, M2, M3 for transparency in case of bugs
-#    M1 = transformation_constants.A @ coordxyz_ICRS
-#    M2 = M1 - np.array([[r_0],
-#                        [0],
-#                        [0]])
-#    M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
-
-#    result = (M3[0][0], M3[1][0], M3[2][0])
-
-#    return result
-
-#def transform_velocities_galactocentric(ra, dec, w, mu_ra, mu_dec, v_r, z_0, r_0, v_sun):
-
-#    # Going from DEG -> RAD
-#    ra = np.deg2rad(ra)
-#    dec = np.deg2rad(dec)
-
-#    # from 1/yr -> km/s
-#    k2 = transformation_constants.k2
-
-#    # Declaring constants to reduce process time
-#    c2 = k2/w
-
-#    # Initial velocity vector in ICRS in units km/s
-#    v_ICRS = np.array([[v_r],
-#                      [(c2)*mu_ra],
-#                      [(c2)*mu_dec]])
-
-#    B = transformation_constants.get_b_matrix(ra, dec)
-
-#    # Using M1, M2, M3, .. for transparency in case of bugs
-#    M1 = B @ v_ICRS
-#    M2 = transformation_constants.A @ M1
-#    M3 = transformation_constants.get_H_matrix(z_0, r_0) @ M2
-#    M4 = M3 + v_sun
-
-#    result = (M4[0][0], M4[1][0], M4[2][0])
-
-#    return result
-
-#def transform_velocities_cylindrical(velocities, phi):
-
-#    v_cylindrical = transformation_constants.get_cylindrical_velocity_matrix(phi) @ velocities
-
-#    return v_cylindrical
 
 
 
