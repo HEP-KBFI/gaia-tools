@@ -79,8 +79,6 @@ def get_likelihood_sum(data_icrs,
     n = reduce(lambda x, y: x*y, bin_collection.N_bins)
     likelihood_array = np.zeros(n)
 
-    star_count = len(bin_collection.data)
-
     # Keep track how many data points are used in likelihood computation
     point_count = []
 
@@ -180,7 +178,7 @@ def generate_likelihood_plot(x, y, bin_r, bin_z, parameter, save = False):
     plt.ylabel('Log Likelihood',fontdict={'fontsize': 18}, labelpad = 25)
     plt.subplots_adjust(left=0.2)
 
-    title_string = "../out/Likelihood_{0}_{1}x{2}".format(parameter, bin_r, bin_z)
+    title_string = "../out/Likelihood_{0}_{1}x{2}_{3}".format(parameter, bin_r, bin_z, is_near)
 
     if(save):
         plt.savefig(title_string+'.png', dpi=300)
@@ -189,8 +187,15 @@ if __name__ == "__main__":
 
     parameter = sys.argv[1]
 
+    # True/False
+    is_near = sys.argv[2]
+
     path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
     data_icrs = import_data(path = path, debug = False)
+
+    if(is_near == "True"):
+        data_icrs = data_icrs[data_icrs.r_est < 4000]
+        data_icrs.reset_index(inplace=True, drop=True)
 
     bin_settings = [(5,4), (10,4), (15,4), (10, 2), (20, 8)]
 
