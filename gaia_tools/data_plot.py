@@ -210,7 +210,7 @@ def plot_collapsed_bins(bin_collection, projection_parameter, showBinValues = Tr
     cbar = plt.colorbar(plot1,ax=ax1,
                         pad = .015,
                         aspect = 20,
-                        label = 'Value in r-z bin: {0} {1}'.format(projection_parameter, mode))
+                        label = '{0} {1}'.format(projection_parameter, mode))
 
     plt.xticks(XX[0])
     plt.yticks(YY.T[0])
