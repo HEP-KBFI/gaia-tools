@@ -1,6 +1,6 @@
 '''
-File for storing functions and constants related to generating and transforming
-data covariance matrices.
+Module for storing functions and constants related to
+generating and transforming covariance matrices.
 '''
 
 import numpy as np
@@ -10,13 +10,7 @@ import timeit
 
 ERROR_NAMES = ['ra_error', 'dec_error', 'parallax_error', 'pmra_error', 'pmdec_error']
 
-'''
-Main function for generating covariance matrices and transforming them.
 
-
-Function that iterates over the DataFrame and appends covariances matrices to a
-dictonary with 'the source_id' as key.
-'''
 def generate_covmatrices(df,
                          df_crt = None,
                          transform_to_galcen = False,
@@ -25,6 +19,22 @@ def generate_covmatrices(df,
                          r_0 = transformation_constants.R_0,
                          is_bayes = False,
                          debug = False):
+    """Generate covariance matrices for ICRS data and propagates to galactocentric Cartesian/cylindrical modes if flagged so.
+
+    Args:
+        df (DataFrame): The Gaia ICRS data.
+        df_crt (DataFrame, optional): The Gaia data in galactocentric Cartesian coordinates. Defaults to None.
+        transform_to_galcen (bool, optional): Set true to propagate covariance information to Cartesian coordinates. Defaults to False.
+        transform_to_cylindrical (bool, optional): Set true to propagate covariance information to cylindrical coordinates.
+                                                    NB! Requires Cartesian covariance matrix. Defaults to False.
+        z_0 (float, optional): Sun's height over the Galactic plane. Defaults to transformation_constants.Z_0.
+        r_0 (float, optional): Sun's distance from the Galactic centre. Defaults to transformation_constants.R_0.
+        is_bayes (bool, optional): Set True if using distance estimates and not parallax. Defaults to False.
+        debug (bool, optional): Set True for verbose. Defaults to False.
+
+    Returns:
+        DataFrame: Returns (transformed) covariance matrices with 'source_id'-s.
+    """
 
     Z_0 = z_0
     R_0 = r_0
@@ -47,20 +57,15 @@ def generate_covmatrices(df,
         else:
             data_array = df[["ra", "dec","parallax","pmra","pmdec","radial_velocity"]].to_numpy()
 
-
         if isinstance(data_array, np.ndarray):
             C = transform_cov_matrix(C, data_array, "Cartesian", Z_0, R_0, is_bayes=is_bayes)
         else:
             print("Data is not a numpy array!")
             return
 
-    # Transforms to cylindrical coordinate system. Can only be done if coordinates are in galactocentric frame.
-    # Expects DF with parameters in Cartesian.
-
-    # TODO: Implement exception handling in the future
-    # EXAMPLE: If cylindrical coordinates not found give an error.
-    # EXAMPLE: If data_array not numpy array -> Exception
     if(transform_to_cylindrical is True):
+
+        assert transform_to_galcen, "Must first transform to galactocentric frame!"
 
         data_array = df_crt[["x", "y","r","phi","v_r","v_phi"]].to_numpy()
 
@@ -83,19 +88,16 @@ def generate_covmatrices(df,
 
     return cov_df
 
-'''
-A new function for transforming covariance matrices of whole data set.
-The idea is that it will not create a new matrix every iteration but
-transform the initial ones generated from Gaia input data.
-'''
-def transform_cov_matrices():
-    pass
 
-
-'''
-Function that gets the covariance matrix of a specific point source (row in DataFrame).
-'''
 def generate_covmat(df):
+    """Generates covariance matrices from the Gaia data.
+
+    Args:
+        df (DataFrame): A DataFrame of Gaia data.
+
+    Returns:
+        Array: Numpy array of covariance matrices. Shape of (n x 6 x 6).
+    """
 
     n = len(df)
 
@@ -150,7 +152,19 @@ def generate_covmat(df):
 
 
 def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, is_bayes = False):
+    """Transforms an array of covariance matrices to specified coordinate system.
 
+    Args:
+        C (Array): Arrays of covariance matrices
+        df (DataFrame): DataFrame of Gaia data used for generating Jacobian matrices for each observation.
+        coordinate_system (str): Specified coordinate system, either "Cartesian" or "Cylindrical".
+        z_0 (float, optional): Sun's height over Galactic plane. Defaults to transformation_constants.Z_0.
+        r_0 (float, optional): Sun's distance from Galactic centre. Defaults to transformation_constants.R_0.
+        is_bayes (bool, optional): Set True if using distance estimates instead of parallaxes. Defaults to False.
+
+    Returns:
+        Array: Returns array of transformed covariance matrices.
+    """
 
     if(is_bayes == True):
         # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).

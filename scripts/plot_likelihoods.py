@@ -10,6 +10,8 @@ import transformation_constants
 import covariance_generation
 from import_functions import import_data
 
+
+
 # LIKELIHOOD SUM FUNCTION
 '''
 This function uses the Gaia data in ICRS:
@@ -120,11 +122,11 @@ def generate_plot_vars(bin_r, bin_z, parameter):
 
     # The varied range in x-axis
     if(parameter == "R_0"):
-        x = np.linspace(6000, 12000, 10)
+        x = np.linspace(6000, 12000, 15)
     elif(parameter == "U_odot"):
-        x = np.linspace(0, 50, 10)
+        x = np.linspace(0, 50, 15)
     else:
-        x = np.linspace(150, 350, 10)
+        x = np.linspace(150, 350, 15)
 
     # The likelihood values
     y = []
@@ -187,18 +189,29 @@ if __name__ == "__main__":
 
     parameter = sys.argv[1]
 
-    # True/False
-    is_near = sys.argv[2]
-
     path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
     data_icrs = import_data(path = path, debug = False)
 
-    if(is_near == "True"):
-        data_icrs = data_icrs[data_icrs.r_est < 4000]
-        data_icrs.reset_index(inplace=True, drop=True)
+    bin_settings = [(10,4), (20, 8)]
 
-    bin_settings = [(5,4), (10,4), (15,4), (10, 2), (20, 8)]
+    out_dict = {}
 
     for bin_r, bin_z in bin_settings:
         x, y, parameter = generate_plot_vars(bin_r, bin_z, parameter)
+
+        idx_max = np.argmax(y)
+        plt.axvline(x=x[idx_max], ls="--", label="Max")
+
+        out_dict[(bin_r, bin_z)] = x[idx_max]
+
         generate_likelihood_plot(x, y, bin_r, bin_z, parameter, True)
+
+    print(out_dict)
+
+    import csv
+    with open('../out/{}_results.csv'.format(parameter), 'w') as csv_file:  
+        writer = csv.writer(csv_file)
+        for key, value in out_dict.items():
+            writer.writerow([key, value])
+
+    
