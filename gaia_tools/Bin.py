@@ -8,13 +8,13 @@ needed error parameters that can be accessed at any later time.
 
 Instance variables
 ------------------
-data : DataFrame 
+data : DataFrame
         A subset of data from original DataFrame belonging to particular bin.
 
-bin_num : int 
+bin_num : int
         Number of the particular bin.
 
-N_points : int 
+N_points : int
         Number of data points in particular bin.
 
 x_boundaries : tuple()
@@ -31,7 +31,7 @@ z_boundaries : tuple()
 class Bin:
     def __init__(self, data_subset):
         self.data = data_subset
-        
+
         if("Bin_index" in data_subset.index):
             self.bin_num = data_subset.Bin_index.iloc[0]
 
@@ -44,24 +44,32 @@ class Bin:
         self.z_boundaries= []
         self.MLE_sigma = None
         self.MLE_mu = None
+        self.med_sig_vphi = None
+        self.A_parameter = None
 
     '''
     To keep this function generalized, should pass a parameter describing
     what specfic value from covariance matrix is needed
     '''
-    def get_error_data(self):
+    def get_error_data(self, parameter):
 
-        # Figure out which element in cov mat is correct error!!
-        # Currently have it magic numbered to error of v_phi
-        value_list = [value[4][4] for value in self.data.cov_mat]
+        # Error information for v_r is in [3][3]
+        if(parameter == 'v_r'):
+            value_list = [value[3][3] for value in self.data.cov_mat]
+
+        elif(parameter =='v_phi'):
+            value_list = [value[4][4] for value in self.data.cov_mat]
+
+        else:
+            value_list = [value[4][4] for value in self.data.cov_mat]
 
         # CHECK IF THIS IS CORRECT!
         return np.sqrt(value_list)
 
     def get_parameter_data(self, parameter):
-    
+
         parameter_array = [value for value in self.data[parameter]]
-        
+
         return parameter_array
 
     '''
@@ -72,13 +80,13 @@ class Bin:
 
     '''
     def get_bin_likelihood(self, debug=False):
-    
-        
+
+
         sig = self.MLE_sigma
         mu = self.MLE_mu
         n = self.N_points
         velocity_array = self.get_parameter_data('v_phi')
-        
+
         try:
             error_array = self.get_error_data()
         except:
@@ -96,10 +104,71 @@ class Bin:
         add2 = (((velocity_array - mu)**2)*denom_array).sum()
 
         result = -0.5*(add1 + add2)
-        
+
 
         return result
-        
-        
+
+    def get_likelihood_w_asymmetry(self, v_c, debug=False):
+        """Compute likelihood of bin with asymmetry taken into account
+
+        Args:
+            v_c (float): Proposed V_c of bin in MCMC
+            debug (bool, optional): Verbose flag. Defaults to False.
+
+        Returns:
+            float: Returns bin likelihood
+        """
+
+        # Likelihood for bin only
+
+        med_sig_vphi = self.med_sig_vphi
+        med_vphi = np.median(self.data.v_phi)
+
+        A = self.A_parameter
+
+        add_1 = np.log(2*np.pi*med_sig_vphi)
+
+        add_2 = (med_vphi - ((A + v_c**2)/v_c))**2/med_sig_vphi
+
+        add_3 = med_sig_vphi/((1-(A/v_c**2)))**2
+
+        if(debug):
+            print("A -> {}".format(A))
+            print("Add 1 -> {}".format(add_1))
+            print("Add 2 -> {}".format(add_2))
+            print("Add 3 -> {}".format(add_3))
+
+        return -0.5*(add_1 + add_2 + add_3)
 
 
+    def get_med_sig_vphi(self, debug):
+
+        try:
+            self.med_sig_vphi = np.median((self.get_error_data('v_phi'))**2)
+        except:
+            if(debug):
+                print("No error data was found inside bin!")
+            return 0
+
+    def compute_A_parameter(self):
+
+        # rot_vel_var - median of rotational-velocity variance in bin
+        rot_vel_var = self.med_sig_vphi
+
+        # rad_vel_var - median of radial-velocity variance in bin
+        rad_vel_var = np.median(self.data.sig_vr)
+
+        XX = rot_vel_var/rad_vel_var
+
+        # R - bin center
+        R = np.mean(self.r_boundaries)
+
+        # h_r - radial scale length
+        h_r = 3000
+
+        # h_sig - radial-velocity dispersion scale length
+        h_sig = 8000
+
+        A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
+
+        return A
