@@ -18,6 +18,7 @@ def generate_covmatrices(df,
                          z_0 = transformation_constants.Z_0,
                          r_0 = transformation_constants.R_0,
                          is_bayes = False,
+                         is_unpack_velocity = False,
                          debug = False):
     """Generate covariance matrices for ICRS data and propagates to galactocentric Cartesian/cylindrical modes if flagged so.
 
@@ -75,12 +76,20 @@ def generate_covmatrices(df,
             print("Data is not a numpy array!")
             return
 
-    # Unpack covariance matrices to list
-    # TODO: Figure out a more efficient way to do this!!
-    cov_list = list(C)
 
-    d = {"source_id": df.source_id, "cov_mat": cov_list}
-    cov_df = pd.DataFrame(d)
+    if(is_unpack_velocity):
+        covariance_data = {"source_id": df_crt.source_id,
+                        "sig_vphi": C[:, 4, 4],
+                        "sig_vr": C[:, 3, 3]}
+        cov_df = pd.DataFrame(covariance_data)
+
+    else:
+        # Unpack covariance matrices to list
+        # TODO: Figure out a more efficient way to do this!!
+        cov_list = list(C)
+
+        d = {"source_id": df.source_id, "cov_mat": cov_list}
+        cov_df = pd.DataFrame(d)
 
     if(debug):
         toc=timeit.default_timer()
