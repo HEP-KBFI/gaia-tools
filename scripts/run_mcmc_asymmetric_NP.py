@@ -16,6 +16,18 @@ import datetime as dt
 import pandas as pd
 import os
 import pickle
+import argparse
+
+
+parser = argparse.ArgumentParser(description='Run MCMC.')
+parser.add_argument('--out', type=str)
+parser.add_argument('--run_comment', type=str)
+parser.add_argument('--query-size', type=int)
+parser.set_defaults(feature=True)
+args = parser.parse_args()
+
+
+
 # Start import section
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
@@ -27,10 +39,14 @@ start = time.time()
 # Import the ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
 
+# Use stars within 1.5 kpc of the Sun
+# r_est_lim = 1500
+# icrs_data = icrs_data[(icrs_data.r_est < r_est_lim)]
+# icrs_data.reset_index(inplace=True, drop=True)
 
 z_lim = 50
-r_lim_min = transformation_constants.R_0 - 1500
-r_lim_max = transformation_constants.R_0 + 1500
+r_lim_min = 5000
+r_lim_max = 12000
 
 
 galcen_data = data_analysis.get_transformed_data(icrs_data,
@@ -148,9 +164,9 @@ def log_likelihood(theta):
                                                       theta = (theta[0], theta[1]),
                                                       BL_r_min = min_val - 1,
                                                       BL_r_max = max_val + 1,
-                                                      BL_z_min = -200,
-                                                      BL_z_max = 200,
-                                                      N_bins = (5, 1),
+                                                      BL_z_min = -z_lim,
+                                                      BL_z_max = z_lim,
+                                                      N_bins = (10, 1),
                                                       r_drift = False,
                                                       debug = False)
 
@@ -194,7 +210,7 @@ def log_prior(theta):
    ## flat across all parameters at first
 
    trig_1 = (theta[0:-1] > -400).all() and (theta[0:-1]  < 300).all()
-   trig_2 = (theta[-1] > 100) and (theta[-1]  < 300)
+   trig_2 = (theta[-1] > 150) and (theta[-1]  < 300)
 
    if trig_1 and trig_2:
        return 0.0
@@ -220,11 +236,11 @@ print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
 nwalkers = 60
-ndim = 6
-nsteps = 500
+ndim = 11
+nsteps = 1000
 
 # These are randomly chosen in the prior range
-theta_0 = (-300, -190, -210, -275, -147, 150)
+theta_0 = (-300, -190, -210, -275, -147,-300, -190, -210, -275, -147, 200)
 
 # Init starting point for all walkers
 pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
@@ -232,17 +248,19 @@ pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
 print(pos)
 
 # Setup saving results to output file
-filename = "../out/mcmc_sampler/LP_sampler_{}_zlim{}_rlim{}_{}.h5".format(start_datetime, z_lim, r_lim_min, r_lim_max)
+filename = "../out/mcmc_sampler/modified_binning/sampler_larger_binning_10x1_{}_zlim{}_minrlim{}_maxrlim{}.h5".format(start_datetime, z_lim, r_lim_min, r_lim_max)
 
 # To continue previous run
+
+prev_filename = "/home/sven/repos/gaia-tools/out/mcmc_sampler/modified_binning/sampler_larger_binning_10x1_2022-05-17-11-49-12_zlim50_minrlim5000_maxrlim12000.h5"
 # reader = emcee.backends.HDFBackend(filename)
 # samples = reader.get_chain()
 # pos = samples[-1]
 
-backend = emcee.backends.HDFBackend(filename)
+backend = emcee.backends.HDFBackend(prev_filename)
 
 # Comment out to continue previous run
-backend.reset(nwalkers, ndim)
+#backend.reset(nwalkers, ndim)
 
 with Pool(ncpu) as pool:
 
@@ -251,14 +269,14 @@ with Pool(ncpu) as pool:
 
    print("Starting sampling. Walkers = {}, Steps = {}, CPU = {}".format(nwalkers, nsteps, ncpu))
    # Run the sampler
-   sampler.run_mcmc(pos, nsteps, progress=True)
+   sampler.run_mcmc(None, nsteps, progress=True)
 
    print("Sampler done!")
 
 # Dumps sampler object to pkl
-fn='sampler_largeprior_optimized_nsteps_{}_{}_{}_{}_{}'.format(nsteps,
-                                                   start_datetime,
-                                                   z_lim, r_lim_min, r_lim_max)
+fn='../out/mcmc_sampler/sampler_pkls/sampler_larger_binning_10x1_optimized_nsteps{}_zlim{}_minrlim{}_maxrlim{}'.format(nsteps,
+                                                   z_lim, 
+                                                   r_lim_min, r_lim_max)
 with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:
         pickle.dump(sampler, f, -1)
 
