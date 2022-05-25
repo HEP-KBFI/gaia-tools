@@ -19,16 +19,25 @@ import pickle
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Run MCMC.')
-parser.add_argument('--out', type=str)
-parser.add_argument('--run_comment', type=str)
-parser.add_argument('--query-size', type=int)
-parser.set_defaults(feature=True)
-args = parser.parse_args()
+# 2MASS DATA IMPORT
+tmass_data_path = '/hdfs/local/sven/gaia_tools_data/crossmatched_tmass_data/crossmatched_tmass_data.csv'
+
+import re
+def is_allowed_flg(string):
+
+    charRe = re.compile(r'[^A-B]')
+    string = charRe.search(string)
+    return not bool(string)
+
+crossmatched_tmass_data = pd.read_csv(tmass_data_path)
+
+sliced_tmass_data = crossmatched_tmass_data[((crossmatched_tmass_data.j_m - crossmatched_tmass_data.k_m) > 0.5) & ((crossmatched_tmass_data.j_m - crossmatched_tmass_data.k_m) < 1.1)]
+sliced_tmass_data = sliced_tmass_data[((sliced_tmass_data.j_msigcom) < 0.1) & ((sliced_tmass_data.h_msigcom) < 0.1) & ((sliced_tmass_data.k_msigcom) < 0.1)]
+sliced_tmass_data =  sliced_tmass_data [sliced_tmass_data.apply(lambda row : is_allowed_flg(row.ph_qual), axis=1) == True]
+sliced_tmass_data.reset_index(inplace=True, drop=True)
 
 
-
-# Start import section
+# GAIA DATA IMPORT
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
 my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
@@ -38,6 +47,11 @@ start = time.time()
 
 # Import the ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
+
+
+# MERGE 2MASS GAIA ON 'source_id'
+icrs_data = icrs_data.merge(sliced_tmass_data, on='source_id', suffixes=('', '_tmass'))[icrs_data.columns]
+print('Gaia data shape: {}'.format(icrs_data.shape))
 
 # Use stars within 1.5 kpc of the Sun
 # r_est_lim = 1500
@@ -60,6 +74,7 @@ galcen_data = galcen_data[(galcen_data.z < z_lim) & (galcen_data.z > -z_lim)]
 galcen_data.reset_index(inplace=True, drop=True)
 
 icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
+print('Gaia data shape: {}'.format(icrs_data.shape))
 
 coords =  data_analysis.transform_coordinates_galactocentric(icrs_data,
                                         transformation_constants.Z_0,
@@ -166,7 +181,7 @@ def log_likelihood(theta):
                                                       BL_r_max = max_val + 1,
                                                       BL_z_min = -z_lim,
                                                       BL_z_max = z_lim,
-                                                      N_bins = (10, 1),
+                                                      N_bins = (5, 1),
                                                       r_drift = False,
                                                       debug = False)
 
@@ -236,11 +251,11 @@ print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
 nwalkers = 60
-ndim = 11
-nsteps = 1000
+ndim = 6
+nsteps = 1500
 
 # These are randomly chosen in the prior range
-theta_0 = (-300, -190, -210, -275, -147,-300, -190, -210, -275, -147, 200)
+theta_0 = (-300, -190, -210, -275, -147, 200)
 
 # Init starting point for all walkers
 pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
@@ -248,16 +263,16 @@ pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
 print(pos)
 
 # Setup saving results to output file
-filename = "../out/mcmc_sampler/modified_binning/sampler_larger_binning_10x1_{}_zlim{}_minrlim{}_maxrlim{}.h5".format(start_datetime, z_lim, r_lim_min, r_lim_max)
+filename = "../out/mcmc_sampler/bovy_sample/sampler_{}_zlim{}_minrlim{}_maxrlim{}.h5".format(start_datetime, z_lim, r_lim_min, r_lim_max)
 
 # To continue previous run
 
-prev_filename = "/home/sven/repos/gaia-tools/out/mcmc_sampler/modified_binning/sampler_larger_binning_10x1_2022-05-17-11-49-12_zlim50_minrlim5000_maxrlim12000.h5"
+#prev_filename = "/home/sven/repos/gaia-tools/out/mcmc_sampler/modified_binning/sampler_larger_binning_10x1_2022-05-17-11-49-12_zlim50_minrlim5000_maxrlim12000.h5"
 # reader = emcee.backends.HDFBackend(filename)
 # samples = reader.get_chain()
 # pos = samples[-1]
 
-backend = emcee.backends.HDFBackend(prev_filename)
+backend = emcee.backends.HDFBackend(filename)
 
 # Comment out to continue previous run
 #backend.reset(nwalkers, ndim)
@@ -269,12 +284,12 @@ with Pool(ncpu) as pool:
 
    print("Starting sampling. Walkers = {}, Steps = {}, CPU = {}".format(nwalkers, nsteps, ncpu))
    # Run the sampler
-   sampler.run_mcmc(None, nsteps, progress=True)
+   sampler.run_mcmc(pos, nsteps, progress=True)
 
    print("Sampler done!")
 
 # Dumps sampler object to pkl
-fn='../out/mcmc_sampler/sampler_pkls/sampler_larger_binning_10x1_optimized_nsteps{}_zlim{}_minrlim{}_maxrlim{}'.format(nsteps,
+fn='../out/mcmc_sampler/sampler_pkls/sampler_bovy_sample_5x1_optimized_nsteps{}_zlim{}_minrlim{}_maxrlim{}'.format(nsteps,
                                                    z_lim, 
                                                    r_lim_min, r_lim_max)
 with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:

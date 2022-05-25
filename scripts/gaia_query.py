@@ -12,18 +12,18 @@ def launch_query(args):
     if args.login:
         Gaia.login()
 
-    # Select stars with measured radial velocity
-    # ADQL_string = 'select top {} gaia_source.source_id,gaia_source.phot_g_mean_flux,gaia_source.phot_g_mean_flux_error,' \
-    #                 'gaia_source.phot_g_mean_mag,gaia_source.phot_bp_mean_flux,gaia_source.phot_bp_mean_flux_error, '\
-    #                 'gaia_source.phot_bp_mean_mag,gaia_source.phot_rp_mean_flux,gaia_source.phot_rp_mean_flux_error, '\
-    #                 'gaia_source.phot_rp_mean_mag,gaia_source.bp_rp,gaia_source.bp_g,gaia_source.g_rp from'\
-    #                 'gaiadr2.gaia_source where radial_velocity is not null'.format(args.query_size)
+    # Select Gaia photometric data for stars with measured radial velocity
+    ADQL_string = 'select top {} gaia_source.source_id,gaia_source.phot_g_mean_flux,gaia_source.phot_g_mean_flux_error,' \
+                    'gaia_source.phot_g_mean_mag,gaia_source.phot_bp_mean_flux,gaia_source.phot_bp_mean_flux_error, '\
+                    'gaia_source.phot_bp_mean_mag,gaia_source.phot_rp_mean_flux,gaia_source.phot_rp_mean_flux_error, '\
+                    'gaia_source.phot_rp_mean_mag,gaia_source.bp_rp,gaia_source.bp_g,gaia_source.g_rp from'\
+                    'gaiadr2.gaia_source where radial_velocity is not null'.format(args.query_size)
 
 
-    # Select Bayesian r_estimates of stars with measured radial velocity
-    ADQL_string = 'select all g.source_id, g.r_est from external.gaiadr2_geometric_distance as g, ' \
-                    'gaiadr2.gaia_source as s where s.radial_velocity is not null ' \
-                    'and g.source_id = s.source_id'
+    # Select Bayesian r_estimates for stars with measured radial velocity
+    # ADQL_string = 'select all g.source_id, g.r_est from external.gaiadr2_geometric_distance as g, ' \
+    #                 'gaiadr2.gaia_source as s where s.radial_velocity is not null ' \
+    #                 'and g.source_id = s.source_id'
 
     outpath = args.out
     job = Gaia.launch_job_async(ADQL_string, output_file=outpath, output_format='csv', dump_to_file=True, verbose=True)
