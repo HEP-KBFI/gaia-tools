@@ -5,7 +5,7 @@ from pyvo.auth.authsession import AuthSession
 import pandas as pd
 import argparse
 import time
-
+from import_functions import import_data
 #
 # Verify the version of pyvo 
 #
@@ -34,6 +34,9 @@ def run_single_job(args):
     #
     name = 'Gaia@AIP'
     url = "https://gaia.aip.de/tap"
+
+    url_heidelberg = "http://dc.zah.uni-heidelberg.de/__system__/tap/run" 
+
     token = '9ef51a3b42860269f9cc7d5e2fa90cf026fc0815'
 
     print('TAP service %s \n' % name)
@@ -46,14 +49,27 @@ def run_single_job(args):
     'where s.radial_velocity is not null ' \
     'and g.source_id = s.source_id'
 
+    heidelberg_string = "select top all g.source_id from gdr2ap.main as g where g.source_id = {}"
+
     # Setup authorization
     tap_session = requests.Session()
     tap_session.headers['Authorization'] = token
 
     tap_service = vo.dal.TAPService(url, session=tap_session)
 
-    tap_result = tap_service.run_async(starhorse_string)
+    tap_service = vo.dal.TAPService(url_heidelberg)
+
+    my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+
+    # Import the ICRS data
+    icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
+
+    print('Maxrec {}'.format(tap_service.maxrec))
+    print('Hardlimit {}'.format(tap_service.hardlimit))
+
+    tap_result = tap_service.run_async(heidelberg_string, maxrec=10000000)
     tap_result.to_table()
+
 
     output_df = tap_result.to_table().to_pandas()
     output_df.to_csv(outpath)
@@ -211,5 +227,5 @@ if __name__ == "__main__":
     parser.add_argument('--out', type=str)
     args = parser.parse_args()
 
-    #run_single_job(args)
-    query_AIP_tmass(args)
+    run_single_job(args)
+    #query_AIP_tmass(args)
