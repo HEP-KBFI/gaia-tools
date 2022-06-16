@@ -1,7 +1,4 @@
 
-'''
-MCMC to run in the cluster for: R0, U_odot, V_odot
-'''
 import sys
 sys.path.append("../gaia_tools/")
 import data_analysis
@@ -13,18 +10,27 @@ from functools import reduce
 import time, timeit
 import transformation_constants
 import datetime as dt
+import photometric_cut
+import os
+import pickle
 
-# Start import section
+dtime = dt.time()
+now=dt.datetime.now()
+start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
+
+print("Starting MCMC..")
+
+sample_IDs = photometric_cut.get_sample_IDs(start_datetime, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
 my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
 
-# Writing new import section for faster debugging!
-start = time.time()
-
-# Import the ICRS data
+# Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
+icrs_data = icrs_data.merge(sample_IDs, on='source_id', suffixes=("", "_y"))
+icrs_data.reset_index(inplace=True, drop=True)
 
+print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
 
 galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        include_cylindrical = True,
@@ -32,19 +38,18 @@ galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        is_bayes = True,
                                        is_source_included = True)
 
-cov_df = cov.generate_covmatrices(df = icrs_data,
-                                       df_crt = galcen_data,
-                                       transform_to_galcen = True,
-                                       transform_to_cylindrical = True,
-                                       is_bayes = True,
-                                       debug=False)
+galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, True)
+cyl_cov = cov.transform_cov_cylindirical(galcen_data, galactocentric_cov)
+galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
 # append covariance information to galactocentric data
-galcen_data['cov_mat'] = cov_df['cov_mat']
+#galcen_data['cov_mat'] = cov_df['cov_mat']
 
 galcen_data = galcen_data[(galcen_data.r < 12000) & (galcen_data.r > 5000)]
 galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
 galcen_data.reset_index(inplace=True, drop=True)
+
+print("Final size of sample {}".format(galcen_data.shape))
 
 icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
 
@@ -62,75 +67,18 @@ bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                       debug = False)
 
 for i, bin in enumerate(bin_collection.bins):
-    bin.med_sig_vphi = np.median((bin.get_error_data('v_phi'))**2)
+    bin.med_sig_vphi = np.median(bin.data.sig_vphi)
     bin.A_parameter = bin.compute_A_parameter()
 
 # End import section
 
 debug = False
 
-dtime = dt.time()
-now=dt.datetime.now()
-start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
-
 def log_likelihood(theta):
-
-   # transform data
-   # region
-
-   '''
-   transfrom from icrs to cylindrical galactocentric coordinates
-
-   '''
-
-   # v_sun = np.array([[theta[1]],
-   #                   [theta[2]],
-   #                   [transformation_constants.V_SUN[2][0]]])
-
-   # galcen_data = data_analysis.get_transformed_data(icrs_data,
-   #                                                     include_cylindrical = True,
-   #                                                     debug = False,
-   #                                                     is_bayes = True,
-   #                                                     is_source_included = True)
-
-   # cov_df = cov.generate_covmatrices(df = icrs_data,
-   #                                     df_crt = galcen_data,
-   #                                     transform_to_galcen = True,
-   #                                     transform_to_cylindrical = True,
-   #                                     is_bayes = True,
-   #                                     debug=False)
-
-   # # append covariance information to galactocentric data
-   # galcen_data['cov_mat'] = cov_df['cov_mat']
-
-   #endregion
-
-   # bin data
-   #region
-
-   # min_val = np.min(galcen_data.r)
-   # max_val = np.max(galcen_data.r)
-
-   # # declared variable with bincollection object
-   # bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-   #                                                    theta = (theta[0], theta[1]),
-   #                                                    BL_r_min = min_val - 1,
-   #                                                    BL_r_max = max_val + 1,
-   #                                                    BL_z_min = -200,
-   #                                                    BL_z_max = 200,
-   #                                                    N_bins = (5, 1),
-   #                                                    r_drift = False,
-   #                                                    debug = False)
-
-   # populates bins with their mle values of mean and variance
-   # bin_collection.GetMLEParameters()
-
-   #endregion
 
    if(debug):
       tic=timeit.default_timer()
 
-   # calculate likelihoods region
    n = reduce(lambda x, y: x*y, bin_collection.N_bins)
    likelihood_array = np.zeros(n)
 
@@ -147,8 +95,6 @@ def log_likelihood(theta):
    if(debug):
        toc=timeit.default_timer()
        print("time elapsed for likelihoods computation section: {a} sec".format(a=toc-tic))
-
-   #endregion
 
    return likelihood_sum
 
@@ -208,6 +154,11 @@ with Pool(ncpu) as pool:
    sampler.run_mcmc(pos, nsteps, progress=True)
 
    print("Sampler done!")
+
+# Dumps sampler object to pkl
+fn='../out/mcmc_sampler/sampler_pkls/sampler_{}'.format(start_datetime)
+with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:
+        pickle.dump(sampler, f, -1)
 
 
 print("Script finished!")
