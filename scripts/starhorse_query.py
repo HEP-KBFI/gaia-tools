@@ -58,16 +58,16 @@ def run_single_job(args):
     tap_service = vo.dal.TAPService(url, session=tap_session)
 
     tap_service = vo.dal.TAPService(url_heidelberg)
-
-    my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
-
-    # Import the ICRS data
-    icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
-
     print('Maxrec {}'.format(tap_service.maxrec))
     print('Hardlimit {}'.format(tap_service.hardlimit))
 
-    tap_result = tap_service.run_async(heidelberg_string, maxrec=10000000)
+    my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+    icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
+
+    for id in icrs_data.source_id:
+        tap_result = tap_service.run_async(heidelberg_string, maxrec=10000000)
+    
+    
     tap_result.to_table()
 
 
