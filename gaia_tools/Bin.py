@@ -137,6 +137,7 @@ class Bin:
             print("Add 1 -> {}".format(add_1))
             print("Add 2 -> {}".format(add_2))
             print("Add 3 -> {}".format(add_3))
+            print("Asymmetric drift -> {}".format(A/v_c))
 
         return -0.5*(add_1 + add_2 + add_3)
 
