@@ -606,5 +606,98 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits =
     return fig
 
 
+def sample_distribution_galactic_coords(icrs_data, outpath, is_save = True):
+
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
+    from matplotlib import colors
+
+    c = SkyCoord(ra=list(icrs_data.ra)*u.degree, dec=list(icrs_data.dec)*u.degree, frame='icrs')
+
+    fig = plt.figure(figsize=(16, 8))
+
+    x = c.galactic.l.to_value()
+    y = c.galactic.b.to_value()
+    h = plt.hist2d(x, y, bins=250, cmin=50, norm=colors.PowerNorm(0.5), zorder=0.5)
+    plt.scatter(x, y, alpha=0.05, s=1, color='k', zorder=0)
+
+    fmt = mpl.ticker.ScalarFormatter(useMathText=True)
+    fmt.set_powerlimits((0, 0))
+    plt.colorbar(h[3], pad=0.02, format=fmt, orientation='vertical')
+
+    plt.xlabel(r'$l$ [deg]', fontdict={'fontsize' : 16})
+    plt.ylabel(r'$b$ [deg]',  fontdict={'fontsize' : 16})
+
+    plt.title("Sample Distribution in Galactic Coordinates", fontsize=18, pad=15)
+    
+    fig_name = '/sample_distribution_galactic_coords'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
 
 
+def plot_radial_distribution(sample, outpath, is_save=True):
+
+    fig = plt.figure(figsize=(10, 10))
+
+    fig.patch.set_facecolor('white')
+
+    n_bins = 150
+    r_min = 0
+    r_max = np.max(sample.r_est)
+
+    plt.hist(sample.r_est, bins=np.linspace(r_min, r_max, n_bins))
+
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+    txt="{0} bins defined in the range [{1} - {2}] kpc".format(n_bins, r_min, np.round(r_max))
+    plt.figtext(0.5, 0.01, txt, wrap=True, horizontalalignment='center', fontsize=12)
+
+    plt.xlabel(r'$r$ (Heliocentric) [pc]', fontdict={'fontsize': 18}, labelpad = 20);
+    plt.ylabel('Star count', fontdict={'fontsize': 18}, labelpad = 20);
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.grid()
+
+    plt.rcParams["patch.force_edgecolor"] = True
+    plt.rc('font', **{'size':'16'})
+    plt.title("Heliocentric Stellar Distances", pad=20, fontdict={'fontsize': 20})
+
+    fig_name = '/star_density_heliocentric_distribution'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
+
+def plot_distribution(sample, outpath, parameter, param_min, param_max, cutlines=None, is_save=True):
+    
+    fig, ax = plt.subplots(figsize=(10, 10))
+    fig.patch.set_facecolor('white')
+
+    n_bins = 150
+    # param_min = -2000
+    # param_max= 2000
+
+    h = plt.hist(sample[parameter], bins=np.linspace(param_min, param_max, n_bins), alpha=1)
+
+    #plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+    txt="{0} bins defined in the range [{1} - {2}] pc".format(n_bins, param_min, param_max)
+    plt.figtext(0.5, 0.01, txt, wrap=True, horizontalalignment='center', fontsize=12)
+
+    plt.xlabel(r'${}$ [pc]'.format(parameter), fontdict={'fontsize': 18}, labelpad = 20);
+    plt.ylabel('Star count', fontdict={'fontsize': 18}, labelpad = 20);
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.grid()
+
+    plt.rcParams["patch.force_edgecolor"] = True
+    plt.rc('font', **{'size':'16'})
+
+    plt.title("Star Density Histogram ({})".format(parameter), pad=20, fontdict={'fontsize': 20})
+
+    if(cutlines is not None):
+        ax.vlines([cutlines[0], cutlines[1]], 0, np.max(h[0]), colors='yellow', linestyles='--')
+
+    fig_name = '/star_density_{}_distribution'.format(parameter)
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')

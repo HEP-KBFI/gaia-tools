@@ -10,7 +10,7 @@ import numpy as np
 columns = ['source_id', 'J_p50', 'Ks_p50', 'H_p50', 'J_sigma', 'Ks_sigma', 'H_sigma', 'parallax', 'parallax_sigma']
 
 
-def get_sample_IDs(start_datetime, is_save_region):
+def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
 
     # Import Fouesneau
     vaex_path = '/scratch/sven/gaia_downloads/catalog-20210311-goodphot_lite_nodup.vaex.hdf5'
@@ -48,10 +48,18 @@ def get_sample_IDs(start_datetime, is_save_region):
         return not bool(string)
 
     crossmatched_tmass_data['is_qual_true'] = crossmatched_tmass_data.ph_qual.apply(is_allowed_flg)
-
     cut_sample = crossmatched_tmass_data[((crossmatched_tmass_data.J_p50 - crossmatched_tmass_data.Ks_p50) > 0.5) & ((crossmatched_tmass_data.J_p50 - crossmatched_tmass_data.Ks_p50) < 1.1)]
+
+    # Plot sample before uncertainty cut
+    plot_filter_uncertainties(cut_sample, run_out_path, 'Sample before the cut JHKS_sigma < 0.1')
     cut_sample = cut_sample[(cut_sample.J_sigma < 0.1) & (cut_sample.Ks_sigma < 0.1) & (cut_sample.H_sigma < 0.1)]
+
+    # Plot sample before photometric quality cut
+    plot_filter_uncertainties_qual(cut_sample, run_out_path, is_save = True)
     cut_sample =  cut_sample[cut_sample.is_qual_true == True]
+
+    # Plot sample before parallax sigma cut
+    plot_filter_uncertainties_w_parallax(cut_sample, run_out_path)
     cut_sample = cut_sample[cut_sample.parallax_sigma/cut_sample.parallax < 0.2]
 
     print("Stars in the sample after making photometric cuts: {}".format(cut_sample.shape))
@@ -83,25 +91,109 @@ def get_sample_IDs(start_datetime, is_save_region):
     fit_y = h[2][yc]
     cut_ids = np.where((fit_y > -2) & (fit_y < -1))
     a, b = np.polyfit(fit_x[cut_ids], fit_y[cut_ids], 1)
-    plt.plot(h[1], a*h[1] + b, c='w')
-
-    plt.plot(h[1], a*h[1] + b + 0.3, c='w', linestyle="--")
-    plt.plot(h[1], a*h[1] + b - 0.3, c='w', linestyle="--")
-
-    plt.grid()
     
     if(is_save_region):
-        fig_name = 'cut_region_' + start_datetime
-        plt.savefig('/home/sven/repos/gaia-tools/out/mcmc_plots/photometric_cut/' + fig_name +'.png', dpi=300, bbox_inches='tight', facecolor='white')
+        plt.plot(h[1], a*h[1] + b, c='w')
+        plt.plot(h[1], a*h[1] + b + cut_range, c='w', linestyle="--")
+        plt.plot(h[1], a*h[1] + b - cut_range, c='w', linestyle="--")
+
+        plt.grid()
+    
+        fig_name = '/cut_region'
+
+        plt.savefig(run_out_path + fig_name +'.png', dpi=300, bbox_inches='tight', facecolor='white')
 
     #
     # Impose CUT for RC region
     #
 
     JKs = cut_sample.J_p50 - cut_sample.Ks_p50
-    cut_sample = cut_sample[(cut_sample.H_p50 < a*JKs + b + 0.3) & (cut_sample.H_p50 > a*JKs + b - 0.3)]
+    cut_sample = cut_sample[(cut_sample.H_p50 < a*JKs + b + cut_range) & (cut_sample.H_p50 > a*JKs + b - cut_range)]
 
     # Save final sample IDs to pandas DataFrame
     sample_IDs = cut_sample.to_pandas_df(['source_id', 'r_est'])
 
     return sample_IDs
+
+def plot_filter_uncertainties(cut_sample, out, suptitle='', is_save = True):
+
+    plt.rc('text', usetex=False)
+    filters_fouesnau = ['J', 'H', 'Ks']
+
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize = (24,8))
+
+    for i, filter in enumerate(filters_fouesnau):
+        y_values = cut_sample[filters_fouesnau[i]+'_sigma'].values 
+        h = axs[i].hist(y_values, bins=120, histtype='step', density=False, lw=2)
+        axs[i].set_xlabel(filters_fouesnau[i]+'_sigma', fontdict={'fontsize': 15}, labelpad=10)
+        axs[i].set_xscale('log')
+        axs[i].set_yscale('log')
+        axs[i].tick_params(axis='both', which='major', labelsize=15)
+        axs[i].set_title('{}'.format(filters_fouesnau[i]), fontdict={'fontsize': 15}, pad=20, fontweight='bold')
+        axs[i].vlines(0.1, 0, np.max(h[0]), colors='red', linestyles = '--')
+
+    fig.suptitle(suptitle, fontsize=18)
+
+    if(is_save):
+        fig_name = '/JHKs_sigma_distribution_0.1_cut'
+        plt.savefig(out + fig_name +'.png', dpi=300, bbox_inches='tight', facecolor='white')
+
+
+def plot_filter_uncertainties_qual(cut_sample, out, is_save = True):
+
+    plt.rc('text', usetex=False)
+
+    cut_sample_qual =  cut_sample[cut_sample.is_qual_true == True]
+
+    filters_fouesnau = ['J_p50', 'H_p50', 'Ks_p50']
+    filters = ['J', 'H', 'Ks']
+
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize = (24,8))
+
+    for i, filter in enumerate(filters_fouesnau):
+        y_values = cut_sample[filters[i]+'_sigma'].values 
+        axs[i].hist(y_values, bins=30, histtype='step', density=False, lw=2, label='before')
+        axs[i].hist(cut_sample_qual[filters[i]+'_sigma'].values , bins=30, histtype='step', density=False, lw=2, label='quality flag A or B')
+        axs[i].set_xlabel(filters_fouesnau[i]+'_sigma', fontdict={'fontsize': 15}, labelpad=0)
+        axs[i].legend(loc='upper right')
+        axs[i].set_yscale('log')
+        axs[i].tick_params(axis='both', which='major', labelsize=15)
+        axs[i].set_title('{}'.format(filters_fouesnau[i]), fontdict={'fontsize': 15}, pad=20, fontweight='bold')
+
+    fig.suptitle('Sample after the quality flag cut', fontsize=18)
+
+    if(is_save):
+        fig_name = '/JHKs_sigma_distribution_quality_cut'
+        plt.savefig(out + fig_name +'.png', dpi=300, bbox_inches='tight', facecolor='white')
+
+
+def plot_filter_uncertainties_w_parallax(cut_sample, out, is_save = True):
+
+    cut_sample_parallax = cut_sample[cut_sample.parallax_sigma/cut_sample.parallax < 0.2]
+
+    filters_fouesnau = ['J', 'H', 'Ks']
+
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize = (24,8))
+
+    for i, filter in enumerate(filters_fouesnau):
+
+        y_values = cut_sample[filters_fouesnau[i]+'_sigma'].values
+        y_values_parallax =  cut_sample_parallax[filters_fouesnau[i]+'_sigma'].values
+
+        axs[i].hist(y_values, bins=30, histtype='step', density=False, lw=2)
+        axs[i].hist(y_values_parallax, bins=30, histtype='step', density=False, lw=2, label=r"$\sigma_\varpi/\varpi$ < 0.2")
+
+        axs[i].set_xlabel(filters_fouesnau[i]+'_sigma', fontdict={'fontsize': 15}, labelpad=0)
+        axs[i].legend(loc='upper right')
+        axs[i].set_yscale('log')
+        axs[i].tick_params(axis='both', which='major', labelsize=15)
+        axs[i].set_title('{}'.format(filters_fouesnau[i]), fontdict={'fontsize': 15}, pad=20, fontweight='bold')
+
+    fig.suptitle('Sample after the cut JHKS_sigma < 0.1 and sig/parallax < 0.2', fontsize=18)
+
+    if(is_save):
+        fig_name = '/JHKs_sigma_distribution_after_w_cut'
+        plt.savefig(out + fig_name +'.png', dpi=300, bbox_inches='tight', facecolor='white')
+
+
+    
