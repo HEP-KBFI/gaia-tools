@@ -1,12 +1,11 @@
 
 import sys
-
 from torch import float64
 sys.path.append("../gaia_tools/")
 import data_analysis
 import covariance_generation as cov
 from import_functions import import_data
-from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution
+from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram
 import numpy as np
 import emcee
 from functools import reduce
@@ -83,6 +82,7 @@ icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
 # Sample distribution plots
 sample_distribution_galactic_coords(icrs_data, run_out_path)
 plot_radial_distribution(icrs_data, run_out_path)
+fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 30000), title = "Distribution of data on the Galactic plane")
 
 min_val = np.min(galcen_data.r)
 max_val = np.max(galcen_data.r)

@@ -543,7 +543,7 @@ def display_polar_coordinates(phi, r):
 
 
 
-def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits = (), title = "Polar Plot"):
+def display_polar_histogram(galcen_data, outpath, n_bins=100, norm_max = 1000, r_limits = (), title = "Polar Plot", is_save=True):
     """A plot which displays a polar histogram of the stars in a galactocentric frame of reference.
 
     Args:
@@ -580,8 +580,6 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits =
 
     norm_hist2d = ImageNormalize(vmin=0., vmax=norm_max, stretch=LogStretch())
 
-
-
     ax = fig.add_subplot(111, projection='polar')
     plt.hist2d(phi, r, bins=(abins, rbins), norm = norm_hist2d)
 
@@ -603,7 +601,10 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits =
     plt.grid()
     #plt.show()
 
-    return fig
+    fig_name = '/sample_distribution_polar_coords'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
 
 
 def sample_distribution_galactic_coords(icrs_data, outpath, is_save = True):
@@ -623,12 +624,14 @@ def sample_distribution_galactic_coords(icrs_data, outpath, is_save = True):
 
     fmt = mpl.ticker.ScalarFormatter(useMathText=True)
     fmt.set_powerlimits((0, 0))
-    plt.colorbar(h[3], pad=0.02, format=fmt, orientation='vertical')
+    plt.colorbar(h[3], pad=0.02, format=fmt, orientation='vertical', label = 'Star density')
+
+
 
     plt.xlabel(r'$l$ [deg]', fontdict={'fontsize' : 16})
     plt.ylabel(r'$b$ [deg]',  fontdict={'fontsize' : 16})
 
-    plt.title("Sample Distribution in Galactic Coordinates", fontsize=18, pad=15)
+    plt.title("Sample Distribution in Galactic Coordinates\n nstars = {}".format(icrs_data.shape[0]), fontsize=18, pad=15)
     
     fig_name = '/sample_distribution_galactic_coords'
     if(is_save):
@@ -660,7 +663,7 @@ def plot_radial_distribution(sample, outpath, is_save=True):
 
     plt.rcParams["patch.force_edgecolor"] = True
     plt.rc('font', **{'size':'16'})
-    plt.title("Heliocentric Stellar Distances", pad=20, fontdict={'fontsize': 20})
+    plt.title("Heliocentric Stellar Distances\n nstars = {}".format(sample.shape[0]), pad=20, fontdict={'fontsize': 20})
 
     fig_name = '/star_density_heliocentric_distribution'
     if(is_save):
@@ -693,7 +696,7 @@ def plot_distribution(sample, outpath, parameter, param_min, param_max, cutlines
     plt.rcParams["patch.force_edgecolor"] = True
     plt.rc('font', **{'size':'16'})
 
-    plt.title("Star Density Histogram ({})".format(parameter), pad=20, fontdict={'fontsize': 20})
+    plt.title("Star Density Histogram ({})\n nstars = {}".format(parameter, sample.shape[0]), pad=20, fontdict={'fontsize': 20})
 
     if(cutlines is not None):
         ax.vlines([cutlines[0], cutlines[1]], 0, np.max(h[0]), colors='yellow', linestyles='--')

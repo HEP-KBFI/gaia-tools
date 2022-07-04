@@ -83,7 +83,7 @@ def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
 
     fmt = mpl.ticker.ScalarFormatter(useMathText=True)
     fmt.set_powerlimits((0, 0))
-    plt.colorbar(h[3], pad=0.02, format=fmt, orientation='vertical')
+    plt.colorbar(h[3], pad=0.02, format=fmt, orientation='vertical', label = 'Star density')
 
     thresh_max = 200
     xc, yc = np.where(h[0] > thresh_max)
