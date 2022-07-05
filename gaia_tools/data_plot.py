@@ -704,3 +704,142 @@ def plot_distribution(sample, outpath, parameter, param_min, param_max, cutlines
     fig_name = '/star_density_{}_distribution'.format(parameter)
     if(is_save):
         plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
+
+def plot_velocity_distribution(bins, outpath, is_range=False, plot_MU=False, is_save = True):
+
+    if(len(bins) % np.sqrt(len(bins)) == 0):
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x
+    else:
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x+1
+
+    if(len(bins) > 5):
+        figsize = 15
+    else:
+        figsize = 10
+
+    fig, axs = plt.subplots(figs_y, figs_x, figsize = (figsize,figsize))
+
+    for i, ax in enumerate(axs.flat):
+        if(i < len(bins)):
+
+            if(np.abs(np.min(bins[i].data.v_phi) - np.max(bins[i].data.v_phi)) > 500):
+                n_bins = 80
+            else:
+                n_bins = 40
+
+            z_range = bins[i].z_boundaries
+            r_range = bins[i].r_boundaries
+
+            text_string = "$z \in [{:.1f}, {:.1f}]$\n$r \in [{:.1f}, {:.1f}]$".format(z_range[0], z_range[1], 
+                                                                                    r_range[0], r_range[1])
+            ax.text(0.75, 0.8,text_string, horizontalalignment='center',
+                                            verticalalignment='center',
+                                            transform = ax.transAxes, fontdict={'fontsize': 12})
+
+            if(is_range):
+                mean = np.mean(bins[i].data.v_phi)
+                median = np.median(bins[i].data.v_phi)
+                if plot_MU: MLE_MU = bins[i].MLE_mu
+
+                ax.hist(bins[i].data.v_phi, 
+                        bins=n_bins, 
+                        range = (mean-150, mean+150), 
+                        edgecolor='black',
+                        density = True)
+
+                ax.axvline(x=mean, ls="--", label="Mean", color='r')
+                ax.axvline(x=median, ls="--", label="Median", color='orange')
+                if plot_MU: ax.axvline(x=bins[i].MLE_mu, ls="--", label="MLE", color='white')
+                ax.legend(loc="lower left")
+
+                ax.set_title("Bin No. {}".format(i))
+
+            else:    
+                ax.hist(bins[i].data.v_phi, 
+                        bins=n_bins, 
+                        edgecolor='black')
+            
+            ax.set_xlabel("$v_\phi$ [km/s]", fontdict={'fontsize': 15}, labelpad = 5)       
+            ax.set_ylabel("N", fontdict={'fontsize': 15}, labelpad = 10, rotation=0)
+            ax.yaxis.set_label_coords(-0.1, 1.0)
+
+        
+        else:
+            fig.delaxes(ax)
+
+    plt.tight_layout()
+
+    fig_name = '/sample_velocity_distribution'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
+def plot_variance_distribution(bins, parameter, outpath, is_save=True):
+
+    if(len(bins) % np.sqrt(len(bins)) == 0):
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x
+    else:
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x+1
+
+    if(len(bins) > 5):
+        figsize = 15
+    else:
+        figsize = 10
+
+    fig, axs = plt.subplots(figs_y, figs_x, figsize = (figsize,figsize))
+
+    for i, ax in enumerate(axs.flat):
+
+        if(i < len(bins)):
+
+            n_bins = 160
+
+            z_range = bins[i].z_boundaries
+            r_range = bins[i].r_boundaries
+
+            text_string = "$z \in [{:.1f}, {:.1f}]$\n$r \in [{:.1f}, {:.1f}]$".format(z_range[0], z_range[1], 
+                                                                                    r_range[0], r_range[1])
+            ax.text(0.75, 0.8,text_string, horizontalalignment='center',
+                                            verticalalignment='center',
+                                            transform = ax.transAxes, fontdict={'fontsize': 12})
+
+
+            var_array = bins[i].data.sig_vphi
+            
+            mean = np.mean(var_array)
+            median = np.median(var_array)
+
+            ax.hist(var_array, 
+                    bins=n_bins,
+                    edgecolor='black',
+                    density = True)
+
+            ax.axvline(x=mean, ls="--", label="Mean", color='r')
+            ax.axvline(x=median, ls="--", label="Median", color='orange')
+            ax.legend(loc="lower right")
+            ax.set_xlim(0, 0.5*np.max(var_array))
+            ax.set_yscale('log')
+            ax.set_title("Bin No. {}".format(i))
+
+            sub_index = "{" + "v_\{}".format(parameter[parameter.find('_')+1:]) + "}"
+            if(parameter == 'v_r'):
+                sub_index = "{" + "v_r" + "}"
+            
+            ax.set_xlabel('$\sigma^2_{}$ [km/s]'.format(sub_index), fontdict={'fontsize': 15}, labelpad = 5)
+            ax.set_ylabel("N", fontdict={'fontsize': 15}, labelpad = 10, rotation=0)
+            ax.yaxis.set_label_coords(-0.1, 1.0)
+        
+        else:
+            fig.delaxes(ax)
+
+    plt.tight_layout()
+
+
+    fig_name = '/sample_velocity_variance_distribution'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+

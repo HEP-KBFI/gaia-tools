@@ -1,11 +1,12 @@
 
 import sys
 from torch import float64
+
 sys.path.append("../gaia_tools/")
 import data_analysis
 import covariance_generation as cov
 from import_functions import import_data
-from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram
+from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram, plot_variance_distribution, plot_velocity_distribution
 import numpy as np
 import emcee
 from functools import reduce
@@ -77,12 +78,15 @@ galcen_data.reset_index(inplace=True, drop=True)
 
 print("Final size of sample {}".format(galcen_data.shape))
 
+
 icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
 
 # Sample distribution plots
 sample_distribution_galactic_coords(icrs_data, run_out_path)
 plot_radial_distribution(icrs_data, run_out_path)
 fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 30000), title = "Distribution of data on the Galactic plane")
+
+# Sample velocity distributions
 
 min_val = np.min(galcen_data.r)
 max_val = np.max(galcen_data.r)
@@ -96,6 +100,10 @@ bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                       N_bins = (args.nbins, 1),
                                                       r_drift = False,
                                                       debug = False)
+
+# Plots the velocity and velocity variance distribution of first 4 bins. 
+plot_velocity_distribution(bin_collection.bins[0:4], run_out_path, True)
+plot_variance_distribution(bin_collection.bins[0:4], 'v_phi', run_out_path)
 
 for i, bin in enumerate(bin_collection.bins):
     bin.med_sig_vphi = np.median(bin.data.sig_vphi)
