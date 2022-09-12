@@ -170,6 +170,9 @@ class Bin:
         # h_sig - radial-velocity dispersion scale length
         h_sig = 8000
 
+        # radial scale length of radial-velocity dispersion given as R_0/h_sig = 0.03 in Bovy paper
+        h_sig = 270
+
         A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
 
         return A
