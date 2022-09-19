@@ -120,16 +120,13 @@ class Bin:
         """
 
         # Likelihood for bin only
-
         med_sig_vphi = self.med_sig_vphi
         med_vphi = np.median(self.data.v_phi)
 
         A = self.A_parameter
 
         add_1 = np.log(2*np.pi*med_sig_vphi)
-
         add_2 = (med_vphi - ((A + v_c**2)/v_c))**2/med_sig_vphi
-
         add_3 = med_sig_vphi/((1-(A/v_c**2)))**2
 
         if(debug):
@@ -151,7 +148,18 @@ class Bin:
                 print("No error data was found inside bin!")
             return 0
 
-    def compute_A_parameter(self):
+    def compute_A_parameter(self, h_r = 3000, h_sig=16400, debug=False):
+
+        """Compute the A parameter containing the disk scale length and radial velocity dispersion scale length.
+
+        Args:
+            h_r (float): The disk scale length
+            h_sig (float): The radial velocity dispersion scale length.
+            debug (bool, optional): Verbose flag. Defaults to False.
+
+        Returns:
+            float: Returns the parameter value
+        """
 
         # rot_vel_var - median of rotational-velocity variance in bin
         rot_vel_var = self.med_sig_vphi
@@ -161,17 +169,11 @@ class Bin:
 
         XX = rot_vel_var/rad_vel_var
 
+        if(debug):
+            print(XX)
+
         # R - bin center
         R = np.mean(self.r_boundaries)
-
-        # h_r - radial scale length
-        h_r = 3000
-
-        # h_sig - radial-velocity dispersion scale length
-        h_sig = 8000
-
-        # radial scale length of radial-velocity dispersion given as R_0/h_sig = 0.03 in Bovy paper
-        h_sig = 270
 
         A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
 

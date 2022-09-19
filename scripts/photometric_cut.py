@@ -13,14 +13,14 @@ columns = ['source_id', 'J_p50', 'Ks_p50', 'H_p50', 'J_sigma', 'Ks_sigma', 'H_si
 def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
 
     # Import Fouesneau
-    vaex_path = '/scratch/sven/gaia_downloads/catalog-20210311-goodphot_lite_nodup.vaex.hdf5'
+    vaex_path = '/home/svenpoder/Downloads/catalog-20210311-goodphot_lite_nodup.vaex.hdf5'
 
     df=vaex.open(vaex_path)
     df['source_id'] = df.source_id.astype('int64')
     df = df[columns]
 
     # Import 2MASS data to data frame
-    tmass_data_path = '/scratch/sven/gaia_downloads/crossmatched_tmass_data.csv'
+    tmass_data_path = '/home/svenpoder/Gaia_2MASS Data_DR2/gaia_tools_data/crossmatched_tmass_data/crossmatched_tmass_data.csv'
     crossmatched_tmass_data = vaex.from_csv(tmass_data_path, convert=True)
 
     crossmatched_tmass_data = crossmatched_tmass_data.join(df, how='inner', 
@@ -30,7 +30,7 @@ def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
                                 rsuffix='_fouesnau')
 
     # This next import is probably redundant
-    gaia_rv_data = vaex.from_csv('/scratch/sven/gaia_downloads/bayesian_distance_rv_stars.csv', convert=True)
+    gaia_rv_data = vaex.from_csv('/home/svenpoder/Gaia_2MASS Data_DR2/gaia_tools_data/bayesian_distance_rv_stars.csv', convert=True)
 
     crossmatched_tmass_data = crossmatched_tmass_data.join(gaia_rv_data, how='inner', 
                                 left_on='source_id_tmass_xmass', 
@@ -96,7 +96,8 @@ def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
         plt.plot(h[1], a*h[1] + b, c='w')
         plt.plot(h[1], a*h[1] + b + cut_range, c='w', linestyle="--")
         plt.plot(h[1], a*h[1] + b - cut_range, c='w', linestyle="--")
-
+        plt.xlabel("J - Ks [mag]", fontdict={'fontsize': 15})
+        plt.xlabel("H [mag]", fontdict={'fontsize': 15})
         plt.grid()
     
         fig_name = '/cut_region'

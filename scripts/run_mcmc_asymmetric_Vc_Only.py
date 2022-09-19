@@ -1,7 +1,5 @@
 
 import sys
-from torch import float64
-
 sys.path.append("../gaia_tools/")
 import data_analysis
 import covariance_generation as cov
@@ -29,6 +27,8 @@ parser.add_argument('--cut-range', type=float)
 parser.add_argument('--nwalkers', type=int)
 parser.add_argument('--nsteps', type=int)
 parser.add_argument('--nbins', type=int)
+parser.add_argument('--disk-scale', type=float)
+parser.add_argument('--vlos-dispersion-scale', type=float)
 args = parser.parse_args()
 
 # Create outpath for current run
@@ -39,7 +39,7 @@ print("Photometric cut..")
 sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+my_path = "/home/svenpoder/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv"
 
 # Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
@@ -66,35 +66,31 @@ galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, True)
 cyl_cov = cov.transform_cov_cylindirical(galcen_data, galactocentric_cov)
 galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
-# append covariance information to galactocentric data
-#galcen_data['cov_mat'] = cov_df['cov_mat']
-
+# Selection plots
 plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 12000])
 plot_distribution(galcen_data, run_out_path, 'z', -2000, 2000, [-200, 200])
 
+# Final data selection
 galcen_data = galcen_data[(galcen_data.r < 12000) & (galcen_data.r > 5000)]
 galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
 galcen_data.reset_index(inplace=True, drop=True)
-
 print("Final size of sample {}".format(galcen_data.shape))
-
 
 icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
 
 # Sample distribution plots
 sample_distribution_galactic_coords(icrs_data, run_out_path)
 plot_radial_distribution(icrs_data, run_out_path)
-fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 30000), title = "Distribution of data on the Galactic plane")
+fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 15000), norm_max=5000, title = "Distribution of data on the Galactic plane")
 
-# Sample velocity distributions
+min_r = np.min(galcen_data.r)
+max_r = np.max(galcen_data.r)
 
-min_val = np.min(galcen_data.r)
-max_val = np.max(galcen_data.r)
-
+# Generate bins
 bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                       theta = (0, 1),
-                                                      BL_r_min = min_val - 1,
-                                                      BL_r_max = max_val + 1,
+                                                      BL_r_min = min_r - 1,
+                                                      BL_r_max = max_r + 1,
                                                       BL_z_min = -200,
                                                       BL_z_max = 200,
                                                       N_bins = (args.nbins, 1),
@@ -105,11 +101,14 @@ bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
 plot_velocity_distribution(bin_collection.bins[0:4], run_out_path, True)
 plot_variance_distribution(bin_collection.bins[0:4], 'v_phi', run_out_path)
 
+# A parameter computation
 for i, bin in enumerate(bin_collection.bins):
     bin.med_sig_vphi = np.median(bin.data.sig_vphi)
-    bin.A_parameter = bin.compute_A_parameter()
+    bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale, 
+                                             h_sig = args.vlos_dispersion_scale, 
+                                             debug=True)
 
-# End import section
+# End import and plot section
 
 debug = False
 
@@ -155,9 +154,10 @@ print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
 nwalkers = args.nwalkers
-ndim = 10
+ndim = args.nbins
 nsteps = args.nsteps
 theta_0 = (-300,-190, -210, -275, -147, -300,-190, -210, -275, -147)
+#theta_0 = (-300, -190)
 
 # Init starting point for all walkers
 pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
@@ -191,12 +191,12 @@ out_dict = {'bin_centers_r' : np.array(bin_centers_r),
             'R_0' : r_0,
             'Z_0' : z_0,
             'cut_range' : args.cut_range,
-            'final_sample_size' : galcen_data.shape}
+            'final_sample_size' : galcen_data.shape,
+            'disk_scale' : args.disk_scale,
+            'vlos_dispersion_scale' : args.vlos_dispersion_scale}
 
 pickle.dump(out_dict, file)
 file.close()
 
-
 print("Script finished!")
 
-#return result
