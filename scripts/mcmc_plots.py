@@ -11,10 +11,14 @@ import transformation_constants
 import covariance_generation
 from import_functions import import_data
 
-def plot_walkers(reader, theta_labels, burn_in = 0, plot_name = 'Unnamed', is_save=False):
+def plot_walkers(sampler_path, burn_in = 0, plot_name = 'Unnamed', is_save=False):
     
+    reader = emcee.backends.HDFBackend(sampler_path, read_only=True)
     samples_data = reader.get_chain(discard = burn_in)
     print("Sampler shape: {}".format(samples_data.shape))
+
+    xdf = [num for num in range(0, samples_data.shape[2], 1)]
+    theta_labels = [r'$V_{c%s}$' %str(i+1) for i in xdf]
 
     num_parameters = len(theta_labels)
 

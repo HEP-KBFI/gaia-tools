@@ -121,13 +121,13 @@ class Bin:
 
         # Likelihood for bin only
         med_sig_vphi = self.med_sig_vphi
-        med_vphi = np.median(self.data.v_phi)
+        med_vphi = np.abs(np.median(self.data.v_phi))
 
         A = self.A_parameter
 
         add_1 = np.log(2*np.pi*med_sig_vphi)
-        add_2 = (med_vphi - ((A + v_c**2)/v_c))**2/med_sig_vphi
-        add_3 = med_sig_vphi/((1-(A/v_c**2)))**2
+        add_2 = (med_vphi - ((A - v_c**2)/v_c))**2/med_sig_vphi
+        add_3 = med_sig_vphi/((1+(A/v_c**2)))**2
 
         if(debug):
             print("A -> {}".format(A))
@@ -137,7 +137,6 @@ class Bin:
             print("Asymmetric drift -> {}".format(A/v_c))
 
         return -0.5*(add_1 + add_2 + add_3)
-
 
     def get_med_sig_vphi(self, debug):
 
@@ -162,10 +161,13 @@ class Bin:
         """
 
         # rot_vel_var - median of rotational-velocity variance in bin
-        rot_vel_var = self.med_sig_vphi
+        # rot_vel_var = self.med_sig_vphi
 
-        # rad_vel_var - median of radial-velocity variance in bin
-        rad_vel_var = np.median(self.data.sig_vr)
+        # # rad_vel_var - median of radial-velocity variance in bin
+        # rad_vel_var = np.median(self.data.sig_vr)
+
+        rot_vel_var = np.var(self.data.v_phi)
+        rad_vel_var = np.var(self.data.v_r)
 
         XX = rot_vel_var/rad_vel_var
 

@@ -16,6 +16,7 @@ import os
 import pickle
 from pathlib import Path
 import argparse
+import random
 
 dtime = dt.time()
 now=dt.datetime.now()
@@ -50,7 +51,18 @@ print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
 
 ## TRANSFORMATION CONSTANTS
 v_sun = transformation_constants.V_SUN
+
+#Eilers et al. V0,x
+v_sun[0][0] = 245.8
+
+#Eilers et al. V0,y
+#v_sun[1][0] = 245.8
+
+
 z_0 = transformation_constants.Z_0
+
+# Eilers et al. R0
+#r_0 = 8122
 r_0 = transformation_constants.R_0
 
 galcen_data = data_analysis.get_transformed_data(icrs_data,
@@ -134,7 +146,8 @@ def log_likelihood(theta):
 
 def log_prior(theta):
 
-   if (theta > -400).all() and (theta < -100).all():
+   # NOTE CHANGE BACK
+   if (theta > -400).all() and (theta < 400).all():
        return 0.0
    return -np.inf
 
@@ -156,8 +169,7 @@ print("{0} CPUs".format(ncpu))
 nwalkers = args.nwalkers
 ndim = args.nbins
 nsteps = args.nsteps
-theta_0 = (-300,-190, -210, -275, -147, -300,-190, -210, -275, -147)
-#theta_0 = (-300, -190)
+theta_0 = random.sample(range(-300, -150), ndim)
 
 # Init starting point for all walkers
 pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)

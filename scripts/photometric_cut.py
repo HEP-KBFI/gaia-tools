@@ -49,17 +49,22 @@ def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
 
     crossmatched_tmass_data['is_qual_true'] = crossmatched_tmass_data.ph_qual.apply(is_allowed_flg)
     cut_sample = crossmatched_tmass_data[((crossmatched_tmass_data.J_p50 - crossmatched_tmass_data.Ks_p50) > 0.5) & ((crossmatched_tmass_data.J_p50 - crossmatched_tmass_data.Ks_p50) < 1.1)]
+    #cut_sample = crossmatched_tmass_data[((crossmatched_tmass_data.J_p50 - crossmatched_tmass_data.Ks_p50) > 0.6) & ((crossmatched_tmass_data.J_p50 - crossmatched_tmass_data.Ks_p50) < 0.9)]
 
-    # Plot sample before uncertainty cut
-    plot_filter_uncertainties(cut_sample, run_out_path, 'Sample before the cut JHKS_sigma < 0.1')
+
+    if(is_save_region):
+        # Plot sample before uncertainty cut
+        plot_filter_uncertainties(cut_sample, run_out_path, 'Sample before the cut JHKS_sigma < 0.1')
     cut_sample = cut_sample[(cut_sample.J_sigma < 0.1) & (cut_sample.Ks_sigma < 0.1) & (cut_sample.H_sigma < 0.1)]
 
-    # Plot sample before photometric quality cut
-    plot_filter_uncertainties_qual(cut_sample, run_out_path, is_save = True)
+    if(is_save_region):
+        # Plot sample before photometric quality cut
+        plot_filter_uncertainties_qual(cut_sample, run_out_path, is_save = True)
     cut_sample =  cut_sample[cut_sample.is_qual_true == True]
 
-    # Plot sample before parallax sigma cut
-    plot_filter_uncertainties_w_parallax(cut_sample, run_out_path)
+    if(is_save_region):
+        # Plot sample before parallax sigma cut
+        plot_filter_uncertainties_w_parallax(cut_sample, run_out_path)
     cut_sample = cut_sample[cut_sample.parallax_sigma/cut_sample.parallax < 0.2]
 
     print("Stars in the sample after making photometric cuts: {}".format(cut_sample.shape))
