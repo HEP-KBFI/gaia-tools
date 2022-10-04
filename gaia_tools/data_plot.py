@@ -543,7 +543,7 @@ def display_polar_coordinates(phi, r):
 
 
 
-def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits = (), title = "Polar Plot"):
+def display_polar_histogram(galcen_data, outpath, n_bins=100, norm_max = 1000, r_limits = (), title = "Polar Plot", is_save=True):
     """A plot which displays a polar histogram of the stars in a galactocentric frame of reference.
 
     Args:
@@ -580,8 +580,6 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits =
 
     norm_hist2d = ImageNormalize(vmin=0., vmax=norm_max, stretch=LogStretch())
 
-
-
     ax = fig.add_subplot(111, projection='polar')
     plt.hist2d(phi, r, bins=(abins, rbins), norm = norm_hist2d)
 
@@ -603,8 +601,245 @@ def display_polar_histogram(galcen_data, n_bins=100, norm_max = 1000, r_limits =
     plt.grid()
     #plt.show()
 
-    return fig
+    fig_name = '/sample_distribution_polar_coords'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
 
 
 
+def sample_distribution_galactic_coords(icrs_data, outpath, is_save = True):
+
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
+    from matplotlib import colors
+
+    c = SkyCoord(ra=list(icrs_data.ra)*u.degree, dec=list(icrs_data.dec)*u.degree, frame='icrs')
+
+    fig = plt.figure(figsize=(16, 8))
+
+    x = c.galactic.l.to_value()
+    y = c.galactic.b.to_value()
+    h = plt.hist2d(x, y, bins=250, cmin=50, norm=colors.PowerNorm(0.5), zorder=0.5)
+    plt.scatter(x, y, alpha=0.05, s=1, color='k', zorder=0)
+
+    fmt = mpl.ticker.ScalarFormatter(useMathText=True)
+    fmt.set_powerlimits((0, 0))
+    plt.colorbar(h[3], pad=0.02, format=fmt, orientation='vertical', label = 'Star density')
+
+
+
+    plt.xlabel(r'$l$ [deg]', fontdict={'fontsize' : 16})
+    plt.ylabel(r'$b$ [deg]',  fontdict={'fontsize' : 16})
+
+    plt.title("Sample Distribution in Galactic Coordinates\n nstars = {}".format(icrs_data.shape[0]), fontsize=18, pad=15)
+    
+    fig_name = '/sample_distribution_galactic_coords'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
+
+def plot_radial_distribution(sample, outpath, is_save=True):
+
+    fig = plt.figure(figsize=(10, 10))
+
+    fig.patch.set_facecolor('white')
+
+    n_bins = 150
+    r_min = 0
+    r_max = np.max(sample.r_est)
+
+    plt.hist(sample.r_est, bins=np.linspace(r_min, r_max, n_bins))
+
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+    txt="{0} bins defined in the range [{1} - {2}] kpc".format(n_bins, r_min, np.round(r_max))
+    plt.figtext(0.5, 0.01, txt, wrap=True, horizontalalignment='center', fontsize=12)
+
+    plt.xlabel(r'$r$ (Heliocentric) [pc]', fontdict={'fontsize': 18}, labelpad = 20);
+    plt.ylabel('Star count', fontdict={'fontsize': 18}, labelpad = 20);
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.grid()
+
+    plt.rcParams["patch.force_edgecolor"] = True
+    plt.rc('font', **{'size':'16'})
+    plt.title("Heliocentric Stellar Distances\n nstars = {}".format(sample.shape[0]), pad=20, fontdict={'fontsize': 20})
+
+    fig_name = '/star_density_heliocentric_distribution'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
+
+def plot_distribution(sample, outpath, parameter, param_min, param_max, cutlines=None, is_save=True):
+    
+    fig, ax = plt.subplots(figsize=(10, 10))
+    fig.patch.set_facecolor('white')
+
+    n_bins = 150
+    # param_min = -2000
+    # param_max= 2000
+
+    h = plt.hist(sample[parameter], bins=np.linspace(param_min, param_max, n_bins), alpha=1)
+
+    #plt.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+
+    txt="{0} bins defined in the range [{1} - {2}] pc".format(n_bins, param_min, param_max)
+    plt.figtext(0.5, 0.01, txt, wrap=True, horizontalalignment='center', fontsize=12)
+
+    plt.xlabel(r'${}$ [pc]'.format(parameter), fontdict={'fontsize': 18}, labelpad = 20);
+    plt.ylabel('Star count', fontdict={'fontsize': 18}, labelpad = 20);
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.grid()
+
+    plt.rcParams["patch.force_edgecolor"] = True
+    plt.rc('font', **{'size':'16'})
+
+    plt.title("Star Density Histogram ({})\n nstars = {}".format(parameter, sample.shape[0]), pad=20, fontdict={'fontsize': 20})
+
+    if(cutlines is not None):
+        ax.vlines([cutlines[0], cutlines[1]], 0, np.max(h[0]), colors='yellow', linestyles='--')
+
+    fig_name = '/star_density_{}_distribution'.format(parameter)
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
+
+def plot_velocity_distribution(bins, outpath, is_range=False, plot_MU=False, is_save = True):
+
+    if(len(bins) % np.sqrt(len(bins)) == 0):
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x
+    else:
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x+1
+
+    if(len(bins) > 5):
+        figsize = 15
+    else:
+        figsize = 10
+
+    fig, axs = plt.subplots(figs_y, figs_x, figsize = (figsize,figsize))
+
+    for i, ax in enumerate(axs.flat):
+        if(i < len(bins)):
+
+            if(np.abs(np.min(bins[i].data.v_phi) - np.max(bins[i].data.v_phi)) > 500):
+                n_bins = 80
+            else:
+                n_bins = 40
+
+            z_range = bins[i].z_boundaries
+            r_range = bins[i].r_boundaries
+
+            text_string = "$z \in [{:.1f}, {:.1f}]$\n$r \in [{:.1f}, {:.1f}]$".format(z_range[0], z_range[1], 
+                                                                                    r_range[0], r_range[1])
+            ax.text(0.75, 0.8,text_string, horizontalalignment='center',
+                                            verticalalignment='center',
+                                            transform = ax.transAxes, fontdict={'fontsize': 12})
+
+            if(is_range):
+                mean = np.mean(bins[i].data.v_phi)
+                median = np.median(bins[i].data.v_phi)
+                if plot_MU: MLE_MU = bins[i].MLE_mu
+
+                ax.hist(bins[i].data.v_phi, 
+                        bins=n_bins, 
+                        range = (mean-150, mean+150), 
+                        edgecolor='black',
+                        density = True)
+
+                ax.axvline(x=mean, ls="--", label="Mean", color='r')
+                ax.axvline(x=median, ls="--", label="Median", color='orange')
+                if plot_MU: ax.axvline(x=bins[i].MLE_mu, ls="--", label="MLE", color='white')
+                ax.legend(loc="lower left")
+
+                ax.set_title("Bin No. {}".format(i))
+
+            else:    
+                ax.hist(bins[i].data.v_phi, 
+                        bins=n_bins, 
+                        edgecolor='black')
+            
+            ax.set_xlabel("$v_\phi$ [km/s]", fontdict={'fontsize': 15}, labelpad = 5)       
+            ax.set_ylabel("N", fontdict={'fontsize': 15}, labelpad = 10, rotation=0)
+            ax.yaxis.set_label_coords(-0.1, 1.0)
+
+        
+        else:
+            fig.delaxes(ax)
+
+    plt.tight_layout()
+
+    fig_name = '/sample_velocity_distribution'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
+
+def plot_variance_distribution(bins, parameter, outpath, is_save=True):
+
+    if(len(bins) % np.sqrt(len(bins)) == 0):
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x
+    else:
+        figs_x = round(np.sqrt(len(bins)))
+        figs_y = figs_x+1
+
+    if(len(bins) > 5):
+        figsize = 15
+    else:
+        figsize = 10
+
+    fig, axs = plt.subplots(figs_y, figs_x, figsize = (figsize,figsize))
+
+    for i, ax in enumerate(axs.flat):
+
+        if(i < len(bins)):
+
+            n_bins = 160
+
+            z_range = bins[i].z_boundaries
+            r_range = bins[i].r_boundaries
+
+            text_string = "$z \in [{:.1f}, {:.1f}]$\n$r \in [{:.1f}, {:.1f}]$".format(z_range[0], z_range[1], 
+                                                                                    r_range[0], r_range[1])
+            ax.text(0.75, 0.8,text_string, horizontalalignment='center',
+                                            verticalalignment='center',
+                                            transform = ax.transAxes, fontdict={'fontsize': 12})
+
+
+            var_array = bins[i].data.sig_vphi
+            
+            mean = np.mean(var_array)
+            median = np.median(var_array)
+
+            ax.hist(var_array, 
+                    bins=n_bins,
+                    edgecolor='black',
+                    density = True)
+
+            ax.axvline(x=mean, ls="--", label="Mean", color='r')
+            ax.axvline(x=median, ls="--", label="Median", color='orange')
+            ax.legend(loc="lower right")
+            ax.set_xlim(0, 0.5*np.max(var_array))
+            ax.set_yscale('log')
+            ax.set_title("Bin No. {}".format(i))
+
+            sub_index = "{" + "v_\{}".format(parameter[parameter.find('_')+1:]) + "}"
+            if(parameter == 'v_r'):
+                sub_index = "{" + "v_r" + "}"
+            
+            ax.set_xlabel('$\sigma^2_{}$ [km/s]'.format(sub_index), fontdict={'fontsize': 15}, labelpad = 5)
+            ax.set_ylabel("N", fontdict={'fontsize': 15}, labelpad = 10, rotation=0)
+            ax.yaxis.set_label_coords(-0.1, 1.0)
+        
+        else:
+            fig.delaxes(ax)
+
+    plt.tight_layout()
+
+
+    fig_name = '/sample_velocity_variance_distribution'
+    if(is_save):
+        plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
 

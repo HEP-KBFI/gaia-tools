@@ -18,6 +18,7 @@ def generate_covmatrices(df,
                          z_0 = transformation_constants.Z_0,
                          r_0 = transformation_constants.R_0,
                          is_bayes = False,
+                         is_unpack_velocity = False,
                          debug = False):
     """Generate covariance matrices for ICRS data and propagates to galactocentric Cartesian/cylindrical modes if flagged so.
 
@@ -75,16 +76,63 @@ def generate_covmatrices(df,
             print("Data is not a numpy array!")
             return
 
-    # Unpack covariance matrices to list
-    # TODO: Figure out a more efficient way to do this!!
-    cov_list = list(C)
 
-    d = {"source_id": df.source_id, "cov_mat": cov_list}
-    cov_df = pd.DataFrame(d)
+    if(is_unpack_velocity):
+        covariance_data = {"source_id": df_crt.source_id,
+                        "sig_vphi": C[:, 4, 4],
+                        "sig_vr": C[:, 3, 3]}
+        cov_df = pd.DataFrame(covariance_data)
+
+    else:
+        # Unpack covariance matrices to list
+        # TODO: Figure out a more efficient way to do this!!
+        cov_list = list(C)
+
+        d = {"source_id": df.source_id, "cov_mat": cov_list}
+        cov_df = pd.DataFrame(d)
 
     if(debug):
         toc=timeit.default_timer()
         print("Time elapsed for covariance matrix generation and transformation: {a} sec".format(a=toc-tic))
+
+    return cov_df
+
+
+def generate_galactocentric_covmat(df,
+                                is_bayes,
+                                Z_0 = transformation_constants.Z_0,
+                                R_0 = transformation_constants.R_0):
+
+    # Get covariance matrix from ICRS coordinates
+    C = generate_covmat(df)
+
+
+    if(is_bayes == True):
+        data_array = df[["ra", "dec","r_est","pmra","pmdec","radial_velocity"]].to_numpy()
+
+    else:
+        data_array = df[["ra", "dec","parallax","pmra","pmdec","radial_velocity"]].to_numpy()
+
+    if isinstance(data_array, np.ndarray):
+        C = transform_cov_matrix(C, data_array, "Cartesian", Z_0, R_0, is_bayes=is_bayes)
+    else:
+        print("Data is not a numpy array!")
+        return
+
+    return C
+
+def transform_cov_cylindirical(df_crt, C,
+                                Z_0 = transformation_constants.Z_0,
+                                R_0 = transformation_constants.R_0):
+
+    data_array = df_crt[["x", "y","r","phi","v_r","v_phi"]].to_numpy()
+
+    C = transform_cov_matrix(C, data_array, "Cylindrical", Z_0, R_0)
+
+    covariance_data = {"source_id": df_crt.source_id,
+                        "sig_vphi": C[:, 4, 4],
+                        "sig_vr": C[:, 3, 3]}
+    cov_df = pd.DataFrame(covariance_data)
 
     return cov_df
 
