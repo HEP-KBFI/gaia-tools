@@ -4,6 +4,14 @@ A module to deal with everything data import.
 
 import pandas as pd
 from data_analysis import filter_distance
+import sys
+sys.path.append("../gaia_tools/")
+sys.path.append("../scripts/")
+import data_analysis
+import covariance_generation as cov
+import transformation_constants
+import photometric_cut
+import numpy as np
 
 
 '''
@@ -58,3 +66,56 @@ def import_data(path, distance = 32000, is_bayes = True, filter_distance = False
         print("<!--------------------------------------------------!> \n")
 
     return df
+
+
+
+def import_baseline_sample():
+    
+    # Create outpath for current run
+    run_out_path = "/home/svenpoder/repos/gaia-tools/jupyter-notebook"
+
+    print("Photometric cut..")
+    sample_IDs = photometric_cut.get_sample_IDs(run_out_path, 0.3, False)
+
+    # The path containing the initial ICRS data with Bayesian distance estimates.
+    my_path = "/home/svenpoder/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv"
+
+    # Import ICRS data
+    icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
+    icrs_data = icrs_data.merge(sample_IDs, on='source_id', suffixes=("", "_y"))
+    icrs_data.reset_index(inplace=True, drop=True)
+
+    print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
+
+    ## TRANSFORMATION CONSTANTS
+    v_sun = transformation_constants.V_SUN
+    z_0 = transformation_constants.Z_0
+    r_0 = transformation_constants.R_0
+
+    galcen_data = data_analysis.get_transformed_data(icrs_data,
+                                        include_cylindrical = True,
+                                        z_0 = z_0,
+                                        r_0 = r_0,
+                                        v_sun = v_sun,
+                                        debug = True,
+                                        is_bayes = True,
+                                        is_source_included = True)
+
+    galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, True)
+    cyl_cov = cov.transform_cov_cylindirical(galcen_data, galactocentric_cov)
+    galcen_data = galcen_data.merge(cyl_cov, on='source_id')
+
+
+    # Final data selection
+    galcen_data = galcen_data[(galcen_data.r < 12000) & (galcen_data.r > 5000)]
+    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+    galcen_data.reset_index(inplace=True, drop=True)
+    print("Final size of sample {}".format(galcen_data.shape))
+
+    icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
+
+    min_r = np.min(galcen_data.r)
+    max_r = np.max(galcen_data.r)
+
+    return galcen_data, min_r, max_r
+
