@@ -52,18 +52,15 @@ print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
 ## TRANSFORMATION CONSTANTS
 v_sun = transformation_constants.V_SUN
 
-#Eilers et al. V0,x
-v_sun[0][0] = 245.8
+#Eilers et al.
+v_sun[0][0] = 11.1
+v_sun[1][0] = 245.8
+v_sun[2][0] = 7.8
+z_0 = 25
+r_0 = 8122
 
-#Eilers et al. V0,y
-#v_sun[1][0] = 245.8
-
-
-z_0 = transformation_constants.Z_0
-
-# Eilers et al. R0
-#r_0 = 8122
-r_0 = transformation_constants.R_0
+# z_0 = transformation_constants.Z_0
+# r_0 = transformation_constants.R_0
 
 galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        include_cylindrical = True,
