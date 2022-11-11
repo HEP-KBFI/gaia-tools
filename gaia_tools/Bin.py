@@ -149,9 +149,12 @@ class Bin:
 
         add_1 = np.log(2*np.pi*med_sig_vphi)
 
-        v_phi_model = A/(v_c + med_vphi) - v_c
+        v_phi_model = A/(v_c - med_vphi) - v_c
 
-        add_2 = (med_vphi - v_phi_model)**2/med_sig_vphi
+        # Without 2vc approximation
+        #add_2 = (med_vphi - v_phi_model)**2/med_sig_vphi
+
+        add_2 = (med_vphi - ((A - v_c**2)/v_c))**2/med_sig_vphi
         # add_3 = med_sig_vphi/((1+(A/v_c**2)))**2
 
         if(debug):
@@ -203,7 +206,9 @@ class Bin:
         # R - bin center
         R = np.mean(self.r_boundaries)
 
-        # A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
-        A = rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
+        # Without 2vc approximation
+        #A = rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
+
+        A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
 
         return A
