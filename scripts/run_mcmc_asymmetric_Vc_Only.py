@@ -40,7 +40,7 @@ print("Photometric cut..")
 sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "/hdfs/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
 
 # Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
@@ -53,10 +53,11 @@ print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
 v_sun = transformation_constants.V_SUN
 
 #Eilers et al. V0,x
-v_sun[0][0] = 245.8
+# v_sun[0][0] = 245.8
+
 
 #Eilers et al. V0,y
-#v_sun[1][0] = 245.8
+v_sun[1][0] = 245.8
 
 
 z_0 = transformation_constants.Z_0
@@ -134,7 +135,7 @@ def log_likelihood(theta):
 
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
-      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], debug=False)
+      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], debug=True)
       likelihood_array[i] = likelihood_value
    likelihood_sum = np.sum(likelihood_array)
 

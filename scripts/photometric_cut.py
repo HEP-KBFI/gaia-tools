@@ -20,7 +20,7 @@ def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
     df = df[columns]
 
     # Import 2MASS data to data frame
-    tmass_data_path = '/hdfs/local/sven/gaia_tools_data/crossmatched_tmass_data/crossmatched_tmass_data.csv'
+    tmass_data_path = '/local/sven/gaia_tools_data/crossmatched_tmass_data/crossmatched_tmass_data.csv'
     crossmatched_tmass_data = vaex.from_csv(tmass_data_path, convert=True)
 
     crossmatched_tmass_data = crossmatched_tmass_data.join(df, how='inner', 
@@ -30,7 +30,7 @@ def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
                                 rsuffix='_fouesnau')
 
     # This next import is probably redundant
-    gaia_rv_data = vaex.from_csv('/hdfs/local/sven/gaia_tools_data/bayesian_distance_rv_stars.csv', convert=True)
+    gaia_rv_data = vaex.from_csv('/local/sven/gaia_tools_data/bayesian_distance_rv_stars.csv', convert=True)
 
     crossmatched_tmass_data = crossmatched_tmass_data.join(gaia_rv_data, how='inner', 
                                 left_on='source_id_tmass_xmass', 
