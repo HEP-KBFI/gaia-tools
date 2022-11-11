@@ -109,6 +109,18 @@ class Bin:
         return result
 
     
+    def weighted_avg_and_std(self, values, weights):
+            """
+            Return the weighted average and standard deviation.
+
+            values, weights -- Numpy ndarrays with the same shape.
+            """
+            average = np.average(values, weights=weights)
+
+            # Fast and numerically precise:
+            variance = np.average((values-average)**2, weights=weights)
+
+            return (average, np.sqrt(variance))
 
 
     def get_likelihood_w_asymmetry(self, v_c, debug=False):
@@ -122,43 +134,27 @@ class Bin:
             float: Returns bin likelihood
         """
 
-        def weighted_avg_and_std(values, weights):
-            """
-            Return the weighted average and standard deviation.
-
-            values, weights -- Numpy ndarrays with the same shape.
-            """
-            average = np.average(values, weights=weights)
-
-            # Fast and numerically precise:
-            variance = np.average((values-average)**2, weights=weights)
-
-            return (average, np.sqrt(variance))
-
         weights = 1/self.data.sig_vphi
-        weighted_avg, weighted_std = weighted_avg_and_std(self.data.v_phi, weights)
+        weighted_avg, weighted_std = self.weighted_avg_and_std(self.data.v_phi, weights)
 
-        # Likelihood for bin only
-        #med_sig_vphi = self.med_sig_vphi
-        med_sig_vphi = (weighted_std**2)/len(self.data.v_phi)
+        # Weighted std
+        avg_sig_vphi = (weighted_std**2)/len(self.data.v_phi)
 
-        #med_vphi = np.abs(np.median(self.data.v_phi))
-        med_vphi = np.abs(weighted_avg)
+        # Weighted mean
+        avg_vphi = weighted_avg
 
+        # Get A for asymmetric drift computation
         A = self.A_parameter
 
-        add_1 = np.log(2*np.pi*med_sig_vphi)
-        add_2 = (med_vphi - ((A - v_c**2)/v_c))**2/med_sig_vphi
-        # add_3 = med_sig_vphi/((1+(A/v_c**2)))**2
+        add_1 = np.log(2*np.pi*avg_sig_vphi)
+        add_2 = (avg_vphi - ((v_c**2 - A)/v_c))**2/avg_sig_vphi
 
         if(debug):
             print("A -> {}".format(A))
             print("Add 1 -> {}".format(add_1))
             print("Add 2 -> {}".format(add_2))
-            # print("Add 3 -> {}".format(add_3))
             print("Asymmetric drift -> {}".format(A/v_c))
 
-        # return -0.5*(add_1 + add_2 + add_3)
         return -0.5*(add_1 + add_2)
 
     def get_med_sig_vphi(self, debug):
