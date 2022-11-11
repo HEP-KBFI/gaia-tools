@@ -40,7 +40,7 @@ print("Photometric cut..")
 sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "/home/svenpoder/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv"
+my_path = "/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv"
 
 # Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
