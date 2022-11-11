@@ -159,7 +159,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = 6
+ncpu = 12
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
