@@ -38,8 +38,16 @@ def plot_walkers(sampler_path, burn_in = 0, plot_name = 'Unnamed', is_save=False
         plt.savefig(plot_name, dpi=300)
     plt.show()
 
-def plot_corner(reader, theta_labels, burn_in = 0, plot_name = 'Unnamed', is_save=False):
+def plot_corner(path, burn_in = 0, plot_name = 'Unnamed', is_save=False):
+    
+    reader = emcee.backends.HDFBackend(path, read_only=True)
+    samples_data = reader.get_chain(discard=burn_in)
+
+    xdf = [num for num in range(0, samples_data.shape[2], 1)]
+    theta_labels = [r'$V_{c%s}$' %str(i+1) for i in xdf]
+    reader = emcee.backends.HDFBackend(path, read_only=True)
     flatchain = reader.get_chain(flat=True, discard = burn_in)
+
     print(flatchain.shape)
 
     fig = corner.corner(flatchain, 

@@ -108,6 +108,9 @@ class Bin:
 
         return result
 
+    
+
+
     def get_likelihood_w_asymmetry(self, v_c, debug=False):
         """Compute likelihood of bin with asymmetry taken into account
 
@@ -119,24 +122,47 @@ class Bin:
             float: Returns bin likelihood
         """
 
+        def weighted_avg_and_std(values, weights):
+            """
+            Return the weighted average and standard deviation.
+
+            values, weights -- Numpy ndarrays with the same shape.
+            """
+            average = np.average(values, weights=weights)
+
+            # Fast and numerically precise:
+            variance = np.average((values-average)**2, weights=weights)
+
+            return (average, np.sqrt(variance))
+
+        weights = 1/self.data.sig_vphi
+        weighted_avg, weighted_std = weighted_avg_and_std(self.data.v_phi, weights)
+
         # Likelihood for bin only
-        med_sig_vphi = self.med_sig_vphi
-        med_vphi = np.abs(np.median(self.data.v_phi))
+        #med_sig_vphi = self.med_sig_vphi
+        med_sig_vphi = (weighted_std**2)/len(self.data.v_phi)
+
+        #med_vphi = np.abs(np.median(self.data.v_phi))
+        med_vphi = np.abs(weighted_avg)
 
         A = self.A_parameter
 
         add_1 = np.log(2*np.pi*med_sig_vphi)
-        add_2 = (med_vphi - ((A - v_c**2)/v_c))**2/med_sig_vphi
-        add_3 = med_sig_vphi/((1+(A/v_c**2)))**2
+
+        v_phi_model = A/(v_c + med_vphi) - v_c
+
+        add_2 = (med_vphi - v_phi_model)**2/med_sig_vphi
+        # add_3 = med_sig_vphi/((1+(A/v_c**2)))**2
 
         if(debug):
             print("A -> {}".format(A))
             print("Add 1 -> {}".format(add_1))
             print("Add 2 -> {}".format(add_2))
-            print("Add 3 -> {}".format(add_3))
+            # print("Add 3 -> {}".format(add_3))
             print("Asymmetric drift -> {}".format(A/v_c))
 
-        return -0.5*(add_1 + add_2 + add_3)
+        # return -0.5*(add_1 + add_2 + add_3)
+        return -0.5*(add_1 + add_2)
 
     def get_med_sig_vphi(self, debug):
 
@@ -177,6 +203,7 @@ class Bin:
         # R - bin center
         R = np.mean(self.r_boundaries)
 
-        A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
+        # A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
+        A = rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
 
         return A

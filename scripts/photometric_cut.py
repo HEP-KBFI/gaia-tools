@@ -13,7 +13,7 @@ columns = ['source_id', 'J_p50', 'Ks_p50', 'H_p50', 'J_sigma', 'Ks_sigma', 'H_si
 def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
 
     # Import Fouesneau
-    vaex_path = '/home/svenpoder/Downloads/catalog-20210311-goodphot_lite_nodup.vaex.hdf5'
+    vaex_path = '/scratch/sven/gaia_tools_data/extinction_corrected_photometry/catalog-20210311-goodphot_lite_nodup.vaex.hdf5'
 
     df=vaex.open(vaex_path)
     df['source_id'] = df.source_id.astype('int64')
