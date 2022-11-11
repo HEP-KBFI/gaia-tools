@@ -135,7 +135,7 @@ def log_likelihood(theta):
 
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
-      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], debug=True)
+      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], debug=False)
       likelihood_array[i] = likelihood_value
    likelihood_sum = np.sum(likelihood_array)
 
