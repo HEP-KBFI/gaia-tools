@@ -123,7 +123,7 @@ class Bin:
             return (average, np.sqrt(variance))
 
 
-    def get_likelihood_w_asymmetry(self, v_c, debug=False):
+    def get_likelihood_w_asymmetry(self, v_c, drop_approx = False, debug=False):
         """Compute likelihood of bin with asymmetry taken into account
 
         Args:
@@ -147,7 +147,15 @@ class Bin:
         A = self.A_parameter
 
         add_1 = np.log(2*np.pi*avg_sig_vphi)
-        add_2 = (avg_vphi - ((v_c**2 - A)/v_c))**2/avg_sig_vphi
+
+        if(drop_approx):
+            A = 2*A
+            v_phi_model = v_c - A/(v_c + avg_vphi)
+
+        else:
+            v_phi_model = (v_c**2 - A)/v_c
+
+        add_2 = (avg_vphi - v_phi_model)**2/avg_sig_vphi
 
         if(debug):
             print("A -> {}".format(A))
@@ -178,12 +186,6 @@ class Bin:
         Returns:
             float: Returns the parameter value
         """
-
-        # rot_vel_var - median of rotational-velocity variance in bin
-        # rot_vel_var = self.med_sig_vphi
-
-        # # rad_vel_var - median of radial-velocity variance in bin
-        # rad_vel_var = np.median(self.data.sig_vr)
 
         rot_vel_var = np.var(self.data.v_phi)
         rad_vel_var = np.var(self.data.v_r)
