@@ -109,20 +109,7 @@ class Bin:
         return result
 
     
-
-
-    def get_likelihood_w_asymmetry(self, v_c, debug=False):
-        """Compute likelihood of bin with asymmetry taken into account
-
-        Args:
-            v_c (float): Proposed V_c of bin in MCMC
-            debug (bool, optional): Verbose flag. Defaults to False.
-
-        Returns:
-            float: Returns bin likelihood
-        """
-
-        def weighted_avg_and_std(values, weights):
+    def weighted_avg_and_std(self, values, weights):
             """
             Return the weighted average and standard deviation.
 
@@ -135,36 +122,47 @@ class Bin:
 
             return (average, np.sqrt(variance))
 
+
+    def get_likelihood_w_asymmetry(self, v_c, drop_approx = False, debug=False):
+        """Compute likelihood of bin with asymmetry taken into account
+
+        Args:
+            v_c (float): Proposed V_c of bin in MCMC
+            debug (bool, optional): Verbose flag. Defaults to False.
+
+        Returns:
+            float: Returns bin likelihood
+        """
+
         weights = 1/self.data.sig_vphi
-        weighted_avg, weighted_std = weighted_avg_and_std(self.data.v_phi, weights)
+        weighted_avg, weighted_std = self.weighted_avg_and_std(self.data.v_phi, weights)
 
-        # Likelihood for bin only
-        #med_sig_vphi = self.med_sig_vphi
-        med_sig_vphi = (weighted_std**2)/len(self.data.v_phi)
+        # Weighted std
+        avg_sig_vphi = (weighted_std**2)/len(self.data.v_phi)
 
-        #med_vphi = np.abs(np.median(self.data.v_phi))
-        med_vphi = np.abs(weighted_avg)
+        # Weighted mean
+        avg_vphi = weighted_avg
 
+        # Get A for asymmetric drift computation
         A = self.A_parameter
 
-        add_1 = np.log(2*np.pi*med_sig_vphi)
+        add_1 = np.log(2*np.pi*avg_sig_vphi)
 
-        v_phi_model = A/(v_c - med_vphi) - v_c
+        if(drop_approx):
+            A = 2*A
+            v_phi_model = v_c - A/(v_c + avg_vphi)
 
-        # Without 2vc approximation
-        #add_2 = (med_vphi - v_phi_model)**2/med_sig_vphi
+        else:
+            v_phi_model = (v_c**2 - A)/v_c
 
-        add_2 = (med_vphi - ((A - v_c**2)/v_c))**2/med_sig_vphi
-        # add_3 = med_sig_vphi/((1+(A/v_c**2)))**2
+        add_2 = (avg_vphi - v_phi_model)**2/avg_sig_vphi
 
         if(debug):
             print("A -> {}".format(A))
             print("Add 1 -> {}".format(add_1))
             print("Add 2 -> {}".format(add_2))
-            # print("Add 3 -> {}".format(add_3))
             print("Asymmetric drift -> {}".format(A/v_c))
 
-        # return -0.5*(add_1 + add_2 + add_3)
         return -0.5*(add_1 + add_2)
 
     def get_med_sig_vphi(self, debug):
@@ -188,12 +186,6 @@ class Bin:
         Returns:
             float: Returns the parameter value
         """
-
-        # rot_vel_var - median of rotational-velocity variance in bin
-        # rot_vel_var = self.med_sig_vphi
-
-        # # rad_vel_var - median of radial-velocity variance in bin
-        # rad_vel_var = np.median(self.data.sig_vr)
 
         rot_vel_var = np.var(self.data.v_phi)
         rad_vel_var = np.var(self.data.v_r)
