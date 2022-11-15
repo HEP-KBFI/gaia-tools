@@ -617,16 +617,15 @@ def sample_distribution_galactic_coords(icrs_data, outpath, is_save = True):
 
     fig = plt.figure(figsize=(16, 8))
 
-    x = c.galactic.l.to_value()
-    y = c.galactic.b.to_value()
+    x = c.galactic.l.wrap_at(180*u.deg).to_value()
+    y = c.galactic.b.wrap_at(180*u.deg).to_value()
+
     h = plt.hist2d(x, y, bins=250, cmin=50, norm=colors.PowerNorm(0.5), zorder=0.5)
     plt.scatter(x, y, alpha=0.05, s=1, color='k', zorder=0)
 
     fmt = mpl.ticker.ScalarFormatter(useMathText=True)
     fmt.set_powerlimits((0, 0))
     plt.colorbar(h[3], pad=0.02, format=fmt, orientation='vertical', label = 'Star density')
-
-
 
     plt.xlabel(r'$l$ [deg]', fontdict={'fontsize' : 16})
     plt.ylabel(r'$b$ [deg]',  fontdict={'fontsize' : 16})
