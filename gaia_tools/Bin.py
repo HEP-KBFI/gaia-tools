@@ -198,6 +198,9 @@ class Bin:
         # R - bin center
         R = np.mean(self.r_boundaries)
 
+        # Without 2vc approximation
+        #A = rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
+
         A = 0.5*rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
 
         return A

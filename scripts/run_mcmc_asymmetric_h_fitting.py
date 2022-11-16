@@ -40,7 +40,7 @@ print("Photometric cut..")
 sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+my_path = "/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv"
 
 # Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
@@ -106,16 +106,16 @@ bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                       r_drift = False,
                                                       debug = False)
 
-# Plots the velocity and velocity variance distribution of first 4 bins.
+# Plots the velocity and velocity variance distribution of first 4 bins. 
 plot_velocity_distribution(bin_collection.bins[0:4], run_out_path, True)
 plot_variance_distribution(bin_collection.bins[0:4], 'v_phi', run_out_path)
 
 # A parameter computation
-for i, bin in enumerate(bin_collection.bins):
-    bin.med_sig_vphi = np.median(bin.data.sig_vphi)
-    bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale,
-                                             h_sig = args.vlos_dispersion_scale,
-                                             debug=True)
+# for i, bin in enumerate(bin_collection.bins):
+#     bin.med_sig_vphi = np.median(bin.data.sig_vphi)
+#     bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale, 
+#                                              h_sig = args.vlos_dispersion_scale, 
+#                                              debug=True)
 
 # End import and plot section
 
@@ -131,6 +131,11 @@ def log_likelihood(theta):
 
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
+
+      bin.A_parameter = bin.compute_A_parameter(h_r = theta[-2], 
+                                             h_sig = theta[-1], 
+                                             debug=False)
+
       likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], debug=False)
       likelihood_array[i] = likelihood_value
    likelihood_sum = np.sum(likelihood_array)
@@ -144,7 +149,7 @@ def log_likelihood(theta):
 def log_prior(theta):
 
    # NOTE CHANGE BACK
-   if (theta > -400).all() and (theta < 400).all():
+   if (theta[0:-2] > -400).all() and (theta[0:-2] < 400).all() and (theta[-2] > args.disk_scale - 1000) and (theta[-2] < args.disk_scale + 1000) and (theta[-1] > args.vlos_dispersion_scale - 1000) and (theta[-1] < args.vlos_dispersion_scale + 1000) :
        return 0.0
    return -np.inf
 
@@ -159,14 +164,17 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = 6
+ncpu = 12
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
 nwalkers = args.nwalkers
-ndim = args.nbins
+ndim = args.nbins + 2
 nsteps = args.nsteps
 theta_0 = random.sample(range(-300, -150), ndim)
+
+theta_0[-2] = args.disk_scale
+theta_0[-1] = args.vlos_dispersion_scale
 
 # Init starting point for all walkers
 pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
