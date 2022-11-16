@@ -120,7 +120,7 @@ class Bin:
             # Fast and numerically precise:
             variance = np.average((values-average)**2, weights=weights)
 
-            return (average, np.sqrt(variance))
+            return (average, variance)
 
 
     def get_likelihood_w_asymmetry(self, v_c, drop_approx = False, debug=False):
@@ -135,10 +135,10 @@ class Bin:
         """
 
         weights = 1/self.data.sig_vphi
-        weighted_avg, weighted_std = self.weighted_avg_and_std(self.data.v_phi, weights)
+        weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
 
         # Weighted std
-        avg_sig_vphi = (weighted_std**2)/len(self.data.v_phi)
+        avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Weighted mean
         avg_vphi = weighted_avg
