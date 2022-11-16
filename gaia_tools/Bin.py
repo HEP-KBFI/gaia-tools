@@ -137,7 +137,7 @@ class Bin:
         weights = 1/self.data.sig_vphi
         weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
 
-        # Weighted std
+        # Weighted var
         avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Weighted mean
