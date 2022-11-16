@@ -108,7 +108,7 @@ class Bin:
 
         return result
 
-    
+
     def weighted_avg_and_std(self, values, weights):
             """
             Return the weighted average and standard deviation.
@@ -120,7 +120,7 @@ class Bin:
             # Fast and numerically precise:
             variance = np.average((values-average)**2, weights=weights)
 
-            return (average, np.sqrt(variance))
+            return (average, variance)
 
 
     def get_likelihood_w_asymmetry(self, v_c, drop_approx = False, debug=False):
@@ -135,10 +135,10 @@ class Bin:
         """
 
         weights = 1/self.data.sig_vphi
-        weighted_avg, weighted_std = self.weighted_avg_and_std(self.data.v_phi, weights)
+        weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
 
-        # Weighted std
-        avg_sig_vphi = (weighted_std**2)/len(self.data.v_phi)
+        # Weighted var
+        avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Weighted mean
         avg_vphi = weighted_avg
@@ -187,8 +187,8 @@ class Bin:
             float: Returns the parameter value
         """
 
-        rot_vel_var = np.var(self.data.v_phi)
-        rad_vel_var = np.var(self.data.v_r)
+        rot_vel_var = np.var(self.data.v_phi, ddof=1)
+        rad_vel_var = np.var(self.data.v_r, ddof=1)
 
         XX = rot_vel_var/rad_vel_var
 
