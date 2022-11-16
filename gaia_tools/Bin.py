@@ -108,7 +108,7 @@ class Bin:
 
         return result
 
-    
+
     def weighted_avg_and_std(self, values, weights):
             """
             Return the weighted average and standard deviation.
@@ -187,8 +187,8 @@ class Bin:
             float: Returns the parameter value
         """
 
-        rot_vel_var = np.var(self.data.v_phi)
-        rad_vel_var = np.var(self.data.v_r)
+        rot_vel_var = np.var(self.data.v_phi, ddof=1)
+        rad_vel_var = np.var(self.data.v_r, ddof=1)
 
         XX = rot_vel_var/rad_vel_var
 
