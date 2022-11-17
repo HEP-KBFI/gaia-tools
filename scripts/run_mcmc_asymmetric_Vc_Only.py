@@ -191,6 +191,11 @@ with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:
 bin_centers_r = [np.mean(x.r_boundaries) for x in bin_collection.bins]
 bin_centers_z = [np.mean(x.z_boundaries) for x in bin_collection.bins]
 
+A_r_array = []
+for i, bin in enumerate(bin_collection.bins):
+   A_r_array.append((np.mean(bin.r_boundaries), bin.A_parameter))
+
+
 file = open(run_out_path + "/run_settings.txt", "wb")
 out_dict = {'bin_centers_r' : np.array(bin_centers_r),
             'bin_centers_z' : np.array(bin_centers_z),
@@ -202,7 +207,8 @@ out_dict = {'bin_centers_r' : np.array(bin_centers_r),
             'cut_range' : args.cut_range,
             'final_sample_size' : galcen_data.shape,
             'disk_scale' : args.disk_scale,
-            'vlos_dispersion_scale' : args.vlos_dispersion_scale}
+            'vlos_dispersion_scale' : args.vlos_dispersion_scale,
+            'A_r_info' : A_r_array}
 
 pickle.dump(out_dict, file)
 file.close()

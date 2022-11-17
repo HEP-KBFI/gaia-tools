@@ -102,8 +102,11 @@ def get_sample_IDs(run_out_path, cut_range, is_save_region=True):
         plt.plot(h[1], a*h[1] + b + cut_range, c='w', linestyle="--")
         plt.plot(h[1], a*h[1] + b - cut_range, c='w', linestyle="--")
         plt.xlabel("J - Ks [mag]", fontdict={'fontsize': 15})
-        plt.xlabel("H [mag]", fontdict={'fontsize': 15})
+        plt.ylabel("H [mag]", fontdict={'fontsize': 15})
         plt.grid()
+
+        plt.xlim(0.5, 1.1)
+        plt.ylim(-3.0, 0)
     
         fig_name = '/cut_region'
 
