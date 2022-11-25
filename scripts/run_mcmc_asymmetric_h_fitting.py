@@ -40,7 +40,7 @@ print("Photometric cut..")
 sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv"
+my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
 
 # Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
@@ -98,8 +98,8 @@ max_r = np.max(galcen_data.r)
 # Generate bins
 bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                       theta = (0, 1),
-                                                      BL_r_min = min_r - 1,
-                                                      BL_r_max = max_r + 1,
+                                                      BL_r_min = 5000,
+                                                      BL_r_max = 12000,
                                                       BL_z_min = -200,
                                                       BL_z_max = 200,
                                                       N_bins = (args.nbins, 1),
@@ -136,7 +136,7 @@ def log_likelihood(theta):
                                              h_sig = theta[-1], 
                                              debug=False)
 
-      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], debug=False)
+      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
       likelihood_array[i] = likelihood_value
    likelihood_sum = np.sum(likelihood_array)
 
@@ -164,7 +164,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = 12
+ncpu = 6
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
