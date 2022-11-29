@@ -89,8 +89,12 @@ def import_baseline_sample():
 
     ## TRANSFORMATION CONSTANTS
     v_sun = transformation_constants.V_SUN
-    z_0 = transformation_constants.Z_0
-    r_0 = transformation_constants.R_0
+    #Eilers et al.
+    v_sun[0][0] = 11.1
+    v_sun[1][0] = 245.8
+    v_sun[2][0] = 7.8
+    z_0 = 25
+    r_0 = 8122
 
     galcen_data = data_analysis.get_transformed_data(icrs_data,
                                         include_cylindrical = True,
