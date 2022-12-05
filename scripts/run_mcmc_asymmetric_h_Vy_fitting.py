@@ -54,13 +54,10 @@ v_sun = transformation_constants.V_SUN
 
 #Eilers et al.
 v_sun[0][0] = 11.1
-v_sun[1][0] = 245.8
+v_sun[1][0] = initial_vy = 245.8
 v_sun[2][0] = 7.8
 z_0 = 25
 r_0 = 8122
-
-# z_0 = transformation_constants.Z_0
-# r_0 = transformation_constants.R_0
 
 galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        include_cylindrical = True,
@@ -71,8 +68,16 @@ galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        is_bayes = True,
                                        is_source_included = True)
 
-galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, True)
-cyl_cov = cov.transform_cov_cylindirical(galcen_data, galactocentric_cov)
+galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
+                                                            is_bayes = True,
+                                                            Z_0 = z_0,
+                                                            R_0 = r_0)
+
+cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
+                                             C = galactocentric_cov,
+                                             Z_0 = z_0,
+                                             R_0 = r_0)
+
 galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
 # Selection plots
@@ -106,16 +111,16 @@ bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                       r_drift = False,
                                                       debug = False)
 
-# Plots the velocity and velocity variance distribution of first 4 bins.
+# Plots the velocity and velocity variance distribution of first 4 bins. 
 plot_velocity_distribution(bin_collection.bins[0:4], run_out_path, True)
 plot_variance_distribution(bin_collection.bins[0:4], 'v_phi', run_out_path)
 
 # A parameter computation
-for i, bin in enumerate(bin_collection.bins):
-    bin.med_sig_vphi = np.median(bin.data.sig_vphi)
-    bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale,
-                                             h_sig = args.vlos_dispersion_scale,
-                                             debug=True)
+# for i, bin in enumerate(bin_collection.bins):
+#     bin.med_sig_vphi = np.median(bin.data.sig_vphi)
+#     bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale, 
+#                                              h_sig = args.vlos_dispersion_scale, 
+#                                              debug=True)
 
 # End import and plot section
 
@@ -126,11 +131,54 @@ def log_likelihood(theta):
    if(debug):
       tic=timeit.default_timer()
 
+   v_sun[1][0] = theta[-1]
+   galcen_data = data_analysis.get_transformed_data(icrs_data,
+                                       include_cylindrical = True,
+                                       z_0 = z_0,
+                                       r_0 = r_0,
+                                       v_sun = v_sun,
+                                       debug = False,
+                                       is_bayes = True,
+                                       is_source_included = True)
+
+   galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
+                                                            is_bayes = True,
+                                                            Z_0 = z_0,
+                                                            R_0 = r_0)
+
+   cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
+                                             C = galactocentric_cov,
+                                             Z_0 = z_0,
+                                             R_0 = r_0)
+
+   galcen_data = galcen_data.merge(cyl_cov, on='source_id')
+
+   # Final data selection
+   galcen_data = galcen_data[(galcen_data.r < 12000) & (galcen_data.r > 5000)]
+   galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+   galcen_data.reset_index(inplace=True, drop=True)
+
+   # Generate bins
+   bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
+                                                         theta = (0, 1),
+                                                         BL_r_min = 5000,
+                                                         BL_r_max = 12000,
+                                                         BL_z_min = -200,
+                                                         BL_z_max = 200,
+                                                         N_bins = (args.nbins, 1),
+                                                         r_drift = False,
+                                                         debug = False)
+
    n = reduce(lambda x, y: x*y, bin_collection.N_bins)
    likelihood_array = np.zeros(n)
 
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
+
+      bin.A_parameter = bin.compute_A_parameter(h_r = theta[-3], 
+                                             h_sig = theta[-2], 
+                                             debug=False)
+
       likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
       likelihood_array[i] = likelihood_value
    likelihood_sum = np.sum(likelihood_array)
@@ -143,9 +191,20 @@ def log_likelihood(theta):
 
 def log_prior(theta):
 
-   # NOTE CHANGE BACK
-   if (theta > -400).all() and (theta < 400).all():
-       return 0.0
+   vc_prior_d = (theta[0:-3] > -400).all()
+   vc_prior_u = (theta[0:-3] < 400).all()
+
+   disk_prior_d = (theta[-3] > args.disk_scale - 1000) 
+   disk_prior_u = (theta[-3] < args.disk_scale + 1000)
+
+   vlos_prior_d = (theta[-2] > args.vlos_dispersion_scale - 1000)
+   vlos_prior_u = (theta[-2] < args.vlos_dispersion_scale + 1000)
+
+   vy_prior_d = (theta[-1] > initial_vy - 20)
+   vy_prior_u = (theta[-1] < initial_vy + 20)
+
+   if vc_prior_d and vc_prior_u and disk_prior_d and disk_prior_u and vlos_prior_d and vlos_prior_u and vy_prior_d and vy_prior_u:
+         return 0.0
    return -np.inf
 
 def log_probability(theta):
@@ -159,20 +218,31 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = 6
+ncpu = 14
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
 nwalkers = args.nwalkers
-ndim = args.nbins
+ndim = args.nbins + 3
 nsteps = args.nsteps
 theta_0 = random.sample(range(-300, -150), ndim)
+
+theta_0[-3] = args.disk_scale
+theta_0[-2] = args.vlos_dispersion_scale
+theta_0[-1] = initial_vy
 
 # Init starting point for all walkers
 pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
 
 # Setup saving results to output file
 filename = run_out_path + "/sampler_{a}.h5".format(a=start_datetime)
+
+# To continue previous run
+# filename = "/home/svenpoder/repos/gaia-tools/out/mcmc_runs/2022-12-02-16-09-40_range0.3/sampler_2022-12-02-16-09-40.h5"
+# reader = emcee.backends.HDFBackend(filename)
+# samples = reader.get_chain()
+# pos = samples[-1]
+
 backend = emcee.backends.HDFBackend(filename)
 backend.reset(nwalkers, ndim)
 

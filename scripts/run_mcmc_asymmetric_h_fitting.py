@@ -40,7 +40,7 @@ print("Photometric cut..")
 sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+my_path = "/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_tools_data/gaia_rv_data_bayes.csv"
 
 # Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
@@ -59,9 +59,6 @@ v_sun[2][0] = 7.8
 z_0 = 25
 r_0 = 8122
 
-# z_0 = transformation_constants.Z_0
-# r_0 = transformation_constants.R_0
-
 galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        include_cylindrical = True,
                                        z_0 = z_0,
@@ -71,8 +68,16 @@ galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        is_bayes = True,
                                        is_source_included = True)
 
-galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, True)
-cyl_cov = cov.transform_cov_cylindirical(galcen_data, galactocentric_cov)
+galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
+                                                            is_bayes = True,
+                                                            Z_0 = z_0,
+                                                            R_0 = r_0)
+
+cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
+                                             C = galactocentric_cov,
+                                             Z_0 = z_0,
+                                             R_0 = r_0)
+
 galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
 # Selection plots
@@ -164,7 +169,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = 6
+ncpu = 14
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
@@ -199,6 +204,17 @@ with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:
 bin_centers_r = [np.mean(x.r_boundaries) for x in bin_collection.bins]
 bin_centers_z = [np.mean(x.z_boundaries) for x in bin_collection.bins]
 
+
+# A parameter computation for the asymmetric drift plots
+for i, bin in enumerate(bin_collection.bins):
+    bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale, 
+                                             h_sig = args.vlos_dispersion_scale, 
+                                             debug=True)
+
+A_r_array = []
+for i, bin in enumerate(bin_collection.bins):
+   A_r_array.append((np.mean(bin.r_boundaries), bin.A_parameter))
+
 file = open(run_out_path + "/run_settings.txt", "wb")
 out_dict = {'bin_centers_r' : np.array(bin_centers_r),
             'bin_centers_z' : np.array(bin_centers_z),
@@ -210,7 +226,8 @@ out_dict = {'bin_centers_r' : np.array(bin_centers_r),
             'cut_range' : args.cut_range,
             'final_sample_size' : galcen_data.shape,
             'disk_scale' : args.disk_scale,
-            'vlos_dispersion_scale' : args.vlos_dispersion_scale}
+            'vlos_dispersion_scale' : args.vlos_dispersion_scale,
+            'A_r_info' : A_r_array}
 
 pickle.dump(out_dict, file)
 file.close()

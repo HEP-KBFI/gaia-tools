@@ -105,8 +105,16 @@ def import_baseline_sample():
                                         is_bayes = True,
                                         is_source_included = True)
 
-    galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, True)
-    cyl_cov = cov.transform_cov_cylindirical(galcen_data, galactocentric_cov)
+    galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
+                                                                is_bayes = True,
+                                                                Z_0 = z_0,
+                                                                R_0 = r_0)
+
+    cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
+                                                C = galactocentric_cov,
+                                                Z_0 = z_0,
+                                                R_0 = r_0)
+                                                
     galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
 
