@@ -218,7 +218,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = 14
+ncpu = 6
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
@@ -260,6 +260,12 @@ with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:
 
 bin_centers_r = [np.mean(x.r_boundaries) for x in bin_collection.bins]
 bin_centers_z = [np.mean(x.z_boundaries) for x in bin_collection.bins]
+
+# A parameter computation for the asymmetric drift plots
+for i, bin in enumerate(bin_collection.bins):
+    bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale, 
+                                             h_sig = args.vlos_dispersion_scale, 
+                                             debug=True)
 
 A_r_array = []
 for i, bin in enumerate(bin_collection.bins):
