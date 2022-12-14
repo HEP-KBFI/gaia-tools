@@ -61,8 +61,8 @@ z_0 = 25
 
 # Initial solar vector
 v_sun[0][0] = 11.1
-v_sun[1][0] = 251.5*(r_0/8277)
-v_sun[2][0] = 8.59*(r_0/8277)
+v_sun[1][0] = 245.8
+v_sun[2][0] = 7.8
 
 ## TRANSFORM DATA USING INITIAL TRANSFORMATION CONSTANTS
 galcen_data = data_analysis.get_transformed_data(icrs_data,
