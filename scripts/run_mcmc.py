@@ -60,7 +60,7 @@ r_0 = 8275
 z_0 = 25
 
 # Initial solar vector
-v_sun[0][0] = 9.3
+v_sun[0][0] = 11.1
 v_sun[1][0] = 251.5*(r_0/8275)
 v_sun[2][0] = 8.59*(r_0/8275)
 
@@ -135,7 +135,6 @@ def log_likelihood(theta):
    z_0 = theta[-1]
 
    # Update solar vector
-   v_sun[0][0] = 9.3
    v_sun[1][0] = 251.5*(r_0/8275)
    v_sun[2][0] = 8.59*(r_0/8275)
 

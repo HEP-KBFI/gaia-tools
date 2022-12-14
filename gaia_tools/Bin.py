@@ -122,19 +122,17 @@ class Bin:
 
             return (average, variance)
 
-    def bootstrap_weighted_error(self):
+    def bootstrap_weighted_error(self, bin_vphi, bin_sig_vphi):
 
-        bootstrapped_means = []
-        for _ in range(1000):
+        data_length = len(self.data.v_phi)
+        idx_list = np.arange(data_length)
+        bootstrapped_means = np.zeros(100)
 
-            idx_list = np.arange(self.data.v_phi.size)
+        for i in range(100):
             rnd_idx = np.random.choice(idx_list, replace=True, size=len(self.data.v_phi))
-
-            test_sample = np.array(self.data.v_phi)[rnd_idx]
-            weights = np.array(1/self.data.sig_vphi)[rnd_idx]
-
-            sample_mean = np.average(test_sample, weights=weights)
-            bootstrapped_means.append(sample_mean)
+            test_sample = np.array(bin_vphi)[rnd_idx]
+            weights = np.array(1/bin_sig_vphi)[rnd_idx]
+            bootstrapped_means[i] = np.average(test_sample, weights=weights)
 
         conf_int = np.percentile(bootstrapped_means, [16, 84])
         return (conf_int[1] - conf_int [0])/2
@@ -151,13 +149,17 @@ class Bin:
             float: Returns bin likelihood
         """
 
-        weights = 1/self.data.sig_vphi
+        bin_vphi = self.data.v_phi.to_numpy()
+        bin_sig_vphi = self.data.sig_vphi.to_numpy()
+
+        weights = 1/bin_sig_vphi
+        
         # Weighted mean
-        weighted_mean = np.average(self.data.v_phi, weights=weights)
+        weighted_mean = np.average(bin_vphi, weights=weights)
         #weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
 
         # Weighted error
-        weighted_error = self.bootstrap_weighted_error()
+        weighted_error = self.bootstrap_weighted_error(bin_vphi, bin_sig_vphi)
         #avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Get A for asymmetric drift computation
