@@ -72,13 +72,13 @@ def import_data(path, distance = 32000, is_bayes = True, filter_distance = False
 def import_baseline_sample():
     
     # Create outpath for current run
-    run_out_path = "/home/svenpoder/repos/gaia-tools/jupyter-notebook"
+    run_out_path = "/home/sven/repos/gaia-tools/jupyter-notebook"
 
     print("Photometric cut..")
     sample_IDs = photometric_cut.get_sample_IDs(run_out_path, 0.3, False)
 
     # The path containing the initial ICRS data with Bayesian distance estimates.
-    my_path = "/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv"
+    my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
 
     # Import ICRS data
     icrs_data = import_data(path = my_path, is_bayes = True, debug = True)

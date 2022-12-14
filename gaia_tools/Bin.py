@@ -122,6 +122,23 @@ class Bin:
 
             return (average, variance)
 
+    def bootstrap_weighted_error(self):
+
+        bootstrapped_means = []
+        for _ in range(1000):
+
+            idx_list = np.arange(self.data.v_phi.size)
+            rnd_idx = np.random.choice(idx_list, replace=True, size=len(self.data.v_phi))
+
+            test_sample = np.array(self.data.v_phi)[rnd_idx]
+            weights = np.array(1/self.data.sig_vphi)[rnd_idx]
+
+            sample_mean = np.average(test_sample, weights=weights)
+            bootstrapped_means.append(sample_mean)
+
+        conf_int = np.percentile(bootstrapped_means, [16, 84])
+        return (conf_int[1] - conf_int [0])/2
+
 
     def get_likelihood_w_asymmetry(self, v_c, drop_approx = False, debug=False):
         """Compute likelihood of bin with asymmetry taken into account
@@ -135,27 +152,27 @@ class Bin:
         """
 
         weights = 1/self.data.sig_vphi
-        weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
-
-        # Weighted var
-        avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
-
         # Weighted mean
-        avg_vphi = weighted_avg
+        weighted_mean = np.average(self.data.v_phi, weights=weights)
+        #weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
+
+        # Weighted error
+        weighted_error = self.bootstrap_weighted_error()
+        #avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Get A for asymmetric drift computation
         A = self.A_parameter
 
-        add_1 = np.log(2*np.pi*avg_sig_vphi)
+        add_1 = np.log(2*np.pi*weighted_error)
 
         if(drop_approx):
             A = 2*A
-            v_phi_model = v_c - A/(v_c + avg_vphi)
+            v_phi_model = v_c - A/(v_c + weighted_mean)
 
         else:
             v_phi_model = (v_c**2 - A)/v_c
 
-        add_2 = (avg_vphi - v_phi_model)**2/avg_sig_vphi
+        add_2 = (weighted_mean - v_phi_model)**2/weighted_error
 
         if(debug):
             print("A -> {}".format(A))
