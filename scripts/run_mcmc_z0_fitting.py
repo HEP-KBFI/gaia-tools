@@ -54,7 +54,7 @@ print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
 v_sun = transformation_constants.V_SUN
 
 # Initial Galactocentric distance
-r_0 = 8277
+r_0 = 8122
 
 # Initial height over Galactic plane
 z_0 = 25

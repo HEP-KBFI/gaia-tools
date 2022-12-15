@@ -40,7 +40,7 @@ print("Photometric cut..")
 sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
 
 # The path containing the initial ICRS data with Bayesian distance estimates.
-my_path = "/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_tools_data/gaia_rv_data_bayes.csv"
+my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
 
 # Import ICRS data
 icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
@@ -71,8 +71,16 @@ galcen_data = data_analysis.get_transformed_data(icrs_data,
                                        is_bayes = True,
                                        is_source_included = True)
 
-galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, True)
-cyl_cov = cov.transform_cov_cylindirical(galcen_data, galactocentric_cov)
+galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
+                                                            is_bayes = True,
+                                                            Z_0 = z_0,
+                                                            R_0 = r_0)
+
+cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
+                                             C = galactocentric_cov,
+                                             Z_0 = z_0,
+                                             R_0 = r_0)
+
 galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
 # Selection plots
@@ -115,7 +123,7 @@ for i, bin in enumerate(bin_collection.bins):
     bin.med_sig_vphi = np.median(bin.data.sig_vphi)
     bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale,
                                              h_sig = args.vlos_dispersion_scale,
-                                             debug=True)
+                                             debug=False)
 
 # End import and plot section
 
@@ -159,7 +167,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 # Define CPU count
-ncpu = 6
+ncpu = 8
 print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
