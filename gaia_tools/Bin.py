@@ -1,4 +1,6 @@
 import numpy as np
+import helper_functions as helpfunc
+
 
 '''
 Data object for data entries with the same bin index.
@@ -122,22 +124,6 @@ class Bin:
 
             return (average, variance)
 
-    def bootstrap_weighted_error(self, bin_vphi, bin_sig_vphi):
-
-        data_length = len(self.data.v_phi)
-        idx_list = np.arange(data_length)
-        bootstrapped_means = np.zeros(100)
-
-        for i in range(100):
-            rnd_idx = np.random.choice(idx_list, replace=True, size=len(self.data.v_phi))
-            test_sample = np.array(bin_vphi)[rnd_idx]
-            weights = np.array(1/bin_sig_vphi)[rnd_idx]
-            bootstrapped_means[i] = np.average(test_sample, weights=weights)
-
-        conf_int = np.percentile(bootstrapped_means, [16, 84])
-        return (conf_int[1] - conf_int [0])/2
-
-
     def get_likelihood_w_asymmetry(self, v_c, drop_approx = False, debug=False):
         """Compute likelihood of bin with asymmetry taken into account
 
@@ -156,10 +142,14 @@ class Bin:
         
         # Weighted mean
         weighted_mean = np.average(bin_vphi, weights=weights)
+
+        # OLD ANALYTIC
         #weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
 
         # Weighted error
-        weighted_error = self.bootstrap_weighted_error(bin_vphi, bin_sig_vphi)
+        weighted_error = helpfunc.bootstrap_weighted_error(bin_vphi, bin_sig_vphi)
+  
+        #weighted_error = self.bootstrapped_error
         #avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Get A for asymmetric drift computation
