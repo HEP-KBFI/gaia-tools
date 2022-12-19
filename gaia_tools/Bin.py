@@ -48,6 +48,7 @@ class Bin:
         self.MLE_mu = None
         self.med_sig_vphi = None
         self.A_parameter = None
+        self.bootstrapped_error = None
 
     '''
     To keep this function generalized, should pass a parameter describing
@@ -147,9 +148,9 @@ class Bin:
         #weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
 
         # Weighted error
-        weighted_error = helpfunc.bootstrap_weighted_error(bin_vphi, bin_sig_vphi)
-  
-        #weighted_error = self.bootstrapped_error
+        #weighted_error = helpfunc.bootstrap_weighted_error(bin_vphi, bin_sig_vphi)
+        weighted_error = self.bootstrapped_error
+
         #avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Get A for asymmetric drift computation

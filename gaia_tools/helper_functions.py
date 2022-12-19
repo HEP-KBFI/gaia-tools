@@ -6,9 +6,9 @@ def bootstrap_weighted_error(bin_vphi, bin_sig_vphi):
     
     data_length = len(bin_vphi)
     idx_list = np.arange(data_length)
-    bootstrapped_means = np.zeros(100)
+    bootstrapped_means = np.zeros(1000)
 
-    for i in range(100):
+    for i in range(1000):
         rnd_idx = np.random.choice(idx_list, replace=True, size=data_length)
         test_sample = bin_vphi[rnd_idx]
         sig_vphi = bin_sig_vphi[rnd_idx]
