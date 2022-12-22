@@ -43,8 +43,16 @@ k2 = 4.74047
 #endregion
 
 
+def get_A_matrix(NUMPY_LIB = np, dtype = np.float64):
+
+    A = NUMPY_LIB.asarray([[(-1)*0.0548755604162154, (-1)*0.8734370902348850, (-1)*0.4838350155487132],
+            [0.4941094278755837, (-1)*0.4448296299600112, 0.7469822444972189],
+            [(-1)*0.8676661490190047, (-1)*0.1980763734312015, 0.4559837761750669]], dtype=dtype)
+    return A
+
+
 # Matrix H which accounts for the height of the Sun (Z_0) aboce the Galactic plane.
-def get_H_matrix(Z_0, R_0):
+def get_H_matrix(Z_0, R_0, NUMPY_LIB = np):
     
     if(Z_0/R_0 is None):
         print("Something went wrong! No values for either Z_0 or R_0 were found!")
@@ -56,9 +64,9 @@ def get_H_matrix(Z_0, R_0):
     costheta = np.cos(THETA_0)
     sintheta = np.sin(THETA_0)
 
-    H = np.array([[costheta, 0, sintheta],
-                 [0, 1, 0],
-                 [-sintheta, 0, costheta]])
+    H = NUMPY_LIB.array([[costheta, 0, sintheta],
+                        [0, 1, 0],
+                        [-sintheta, 0, costheta]], dtype=NUMPY_LIB.float32)
 
     return H
 
@@ -68,7 +76,7 @@ Get B matric for velocity transformations.
 Expects ra, dec as NumPy arrays.
 '''
 @jit(nopython=True)
-def get_b_matrix(ra, dec):
+def get_b_matrix(ra, dec, NUMPY_LIB = np, dtype = np.float64):
 
     #B = np.array([[cosra*cosdec, -sinra, -cosra*sindec],
     #         [sinra*cosdec, cosra, -sinra*sindec],
@@ -76,16 +84,15 @@ def get_b_matrix(ra, dec):
     
     
     # Add check if ra == dec
-    
     n = len(ra)
 
-    B = np.zeros((n, 3, 3))
+    B = NUMPY_LIB.zeros((n, 3, 3), dtype = dtype)
     
     # Defining constants to reduce process time
-    cosra = np.cos(ra)
-    cosdec = np.cos(dec)
-    sinra = np.sin(ra)
-    sindec = np.sin(dec)
+    cosra = NUMPY_LIB.cos(ra)
+    cosdec = NUMPY_LIB.cos(dec)
+    sinra = NUMPY_LIB.sin(ra)
+    sindec = NUMPY_LIB.sin(dec)
 
     B[:, 0, 0] = cosra*cosdec
     B[:, 0, 1] = -sinra
@@ -101,23 +108,21 @@ def get_b_matrix(ra, dec):
     # Returns array of B matrices - one for each data point
     return B
 
-def get_cylindrical_velocity_matrix(phi):
+def get_cylindrical_velocity_matrix(phi, NUMPY_LIB = np, dtype = np.float64):
    
     n = len(phi)
 
-    sin_phi = np.sin(phi).ravel()
-    cos_phi = np.cos(phi).ravel()
+    sin_phi = NUMPY_LIB.sin(phi).ravel()
+    cos_phi = NUMPY_LIB.cos(phi).ravel()
 
-    M = np.array([[cos_phi, sin_phi, np.zeros(n)],
-         [-sin_phi, cos_phi, np.zeros(n)],
-         [np.zeros(n), np.zeros(n), np.ones(n)]])
+    M = NUMPY_LIB.array([[cos_phi, sin_phi, NUMPY_LIB.zeros(n)],
+         [-sin_phi, cos_phi, NUMPY_LIB.zeros(n)],
+         [NUMPY_LIB.zeros(n), NUMPY_LIB.zeros(n), NUMPY_LIB.ones(n)]], dtype=dtype)
 
     M = M.T.reshape(n,3,3, order = 'A').swapaxes(1,2)
 
     # Returns array of matrices - one for each data point
     return M
-
-
 
 
 @jit(nopython=True)

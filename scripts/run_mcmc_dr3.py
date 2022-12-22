@@ -1,15 +1,11 @@
 
 import sys
 sys.path.append("../gaia_tools/")
-import data_analysis
-import covariance_generation as cov
-from import_functions import import_data
-from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram, plot_variance_distribution, plot_velocity_distribution
+
 import numpy as np
 import emcee
 from functools import reduce
 import time, timeit
-import transformation_constants
 import datetime as dt
 import os
 import pickle
@@ -18,7 +14,6 @@ import argparse
 import random
 from multiprocessing import Pool
 import pandas as pd 
-import cupy as cp
 
 dtime = dt.time()
 now=dt.datetime.now()
@@ -31,7 +26,25 @@ parser.add_argument('--nsteps', type=int)
 parser.add_argument('--nbins', type=int)
 parser.add_argument('--disk-scale', type=float)
 parser.add_argument('--vlos-dispersion-scale', type=float)
+parser.add_argument('--backend', type=str)
 args = parser.parse_args()
+
+if(args.backend == 'gpu'):
+      import cupy as cp
+      from numba import jit, config
+      config.DISABLE_JIT = True
+      NUMPY_LIB = cp
+      dtype = cp.float32
+else:
+   import numpy
+   NUMPY_LIB = numpy
+
+import transformation_constants
+import transformation_functions
+import data_analysis
+import covariance_generation as cov
+from import_functions import import_data
+from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram, plot_variance_distribution, plot_velocity_distribution
 
 print('Grabbing needed columns')
 icrs_data = pd.read_csv('/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv', nrows = 10)
@@ -115,21 +128,25 @@ bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
 plot_velocity_distribution(bin_collection.bins[0:4], run_out_path, True)
 plot_variance_distribution(bin_collection.bins[0:4], 'v_phi', run_out_path)
 
+
 # GPU VARIABLES
-trans_needed_columns = ['source_id', 'ra', 'dec', 'r_est', 'pmra', 'pmdec', 'radial_velocity']
-icrs_gpu = cp.asarray(icrs_data[trans_needed_columns], dtype=cp.float32)
-C_icrs_gpu = cp.asarray(C_icrs, dtype=cp.float32)
+if(args.backend == 'gpu'):
+   trans_needed_columns = ['source_id', 'ra', 'dec', 'r_est', 'pmra', 'pmdec', 'radial_velocity']
+   icrs_data = cp.asarray(icrs_data[trans_needed_columns], dtype=cp.float32)
+   C_icrs = cp.asarray(C_icrs, dtype=cp.float32)
 
 def get_galcen_data_gpu(icrs_data, cov_mat, z_0, r_0, v_sun):
 
-   galcen_data = data_analysis.get_transformed_data(icrs_data,
+   galcen_data = transformation_functions.get_transformed_data(icrs_data,
                                        include_cylindrical = True,
                                        z_0 = z_0,
                                        r_0 = r_0,
                                        v_sun = v_sun,
-                                       debug = False,
+                                       debug = True,
                                        is_bayes = True,
-                                       is_source_included = True)
+                                       is_source_included = True, 
+                                       NUMPY_LIB = NUMPY_LIB,
+                                       dtype = dtype)
 
    galactocentric_cov = cov.transform_cov_galactocentric(icrs_data, 
                                                             C = C_icrs,

@@ -461,7 +461,7 @@ def transform_velocities_cylindrical(velocities_xyz, phi):
 
     return v_cylindrical
 
-#endregion
+
 
 def main():
     from .data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
