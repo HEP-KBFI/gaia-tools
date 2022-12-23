@@ -126,8 +126,14 @@ def get_cylindrical_velocity_matrix(phi, NUMPY_LIB = np, dtype = np.float64):
 
 
 @jit(nopython=True)
-def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
+def get_jacobian_bayes(df, 
+                    coordinate_system, 
+                    Z_0, 
+                    R_0, 
+                    NUMPY_LIB = np, 
+                    dtype = np.float64):
 
+    A = get_A_matrix(NUMPY_LIB = NUMPY_LIB, dtype = dtype)
     n = len(df)
     
     if(coordinate_system == "Cartesian"):
@@ -136,7 +142,7 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
                 print("Something went wrong! No values for either Z_0 or R_0 were found!")
                 return
     
-        THETA_0 = np.arcsin(Z_0/R_0)
+        THETA_0 = NUMPY_LIB.arcsin(Z_0/R_0, dtype=dtype)
 
         # TODO: Implement exception handling!
 
@@ -144,7 +150,7 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         r_est = df[:,2]
 
         c1 = r_est
-        c2 = 1
+        c2 = dtype(1)
         c3 = k2*(r_est/1000)
         c4 = -k2/1000
 
@@ -155,16 +161,16 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         v_r = df[:,5]
 
         # deg -> radians
-        ra = np.deg2rad(ra)
-        dec = np.deg2rad(dec)
+        ra = NUMPY_LIB.deg2rad(ra)
+        dec = NUMPY_LIB.deg2rad(dec)
 
         # Declaring variables to reduce number of computations 
-        sin_ra = np.sin(ra)
-        cos_ra = np.cos(ra)
-        sin_dec = np.sin(dec)
-        cos_dec = np.cos(dec)
-        sin_theta = np.sin(THETA_0)
-        cos_theta = np.cos(THETA_0)
+        sin_ra = NUMPY_LIB.sin(ra)
+        cos_ra = NUMPY_LIB.cos(ra)
+        sin_dec = NUMPY_LIB.sin(dec)
+        cos_dec = NUMPY_LIB.cos(dec)
+        sin_theta = NUMPY_LIB.sin(THETA_0)
+        cos_theta = NUMPY_LIB.cos(THETA_0)
         
         A_1 = A[0,0]*cos_theta + A[2,0]*sin_theta
         A_2 = A[0,1]*cos_theta + A[2,1]*sin_theta
@@ -194,7 +200,7 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         J11 = c1*(-sin_ra*(A_1) + cos_ra*(A_2))
         J12 = c1*(cos_dec*(A_3) - sin_dec*(cos_ra*(A_1) + sin_ra*(A_2)))
         J13 = c2*(cosra_cosdec*(A_1) + sinra_cosdec*(A_2) + sin_dec*(A_3))
-        J14 = np.zeros(n)
+        J14 = NUMPY_LIB.zeros(n, dtype=dtype)
         #J15 = np.zeros(n)
         #J16 = np.zeros(n)
         
@@ -241,24 +247,27 @@ def get_jacobian_bayes(df, coordinate_system, Z_0, R_0):
         J66 = cosra_cosdec*(A_7) + sinra_cosdec*(A_8) + sin_dec*(A_6)
         
         
-        J1 = np.stack((J11, J12, J13, J14, J14, J14))
-        J2 = np.stack((J21, J22, J23, J14, J14, J14))
-        J3 = np.stack((J31, J32, J33, J14, J14, J14))
-        J4 = np.stack((J41, J42, J43, J44, J45, J46))
-        J5 = np.stack((J51, J52, J53, J54, J55, J56))
-        J6 = np.stack((J61, J62, J63, J64, J65, J66))
+        J1 = NUMPY_LIB.stack((J11, J12, J13, J14, J14, J14))
+        J2 = NUMPY_LIB.stack((J21, J22, J23, J14, J14, J14))
+        J3 = NUMPY_LIB.stack((J31, J32, J33, J14, J14, J14))
+        J4 = NUMPY_LIB.stack((J41, J42, J43, J44, J45, J46))
+        J5 = NUMPY_LIB.stack((J51, J52, J53, J54, J55, J56))
+        J6 = NUMPY_LIB.stack((J61, J62, J63, J64, J65, J66))
         
-        J = np.stack((J1, J2, J3, J4, J5, J6))
+        J = NUMPY_LIB.stack((J1, J2, J3, J4, J5, J6))
 
-    
-        
-        
     return J
 
 # TODO: Fix partial derivatives w.r.t alpha*
 @jit(nopython=True)
-def get_jacobian(df, coordinate_system, Z_0, R_0):
+def get_jacobian(df, 
+                coordinate_system, 
+                Z_0, 
+                R_0, 
+                NUMPY_LIB = np, 
+                dtype = np.float64):
 
+    A = get_A_matrix(NUMPY_LIB = NUMPY_LIB, dtype = dtype)
     n = len(df)
     
     if(coordinate_system == "Cartesian"):
@@ -287,16 +296,16 @@ def get_jacobian(df, coordinate_system, Z_0, R_0):
         v_r = df[:,5]
 
         # deg -> radians
-        ra = np.deg2rad(ra)
-        dec = np.deg2rad(dec)
+        ra = NUMPY_LIB.deg2rad(ra)
+        dec = NUMPY_LIB.deg2rad(dec)
 
         # Declaring variables to reduce number of computations 
-        sin_ra = np.sin(ra)
-        cos_ra = np.cos(ra)
-        sin_dec = np.sin(dec)
-        cos_dec = np.cos(dec)
-        sin_theta = np.sin(THETA_0)
-        cos_theta = np.cos(THETA_0)
+        sin_ra = NUMPY_LIB.sin(ra)
+        cos_ra = NUMPY_LIB.cos(ra)
+        sin_dec = NUMPY_LIB.sin(dec)
+        cos_dec = NUMPY_LIB.cos(dec)
+        sin_theta = NUMPY_LIB.sin(THETA_0)
+        cos_theta = NUMPY_LIB.cos(THETA_0)
         
         A_1 = A[0,0]*cos_theta + A[2,0]*sin_theta
         A_2 = A[0,1]*cos_theta + A[2,1]*sin_theta
@@ -323,7 +332,7 @@ def get_jacobian(df, coordinate_system, Z_0, R_0):
         J11 = c1*(-sin_ra*(A_1) + cos_ra*(A_2))
         J12 = c1*(cos_dec*(A_3) - sin_dec*(cos_ra*(A_1) + sin_ra*(A_2)))
         J13 = c2*(cosra_cosdec*(A_1) + sinra_cosdec*(A_2) + sin_dec*(A_3))
-        J14 = np.zeros(n)
+        J14 = NUMPY_LIB.zeros(n, dtype=dtype)
         #J15 = np.zeros(n)
         #J16 = np.zeros(n)
         
@@ -365,14 +374,14 @@ def get_jacobian(df, coordinate_system, Z_0, R_0):
         J66 = cosra_cosdec*(A_7) + sinra_cosdec*(A_8) + sin_dec*(A_6)
         
         
-        J1 = np.stack((J11, J12, J13, J14, J14, J14))
-        J2 = np.stack((J21, J22, J23, J14, J14, J14))
-        J3 = np.stack((J31, J32, J33, J14, J14, J14))
-        J4 = np.stack((J41, J42, J43, J44, J45, J46))
-        J5 = np.stack((J51, J52, J53, J54, J55, J56))
-        J6 = np.stack((J61, J62, J63, J64, J65, J66))
+        J1 = NUMPY_LIB.stack((J11, J12, J13, J14, J14, J14))
+        J2 = NUMPY_LIB.stack((J21, J22, J23, J14, J14, J14))
+        J3 = NUMPY_LIB.stack((J31, J32, J33, J14, J14, J14))
+        J4 = NUMPY_LIB.stack((J41, J42, J43, J44, J45, J46))
+        J5 = NUMPY_LIB.stack((J51, J52, J53, J54, J55, J56))
+        J6 = NUMPY_LIB.stack((J61, J62, J63, J64, J65, J66))
         
-        J = np.stack((J1, J2, J3, J4, J5, J6))
+        J = NUMPY_LIB.stack((J1, J2, J3, J4, J5, J6))
 
     elif(coordinate_system == "Cylindrical"):
 
@@ -387,17 +396,16 @@ def get_jacobian(df, coordinate_system, Z_0, R_0):
         v_r = df[:,4]
         v_phi = df[:,5]
 
-    
         c1 = x/(r**2)
         c2 = y/(r**2)
         
         # Declaring variables to reduce number of computations 
-        sin_phi = np.sin(phi)
-        cos_phi = np.cos(phi)
+        sin_phi = NUMPY_LIB.sin(phi)
+        cos_phi = NUMPY_LIB.cos(phi)
 
         J11 = x/r
         J12 = y/r
-        J13 = np.zeros(n)
+        J13 = NUMPY_LIB.zeros(n, dtype=dtype)
         #J14 = np.zeros(n)
         #J15 = np.zeros(n)
         #J16 = np.zeros(n)
@@ -411,7 +419,7 @@ def get_jacobian(df, coordinate_system, Z_0, R_0):
 
         #J31 = np.zeros(n)
         #J32 = np.zeros(n)
-        J33 = np.ones(n)
+        J33 = NUMPY_LIB.ones(n, dtype=dtype)
         #J34 = np.zeros(n)
         #J35 = np.zeros(n)
         #J36 = np.zeros(n)
@@ -437,14 +445,13 @@ def get_jacobian(df, coordinate_system, Z_0, R_0):
         #J65 = np.zeros(n)
         #J66 = np.ones(n)
                
-        J1 = np.stack((J11, J12, J13, J13, J13, J13))
-        J2 = np.stack((J21, J22, J13, J13, J13, J13))
-        J3 = np.stack((J13, J13, J33, J13, J13, J13))
-        J4 = np.stack((J41, J42, J13, J44, J45, J13))
-        J5 = np.stack((J51, J52, J13, J54, J55, J13))
-        J6 = np.stack((J13, J13, J13, J13, J13, J33))
+        J1 = NUMPY_LIB.stack((J11, J12, J13, J13, J13, J13))
+        J2 = NUMPY_LIB.stack((J21, J22, J13, J13, J13, J13))
+        J3 = NUMPY_LIB.stack((J13, J13, J33, J13, J13, J13))
+        J4 = NUMPY_LIB.stack((J41, J42, J13, J44, J45, J13))
+        J5 = NUMPY_LIB.stack((J51, J52, J13, J54, J55, J13))
+        J6 = NUMPY_LIB.stack((J13, J13, J13, J13, J13, J33))
         
-        J = np.stack((J1, J2, J3, J4, J5, J6))
-        
+        J = NUMPY_LIB.stack((J1, J2, J3, J4, J5, J6))
         
     return J

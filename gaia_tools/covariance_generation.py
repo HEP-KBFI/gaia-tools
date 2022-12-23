@@ -121,7 +121,8 @@ def generate_galactocentric_covmat(df,
 
     return C
 
-def transform_cov_galactocentric(df, C, 
+def transform_cov_galactocentric(df, 
+                                C, 
                                 is_bayes, 
                                 Z_0 = transformation_constants.Z_0,
                                 R_0 = transformation_constants.R_0):
@@ -141,7 +142,8 @@ def transform_cov_galactocentric(df, C,
     return C
 
 
-def transform_cov_cylindirical(df_crt, C,
+def transform_cov_cylindirical(df_crt, 
+                                C,
                                 Z_0 = transformation_constants.Z_0,
                                 R_0 = transformation_constants.R_0):
 
@@ -219,7 +221,15 @@ def generate_covmat(df):
     return C
 
 
-def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constants.Z_0, r_0 = transformation_constants.R_0, is_bayes = False):
+def transform_cov_matrix(C, 
+                        df, 
+                        coordinate_system, 
+                        z_0 = transformation_constants.Z_0, 
+                        r_0 = transformation_constants.R_0, 
+                        is_bayes = False,
+                        NUMPY_LIB = np, 
+                        dtype = np.float64):
+
     """Transforms an array of covariance matrices to specified coordinate system.
 
     Args:
@@ -239,19 +249,22 @@ def transform_cov_matrix(C, df, coordinate_system, z_0 = transformation_constant
         J = transformation_constants.get_jacobian_bayes(df, 
                                                         coordinate_system, 
                                                         Z_0 = z_0, 
-                                                        R_0 = r_0)
+                                                        R_0 = r_0,
+                                                        NUMPY_LIB = NUMPY_LIB, 
+                                                        dtype = dtype)
     else:
         # Grabs the correct Jacobian for every point in data set. Of shape (n, 6, 6).
         J = transformation_constants.get_jacobian(df, 
                                                 coordinate_system, 
                                                 Z_0 = z_0, 
-                                                R_0 = r_0)
+                                                R_0 = r_0,
+                                                NUMPY_LIB = NUMPY_LIB, 
+                                                dtype = dtype)
 
     J = J.T.reshape(len(df), 6, 6, order = 'A').swapaxes(1,2)
-
     J_trunc= J.reshape(len(df),6,6, order = 'A').swapaxes(1,2)
 
-    C_transformed = J @ C @ J_trunc
+    C_transformed = NUMPY_LIB.matmul(NUMPY_LIB.matmul(J, C), J_trunc)
 
     return C_transformed
 
