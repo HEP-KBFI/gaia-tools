@@ -1,6 +1,6 @@
 
 import re
-import vaex
+#import vaex
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import colors
