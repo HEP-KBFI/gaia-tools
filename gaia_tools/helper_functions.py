@@ -19,16 +19,24 @@ def bootstrap_weighted_error(bin_vphi, bin_sig_vphi):
     return (conf_int[1] - conf_int [0])/2
 
 
-def bootstrap_weighted_error_new(bin_vphi, bin_sig_vphi):
+def bootstrap_weighted_error_gpu(bin_vphi, bin_sig_vphi):
     
-    num_it = 1000
+    total_num_it = 1000
+    batch_num = 10
     data_length = len(bin_vphi)
     idx_list = cp.arange(data_length)
-    bootstrapped_means = cp.zeros(num_it)
-    rnd_idx = cp.random.choice(idx_list, replace=True, size=(num_it,data_length))
-    test_sample = bin_vphi[rnd_idx]
-    sig_vphi = bin_sig_vphi[rnd_idx]
-    bootstrapped_means = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
+    bootstrapped_means = cp.zeros(total_num_it)
+
+    for i in range(100):
+        rnd_idx = cp.random.choice(idx_list, replace=True, size=(batch_num, data_length))
+        
+        test_sample = bin_vphi[rnd_idx]
+        sig_vphi = bin_sig_vphi[rnd_idx]
+
+        start_idx = (i+1)*batch_num - batch_num
+        end_idx = (i+1)*batch_num
+
+        bootstrapped_means[start_idx:end_idx] = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
     conf_int = cp.percentile(bootstrapped_means, [16, 84])
 
-    return cp.asnumpy((conf_int[1] - conf_int [0])/2)
+    return (conf_int[1] - conf_int [0])/2

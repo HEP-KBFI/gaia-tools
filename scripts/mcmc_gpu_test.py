@@ -207,7 +207,7 @@ def log_likelihood(theta, args):
 
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
-      bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_new(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+      bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
                                                                   npcp.asarray(bin.data.sig_vphi, dtype=dtype))
       bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
                                              h_sig = h_sig, 
