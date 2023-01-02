@@ -11,9 +11,9 @@ IMG=/home/software/singularity/base.simg
 
 singularity exec -B /local -B /home -B /scratch -B /scratch-persistent --nv $IMG \
     python3 scripts/mcmc_gpu_slurm.py \
-        --nwalkers 50 \
-        --nsteps 100 \
+        --nwalkers 48 \
+        --nsteps 50000 \
         --nbins 10 \
         --disk-scale 3000.0 \
         --vlos-dispersion-scale 21000.0 \
-        --backend gpu
+        --backend gpus

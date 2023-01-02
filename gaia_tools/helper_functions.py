@@ -1,5 +1,5 @@
 import numpy as np
-import cupy as cp
+#import cupy as cp
 from numba import jit
 
 @jit(nopython=True)
@@ -40,3 +40,5 @@ def bootstrap_weighted_error_gpu(bin_vphi, bin_sig_vphi):
     conf_int = cp.percentile(bootstrapped_means, [16, 84])
 
     return (conf_int[1] - conf_int [0])/2
+
+

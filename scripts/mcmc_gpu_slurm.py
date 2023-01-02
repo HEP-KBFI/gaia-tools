@@ -19,7 +19,6 @@ else:
 
 import transformation_constants
 import transformation_functions
-import helper_functions as helpfunc
 import data_analysis
 import covariance_generation as cov
 from import_functions import import_data
@@ -48,21 +47,21 @@ def parse_args():
    parser.add_argument('--backend', type=str)
    return parser.parse_args()
 
-def set_up_backend(backend):
-   if(backend == 'gpu'):
-      print('Setting backend as GPU...')
-      import cupy as cp
-      from numba import jit, config
-      config.DISABLE_JIT = True
-      NUMPY_LIB = cp
-      dtype = cp.float32
-   else:
-      print('Setting backend as CPU...')
-      import numpy
-      NUMPY_LIB = numpy
-      dtype = numpy.float64
+# def set_up_backend(backend):
+#    if(backend == 'gpu'):
+#       print('Setting backend as GPU...')
+#       import cupy as cp
+#       from numba import jit, config
+#       config.DISABLE_JIT = True
+#       NUMPY_LIB = cp
+#       dtype = cp.float32
+#    else:
+#       print('Setting backend as CPU...')
+#       import numpy
+#       NUMPY_LIB = numpy
+#       dtype = numpy.float64
 
-   return NUMPY_LIB, dtype
+#    return NUMPY_LIB, dtype
 
 def load_galactic_parameters():
    
@@ -160,15 +159,45 @@ def get_galcen_data(r_0):
    return galcen_data
 
 
-   # galcen_data = galcen_data.merge(cyl_cov, on='source_id')
+def bootstrap_weighted_error_gpu(bin_vphi, bin_sig_vphi):
+    
+    total_num_it = 1000
+    batch_num = 10
+    data_length = len(bin_vphi)
+    idx_list = npcp.arange(data_length)
+    bootstrapped_means = npcp.zeros(total_num_it)
 
-   # # Final data selection
-   # galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
-   # galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
-   # galcen_data.reset_index(inplace=True, drop=True)
-   
-   # return galcen_data
+    for i in range(100):
+        rnd_idx = npcp.random.choice(idx_list, replace=True, size=(batch_num, data_length))
+        
+        test_sample = bin_vphi[rnd_idx]
+        sig_vphi = bin_sig_vphi[rnd_idx]
 
+        start_idx = (i+1)*batch_num - batch_num
+        end_idx = (i+1)*batch_num
+
+        bootstrapped_means[start_idx:end_idx] = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
+    conf_int = npcp.percentile(bootstrapped_means, [16, 84])
+
+    return (conf_int[1] - conf_int [0])/2
+
+
+# Fully vectorised
+def bootstrap_weighted_error_gpu_vector(bin_vphi, bin_sig_vphi):
+    
+    num_it = 1000
+    data_length = len(bin_vphi)
+    idx_list = npcp.arange(data_length)
+    bootstrapped_means = npcp.zeros(num_it)
+
+    rnd_idx = npcp.random.choice(idx_list, replace=True, size=(num_it, data_length))
+    
+    test_sample = bin_vphi[rnd_idx]
+    sig_vphi = bin_sig_vphi[rnd_idx]
+    bootstrapped_means = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
+    conf_int = npcp.percentile(bootstrapped_means, [16, 84])
+
+    return (conf_int[1] - conf_int [0])/2
 
 debug = False
 
@@ -185,39 +214,50 @@ def log_likelihood(theta, args):
       # Get Galactocentric data
       galcen_data = get_galcen_data(r_0)
 
-   final_data_columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
-         'sig_vphi', 'sig_vr', 'source_id']
-   # Turn Galactocentric data into Pandas frame
-   galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
-   
-   # # Generate bins
-   bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-                                                         theta = (0, 1),
-                                                         BL_r_min = 5000,
-                                                         BL_r_max = 15000,
-                                                         BL_z_min = -200,
-                                                         BL_z_max = 200,
-                                                         N_bins = (args.nbins, 1),
-                                                         r_drift = False,
-                                                         debug = False)
+      final_data_columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
+            'sig_vphi', 'sig_vr', 'source_id']
+      # Turn Galactocentric data into Pandas frame
+      galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
+      
+      # # Generate bins
+      bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
+                                                            theta = (0, 1),
+                                                            BL_r_min = 5000,
+                                                            BL_r_max = 15000,
+                                                            BL_z_min = -200,
+                                                            BL_z_max = 200,
+                                                            N_bins = (args.nbins, 1),
+                                                            r_drift = False,
+                                                            debug = False)
 
+      n = reduce(lambda x, y: x*y, bin_collection.N_bins)
+      likelihood_array = np.zeros(n)
 
+      for i, bin in enumerate(bin_collection.bins):
+         bin.bootstrapped_error = bootstrap_weighted_error_gpu_vector(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+                                                            npcp.asarray(bin.data.sig_vphi, dtype=dtype))
+         bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
+                                                h_sig = h_sig, 
+                                                debug=False)
 
-   n = reduce(lambda x, y: x*y, bin_collection.N_bins)
-   likelihood_array = np.zeros(n)
+         likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
+
+         likelihood_array[i] = likelihood_value
+   likelihood_sum = np.sum(likelihood_array)
 
    # now we need to calculate likelihood values for each bin
-   for i, bin in enumerate(bin_collection.bins):
-      bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
-                                                                  npcp.asarray(bin.data.sig_vphi, dtype=dtype))
-      bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
-                                             h_sig = h_sig, 
-                                             debug=False)
+   # for i, bin in enumerate(bin_collection.bins):
 
-      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
+      # bin.bootstrapped_error = bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+      #                                                       npcp.asarray(bin.data.sig_vphi, dtype=dtype))
+      # bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
+      #                                        h_sig = h_sig, 
+      #                                        debug=False)
 
-      likelihood_array[i] = likelihood_value
-   likelihood_sum = np.sum(likelihood_array)
+   #    likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
+
+   #    likelihood_array[i] = likelihood_value
+   # likelihood_sum = np.sum(likelihood_array)
 
    if(debug):
        toc=timeit.default_timer()
@@ -270,23 +310,15 @@ def init_vars(queue, input_data, input_cov):
       v_sun[1][0] = 251.5
       v_sun[2][0] = 8.59
 
-   # import transformation_constants
-   # import transformation_functions
-   # import cupy as cp
-   # NUMPY_LIB = cp
-
-   # dtype = cp.float32
-
-
 if __name__ == '__main__':
 
    multiprocessing.set_start_method('forkserver')
 
    args = parse_args()
-   backend, data_type = set_up_backend(args.backend)
+   # backend, data_type = set_up_backend(args.backend)
 
-   global NUMPY_LIB
-   NUMPY_LIB = backend
+   # global NUMPY_LIB
+   # NUMPY_LIB = backend
    #dtype = data_type
 
    dtime = dt.time()
@@ -308,6 +340,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
+   galcen_data = galcen_data[::100]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
@@ -336,14 +369,14 @@ if __name__ == '__main__':
    nwalkers = args.nwalkers
    ndim = args.nbins + 3
    nsteps = args.nsteps
-   theta_0 = random.sample(range(-300, -150), ndim)
+   theta_0 = random.sample(range(-300, -200), ndim)
 
    theta_0[-3] = args.disk_scale
    theta_0[-2] = args.vlos_dispersion_scale
    theta_0[-1] = r_0
 
    # Init starting point for all walkers
-   pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
+   pos = theta_0 + 10**(-1)*np.random.randn(nwalkers, ndim)
 
    # Setup saving results to output file
    filename = run_out_path + "/sampler_{a}.h5".format(a=start_datetime)
@@ -360,7 +393,7 @@ if __name__ == '__main__':
    else:
       NUM_GPUS = 1
  
-   PROC_PER_GPU = 2
+   PROC_PER_GPU = 8
    print("Using {} CPUs per GPU".format(PROC_PER_GPU))
 
    queue = Queue()
