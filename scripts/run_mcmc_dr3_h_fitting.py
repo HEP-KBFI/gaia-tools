@@ -1,6 +1,27 @@
-
 import sys
 sys.path.append("../gaia_tools/")
+
+USE_CUDA=True
+
+if USE_CUDA:
+   import cupy as npcp
+   DeviceContext = npcp.cuda.Device
+   dtype = npcp.float32
+   from numba import config
+   config.DISABLE_JIT = True
+
+else:
+   import numpy as npcp
+   npcp.asnumpy = lambda x: x
+   import contextlib
+   DeviceContext = contextlib.nullcontext
+   dtype = npcp.float64
+   from numba import config
+   config.DISABLE_JIT = False
+
+import transformation_constants
+import transformation_functions
+import helper_functions as helpfunc
 import data_analysis
 import covariance_generation as cov
 from import_functions import import_data
@@ -9,161 +30,89 @@ import numpy as np
 import emcee
 from functools import reduce
 import time, timeit
-import transformation_constants
 import datetime as dt
 import os
 import pickle
 from pathlib import Path
 import argparse
 import random
-import pandas as pd
-import helper_functions as helpfunc 
-
-dtime = dt.time()
-now=dt.datetime.now()
-start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
-
-# Arguments
-parser = argparse.ArgumentParser(description='MCMC input')
-parser.add_argument('--cut-range', type=float)
-parser.add_argument('--nwalkers', type=int)
-parser.add_argument('--nsteps', type=int)
-parser.add_argument('--nbins', type=int)
-parser.add_argument('--disk-scale', type=float)
-parser.add_argument('--vlos-dispersion-scale', type=float)
-args = parser.parse_args()
+import multiprocessing
+from multiprocessing import Pool, Process, Queue
+import pandas as pd 
 
 
-# galcen_data = pd.read_csv('/home/svenpoder/data/baseline_sample_old.csv')
-# print(galcen_data.shape)
-# icrs_data = pd.read_csv('/home/svenpoder/data/gaia_rv_data_bayes.csv')
-# print(icrs_data.shape)
-# icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
-# icrs_data.reset_index(inplace=True, drop=True)
+def parse_args():
+   parser = argparse.ArgumentParser(description='MCMC input')
+   parser.add_argument('--nwalkers', type=int)
+   parser.add_argument('--nsteps', type=int)
+   parser.add_argument('--nbins', type=int)
+   parser.add_argument('--disk-scale', type=float)
+   parser.add_argument('--vlos-dispersion-scale', type=float)
+   parser.add_argument('--backend', type=str)
+   return parser.parse_args()
 
+def load_galactic_parameters():
+   
+   # Initial Galactocentric distance
+   r_0 = 8277
 
-print('Grabbing needed columns')
-icrs_data = pd.read_csv('/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv', nrows = 10)
+   # Initial height over Galactic plane
+   z_0 = 25
 
-print('Importing DR3')
-path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
-gaia_dr3 = pd.read_csv(path)
+   # Initial solar vector
+   v_sun = transformation_constants.V_SUN
+   v_sun[0][0] = 11.1
+   v_sun[1][0] = 251.5
+   v_sun[2][0] = 8.59
+   
+   return r_0, z_0, v_sun
 
-icrs_data = gaia_dr3[icrs_data.columns]
+def apply_initial_cut(icrs_data, run_out_path):
 
+   r_0, z_0, v_sun = load_galactic_parameters()
 
-# Create outpath for current run
-run_out_path = "../out/mcmc_runs/{}_range{}".format(start_datetime, args.cut_range)
-Path(run_out_path).mkdir(parents=True, exist_ok=True)
+   galcen_data = data_analysis.get_transformed_data(icrs_data,
+                                          include_cylindrical = True,
+                                          z_0 = z_0,
+                                          r_0 = r_0,
+                                          v_sun = v_sun,
+                                          debug = True,
+                                          is_bayes = True,
+                                          is_source_included = True)
 
-# print("Photometric cut..")
-# sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
+   galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
+                                                               is_bayes = True,
+                                                               Z_0 = z_0,
+                                                               R_0 = r_0)
 
-# # The path containing the initial ICRS data with Bayesian distance estimates.
-# my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+   cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
+                                                C = galactocentric_cov,
+                                                Z_0 = z_0,
+                                                R_0 = r_0)
+   galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
-# # Import ICRS data
-# icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
-# icrs_data = icrs_data.merge(sample_IDs, on='source_id', suffixes=("", "_y"))
-# icrs_data.reset_index(inplace=True, drop=True)
+   # Plots before cut
+   plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 15000])
+   plot_distribution(galcen_data, run_out_path, 'z', -2000, 2000, [-200, 200])
 
-print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
-
-## TRANSFORMATION CONSTANTS
-v_sun = transformation_constants.V_SUN
-
-#Eilers et al.
-#r_0 = 8275
-r_0 = 8500
-z_0 = 25
-
-v_sun[0][0] = 11.1
-v_sun[1][0] = 251.5*(r_0/8275)
-v_sun[2][0] = 8.59*(r_0/8275)
-
-# z_0 = transformation_constants.Z_0
-# r_0 = transformation_constants.R_0
-
-galcen_data = data_analysis.get_transformed_data(icrs_data,
-                                       include_cylindrical = True,
-                                       z_0 = z_0,
-                                       r_0 = r_0,
-                                       v_sun = v_sun,
-                                       debug = True,
-                                       is_bayes = True,
-                                       is_source_included = True)
-
-galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
-                                                            is_bayes = True,
-                                                            Z_0 = z_0,
-                                                            R_0 = r_0)
-
-cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
-                                             C = galactocentric_cov,
-                                             Z_0 = z_0,
-                                             R_0 = r_0)
-
-galcen_data = galcen_data.merge(cyl_cov, on='source_id')
-
-print(galcen_data.columns)
-
-# Selection plots
-plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 15000])
-plot_distribution(galcen_data, run_out_path, 'z', -2000, 2000, [-200, 200])
-
-# Final data selection
-galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
-galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
-galcen_data.reset_index(inplace=True, drop=True)
-print("Final size of sample {}".format(galcen_data.shape))
-
-icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
-
-# Sample distribution plots
-sample_distribution_galactic_coords(icrs_data, run_out_path)
-plot_radial_distribution(icrs_data, run_out_path)
-fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 15000), norm_max=5000, title = "Distribution of data on the Galactic plane")
-
-min_r = np.min(galcen_data.r)
-max_r = np.max(galcen_data.r)
-
-# Generate bins
-bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-                                                      theta = (0, 1),
-                                                      BL_r_min = 5000,
-                                                      BL_r_max = 15000,
-                                                      BL_z_min = -200,
-                                                      BL_z_max = 200,
-                                                      N_bins = (args.nbins, 1),
-                                                      r_drift = False,
-                                                      debug = False)
-
-# Plots the velocity and velocity variance distribution of first 4 bins.
-plot_velocity_distribution(bin_collection.bins[0:4], run_out_path, True)
-plot_variance_distribution(bin_collection.bins[0:4], 'v_phi', run_out_path)
-
-# A parameter computation
-for i, bin in enumerate(bin_collection.bins):
-    bin.bootstrapped_error = helpfunc.bootstrap_weighted_error(bin.data.v_phi.to_numpy(), bin.data.sig_vphi.to_numpy())
-    # bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale,
-    #                                          h_sig = args.vlos_dispersion_scale,
-    #                                          debug=False)
-
-# End import and plot section
+   # Final data cut
+   galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
+   galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+   galcen_data.reset_index(inplace=True, drop=True)
+   
+   return galcen_data
 
 debug = False
 
-def log_likelihood(theta):
+def log_likelihood(theta, args):
 
    if(debug):
       tic=timeit.default_timer()
 
-   n = reduce(lambda x, y: x*y, bin_collection.N_bins)
-   likelihood_array = np.zeros(n)
+   likelihood_array = np.zeros(args.nbins)
 
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
-
       bin.A_parameter = bin.compute_A_parameter(h_r = theta[-2], 
                                              h_sig = theta[-1], 
                                              debug=False)
@@ -178,78 +127,167 @@ def log_likelihood(theta):
 
    return likelihood_sum
 
-def log_prior(theta):
+def log_prior(theta, args):
 
-   if (theta[0:-2] > -400).all() and (theta[0:-2] < 400).all() and (theta[-2] > args.disk_scale - 1000) and (theta[-2] < args.disk_scale + 1000) and (theta[-1] > args.vlos_dispersion_scale - 1000) and (theta[-1] < args.vlos_dispersion_scale + 1000) :
+   vc_prior_d = (theta[0:-2] > -400).all()
+   vc_prior_u = (theta[0:-2] < 400).all()
+
+   disk_prior = (theta[-2] > args.disk_scale - 1000) and (theta[-2] < args.disk_scale + 1000)
+   vlos_prior = (theta[-1] > args.vlos_dispersion_scale - 1000) and (theta[-1] < args.vlos_dispersion_scale + 1000)
+
+   if vc_prior_d and vc_prior_u and disk_prior and vlos_prior:
        return 0.0
    return -np.inf
 
-def log_probability(theta):
+def log_probability(theta, args):
 
-   lp = log_prior(theta)
+   lp = log_prior(theta, args)
    if not np.isfinite(lp):
        return -np.inf
    return lp + log_likelihood(theta)
 
-from multiprocessing import Pool
-from multiprocessing import cpu_count
+def init_vars(queue, bins):
+   
+   global device_id
+   global bin_collection
+   
+   device_id = queue.get()
 
-# Define CPU count
-ncpu = 6
-print("{0} CPUs".format(ncpu))
+   with DeviceContext(device_id):
+      bin_collection = bins
 
-# Nwalkers has to be at least 2*ndim
-nwalkers = args.nwalkers
-ndim = args.nbins + 2
-nsteps = args.nsteps
-theta_0 = random.sample(range(-300, -150), ndim)
+if __name__ == '__main__':
 
-theta_0[-2] = args.disk_scale
-theta_0[-1] = args.vlos_dispersion_scale
+   multiprocessing.set_start_method('forkserver')
 
-# Init starting point for all walkers
-pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
+   args = parse_args()
 
-# Setup saving results to output file
-filename = run_out_path + "/sampler_{a}.h5".format(a=start_datetime)
-backend = emcee.backends.HDFBackend(filename)
-backend.reset(nwalkers, ndim)
+   dtime = dt.time()
+   now=dt.datetime.now()
+   start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
-# Run emcee EnsembleSampler
-with Pool(ncpu) as pool:
-   sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, pool = pool, backend=backend)
-   print("Starting sampling. Walkers = {}, Steps = {}, CPU = {}".format(nwalkers, nsteps, ncpu))
-   sampler.run_mcmc(pos, nsteps, progress=True)
-   print("Sampler done!")
+   print('Creating outpath for current run...')
+   run_out_path = "../out/mcmc_runs/{}_{}".format(start_datetime, args.nwalkers)
+   Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
-#Dumps sampler object to pkl
-fn = run_out_path + '/sampler_{}'.format(start_datetime)
-with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:
-   pickle.dump(sampler, f, -1)
+   print('Importing necessary column names...')
+   icrs_data_columns = pd.read_csv('/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv', nrows = 10).columns
 
-bin_centers_r = [np.mean(x.r_boundaries) for x in bin_collection.bins]
-bin_centers_z = [np.mean(x.z_boundaries) for x in bin_collection.bins]
+   print('Importing DR3...')
+   dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
+   gaia_dr3 = pd.read_csv(dr3_path)
+   icrs_data = gaia_dr3[icrs_data_columns]
+   print("Initial size of sample: {}".format(icrs_data.shape))
 
-A_r_array = []
-for i, bin in enumerate(bin_collection.bins):
-   A_r_array.append((np.mean(bin.r_boundaries), bin.A_parameter))
+   print('Applying cut...')
+   galcen_data = apply_initial_cut(icrs_data, run_out_path)
+   print("Final size of sample {}".format(galcen_data.shape))
+   
+   # Declare final sample ICRS data and covariance matrices
+   icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
+   C_icrs = cov.generate_covmat(icrs_data)
 
-file = open(run_out_path + "/run_settings.txt", "wb")
-out_dict = {'bin_centers_r' : np.array(bin_centers_r),
-            'bin_centers_z' : np.array(bin_centers_z),
-            'bin_edges' : bin_collection.bin_boundaries,
-            'nbins' : args.nbins,
-            'V_sun' : v_sun,
-            'R_0' : r_0,
-            'Z_0' : z_0,
-            'cut_range' : args.cut_range,
-            'final_sample_size' : galcen_data.shape,
-            'disk_scale' : args.disk_scale,
-            'vlos_dispersion_scale' : args.vlos_dispersion_scale,
-            'A_r_info' : A_r_array}
+   # Plots after cut
+   sample_distribution_galactic_coords(icrs_data, run_out_path)
+   plot_radial_distribution(icrs_data, run_out_path)
+   fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 15000), norm_max=5000, title = "Distribution of data on the Galactic plane")
 
-pickle.dump(out_dict, file)
-file.close()
+   # Generate bins
+   bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
+                                                         theta = (0, 1),
+                                                         BL_r_min = 5000,
+                                                         BL_r_max = 15000,
+                                                         BL_z_min = -200,
+                                                         BL_z_max = 200,
+                                                         N_bins = (args.nbins, 1),
+                                                         r_drift = False,
+                                                         debug = False)
 
-print("Script finished!")
+   # Bootstrap errors
+   for i, bin in enumerate(bin_collection.bins):
+      if(USE_CUDA):
+         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+                                                                        npcp.asarray(bin.data.sig_vphi, dtype=dtype))
+      else:
+         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error(bin.data.v_phi.to_numpy(), bin.data.sig_vphi.to_numpy())
+   
+   # SETUP MCMC
+   # Nwalkers has to be at least 2*ndim
+   nwalkers = args.nwalkers
+   ndim = args.nbins + 2
+   nsteps = args.nsteps
+   theta_0 = random.sample(range(-300, -200), ndim)
 
+   theta_0[-2] = args.disk_scale
+   theta_0[-1] = args.vlos_dispersion_scale
+
+   # Init starting point for all walkers
+   pos = theta_0 + 10**(-1)*np.random.randn(nwalkers, ndim)
+
+   # Setup saving results to output file
+   filename = run_out_path + "/sampler_{a}.h5".format(a=start_datetime)
+   backend = emcee.backends.HDFBackend(filename)
+   backend.reset(nwalkers, ndim)
+
+   if USE_CUDA: 
+      cvd = os.environ["CUDA_VISIBLE_DEVICES"]
+      cvd = [int(x) for x in cvd.split(",")]
+      NUM_GPUS = len(cvd)
+    #actually no GPUs will be used, we just create 1xPROC_PER_GPU CPU processes
+   else:
+      NUM_GPUS = 1
+ 
+   PROC_PER_GPU = 8
+   queue = Queue()
+   #even though CUDA_VISIBLE_DEVICES could be e.g. 3,4
+   #here the indexing will be from 0,1, as nvidia hides the other devices
+   for gpu_ids in range(NUM_GPUS):
+      for _ in range(PROC_PER_GPU):
+         queue.put(gpu_ids)
+
+   # Setup pool   
+   pool = multiprocessing.Pool(NUM_GPUS*PROC_PER_GPU, initializer=init_vars, initargs=(queue, bin_collection))
+
+   # Run emcee EnsembleSampler
+   with pool as pool:
+      sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, pool = pool, args=(args,), backend=backend)
+      print("Starting sampling. Walkers = {}, Steps = {}, CPU = {}".format(nwalkers, nsteps, NUM_GPUS*PROC_PER_GPU))
+      sampler.run_mcmc(pos, nsteps, progress=True)
+      print("Sampler done!")
+
+   #Dumps sampler object to pkl
+   fn = run_out_path + '/sampler_{}'.format(start_datetime)
+   with open(os.path.splitext(fn)[0] + ".pkl", "wb") as f:
+      pickle.dump(sampler, f, -1)
+
+   bin_centers_r = [np.mean(x.r_boundaries) for x in bin_collection.bins]
+   bin_centers_z = [np.mean(x.z_boundaries) for x in bin_collection.bins]
+
+   # A parameter computation for the asymmetric drift plots
+   for i, bin in enumerate(bin_collection.bins):
+      bin.A_parameter = bin.compute_A_parameter(h_r = args.disk_scale, 
+                                                h_sig = args.vlos_dispersion_scale, 
+                                                debug=True)
+
+   A_r_array = []
+   for i, bin in enumerate(bin_collection.bins):
+      A_r_array.append((np.mean(bin.r_boundaries), bin.A_parameter))
+
+   file = open(run_out_path + "/run_settings.txt", "wb")
+   out_dict = {'bin_centers_r' : np.array(bin_centers_r),
+               'bin_centers_z' : np.array(bin_centers_z),
+               'bin_edges' : bin_collection.bin_boundaries,
+               'nbins' : args.nbins,
+               'V_sun' : v_sun,
+               'R_0' : r_0,
+               'Z_0' : z_0,
+               'cut_range' : args.cut_range,
+               'final_sample_size' : galcen_data.shape,
+               'disk_scale' : args.disk_scale,
+               'vlos_dispersion_scale' : args.vlos_dispersion_scale,
+               'A_r_info' : A_r_array}
+
+   pickle.dump(out_dict, file)
+   file.close()
+
+   print("Script finished!")

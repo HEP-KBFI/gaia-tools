@@ -308,7 +308,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   galcen_data = galcen_data[::100]
+   galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices

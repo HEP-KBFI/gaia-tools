@@ -161,17 +161,6 @@ def get_galcen_data(r_0):
 
    return galcen_data
 
-
-   # galcen_data = galcen_data.merge(cyl_cov, on='source_id')
-
-   # # Final data selection
-   # galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
-   # galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
-   # galcen_data.reset_index(inplace=True, drop=True)
-   
-   # return galcen_data
-
-
 debug = False
 
 def log_likelihood(theta, args):
