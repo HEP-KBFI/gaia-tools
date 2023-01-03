@@ -414,6 +414,8 @@ def build_jacobian_with_parallax(df,
     
     J = NUMPY_LIB.stack((J1, J2, J3, J4, J5, J6))
 
+    return J
+
 @jit(nopython=True)
 def build_cylindrical_transformation_jacobian(df,
                                             n,
