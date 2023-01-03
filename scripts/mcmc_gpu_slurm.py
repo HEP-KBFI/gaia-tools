@@ -361,7 +361,7 @@ if __name__ == '__main__':
    else:
       NUM_GPUS = 1
  
-   PROC_PER_GPU = 8
+   PROC_PER_GPU = 2
    print("Using {} CPUs per GPU".format(PROC_PER_GPU))
 
    queue = Queue()

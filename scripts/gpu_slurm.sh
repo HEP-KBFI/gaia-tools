@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -p gpu
-#SBATCH --gpus 2
+#SBATCH --gpus 3
 #SBATCH --mem-per-gpu=10G
 #SBATCH -e /home/sven/repos/gaia-tools/out/logs/error__%A.log
 #SBATCH -o /home/sven/repos/gaia-tools/out/logs/output__%A.log
