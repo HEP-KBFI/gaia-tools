@@ -104,6 +104,28 @@ def apply_initial_cut(icrs_data, run_out_path):
 
 debug = False
 
+def bootstrap_weighted_error_gpu(bin_vphi, bin_sig_vphi):
+    
+    total_num_it = 1000
+    batch_num = 10
+    data_length = len(bin_vphi)
+    idx_list = npcp.arange(data_length)
+    bootstrapped_means = npcp.zeros(total_num_it)
+
+    for i in range(100):
+        rnd_idx = npcp.random.choice(idx_list, replace=True, size=(batch_num, data_length))
+        
+        test_sample = bin_vphi[rnd_idx]
+        sig_vphi = bin_sig_vphi[rnd_idx]
+
+        start_idx = (i+1)*batch_num - batch_num
+        end_idx = (i+1)*batch_num
+
+        bootstrapped_means[start_idx:end_idx] = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
+    conf_int = npcp.percentile(bootstrapped_means, [16, 84])
+
+    return (conf_int[1] - conf_int [0])/2
+
 def log_likelihood(theta, args):
 
    if(debug):
@@ -144,7 +166,7 @@ def log_probability(theta, args):
    lp = log_prior(theta, args)
    if not np.isfinite(lp):
        return -np.inf
-   return lp + log_likelihood(theta)
+   return lp + log_likelihood(theta, args)
 
 def init_vars(queue, bins):
    
@@ -181,6 +203,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
+   galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
@@ -206,11 +229,13 @@ if __name__ == '__main__':
    # Bootstrap errors
    for i, bin in enumerate(bin_collection.bins):
       if(USE_CUDA):
-         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
-                                                                        npcp.asarray(bin.data.sig_vphi, dtype=dtype))
+         bin.bootstrapped_error = bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+                                                               npcp.asarray(bin.data.sig_vphi, dtype=dtype))
       else:
          bin.bootstrapped_error = helpfunc.bootstrap_weighted_error(bin.data.v_phi.to_numpy(), bin.data.sig_vphi.to_numpy())
    
+   r_0, z_0, v_sun = load_galactic_parameters()
+
    # SETUP MCMC
    # Nwalkers has to be at least 2*ndim
    nwalkers = args.nwalkers
@@ -229,15 +254,15 @@ if __name__ == '__main__':
    backend = emcee.backends.HDFBackend(filename)
    backend.reset(nwalkers, ndim)
 
-   if USE_CUDA: 
-      cvd = os.environ["CUDA_VISIBLE_DEVICES"]
-      cvd = [int(x) for x in cvd.split(",")]
-      NUM_GPUS = len(cvd)
+   # if USE_CUDA: 
+   #    cvd = os.environ["CUDA_VISIBLE_DEVICES"]
+   #    cvd = [int(x) for x in cvd.split(",")]
+   #    NUM_GPUS = len(cvd)
     #actually no GPUs will be used, we just create 1xPROC_PER_GPU CPU processes
-   else:
-      NUM_GPUS = 1
+   # else:
+   NUM_GPUS = 1
  
-   PROC_PER_GPU = 8
+   PROC_PER_GPU = 16
    queue = Queue()
    #even though CUDA_VISIBLE_DEVICES could be e.g. 3,4
    #here the indexing will be from 0,1, as nvidia hides the other devices
@@ -281,7 +306,6 @@ if __name__ == '__main__':
                'V_sun' : v_sun,
                'R_0' : r_0,
                'Z_0' : z_0,
-               'cut_range' : args.cut_range,
                'final_sample_size' : galcen_data.shape,
                'disk_scale' : args.disk_scale,
                'vlos_dispersion_scale' : args.vlos_dispersion_scale,

@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-python3 mcmc_gpu_test.py --nwalkers 25 \
+python3 run_mcmc_dr3_h_fitting.py --nwalkers 48 \
                         --nsteps 15000 \
-                        --nbins 5 \
+                        --nbins 10 \
                         --disk-scale 3000.0 \
                         --vlos-dispersion-scale 21000.0
 
