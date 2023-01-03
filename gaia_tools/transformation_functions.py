@@ -107,7 +107,10 @@ def transform_velocities_galactocentric(data_icrs,
 
     v_ICRS = v_ICRS.T.reshape(n,3,1, order = 'A')
 
-    B = transformation_constants.get_b_matrix(ra, dec, NUMPY_LIB, dtype)
+    if(NUMPY_LIB == np):
+        B = transformation_constants.get_b_matrix(ra, dec)
+    else:
+        B = transformation_constants.get_b_matrix(ra, dec, NUMPY_LIB, dtype)
     B = B.reshape(n,3,3, order = 'A')
 
     # Using M1, M2, M3, .. for transparency in case of bugs
@@ -144,7 +147,8 @@ def get_transformed_data(data_icrs,
                         is_bayes = False,
                         NUMPY_LIB = np,
                         dtype = np.float64):
-    
+
+
     # Coordinate and velocity vector in galactocentric frame in xyz
     coords =  transform_coordinates_galactocentric(data_icrs, 
                                                         z_0, 
