@@ -7,8 +7,7 @@ if USE_CUDA:
    import cupy as npcp
    DeviceContext = npcp.cuda.Device
    dtype = npcp.float32
-
-   from numba import jit, config
+   from numba import config
    config.DISABLE_JIT = True
 
 else:
@@ -16,6 +15,10 @@ else:
    npcp.asnumpy = lambda x: x
    import contextlib
    DeviceContext = contextlib.nullcontext
+   dtype = npcp.float64
+   from numba import config
+   config.DISABLE_JIT = False
+
 
 import transformation_constants
 import transformation_functions
@@ -46,22 +49,6 @@ def parse_args():
    parser.add_argument('--vlos-dispersion-scale', type=float)
    parser.add_argument('--backend', type=str)
    return parser.parse_args()
-
-# def set_up_backend(backend):
-#    if(backend == 'gpu'):
-#       print('Setting backend as GPU...')
-#       import cupy as cp
-#       from numba import jit, config
-#       config.DISABLE_JIT = True
-#       NUMPY_LIB = cp
-#       dtype = cp.float32
-#    else:
-#       print('Setting backend as CPU...')
-#       import numpy
-#       NUMPY_LIB = numpy
-#       dtype = numpy.float64
-
-#    return NUMPY_LIB, dtype
 
 def load_galactic_parameters():
    
@@ -245,20 +232,6 @@ def log_likelihood(theta, args):
          likelihood_array[i] = likelihood_value
    likelihood_sum = np.sum(likelihood_array)
 
-   # now we need to calculate likelihood values for each bin
-   # for i, bin in enumerate(bin_collection.bins):
-
-      # bin.bootstrapped_error = bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
-      #                                                       npcp.asarray(bin.data.sig_vphi, dtype=dtype))
-      # bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
-      #                                        h_sig = h_sig, 
-      #                                        debug=False)
-
-   #    likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
-
-   #    likelihood_array[i] = likelihood_value
-   # likelihood_sum = np.sum(likelihood_array)
-
    if(debug):
        toc=timeit.default_timer()
        print("time elapsed for likelihoods computation section: {a} sec".format(a=toc-tic))
@@ -315,11 +288,6 @@ if __name__ == '__main__':
    multiprocessing.set_start_method('forkserver')
 
    args = parse_args()
-   # backend, data_type = set_up_backend(args.backend)
-
-   # global NUMPY_LIB
-   # NUMPY_LIB = backend
-   #dtype = data_type
 
    dtime = dt.time()
    now=dt.datetime.now()

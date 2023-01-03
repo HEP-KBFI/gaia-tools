@@ -7,7 +7,6 @@ if USE_CUDA:
    import cupy as npcp
    DeviceContext = npcp.cuda.Device
    dtype = npcp.float32
-
    from numba import jit, config
    config.DISABLE_JIT = True
 
@@ -16,6 +15,9 @@ else:
    npcp.asnumpy = lambda x: x
    import contextlib
    DeviceContext = contextlib.nullcontext
+   dtype = npcp.float64
+   from numba import config
+   config.DISABLE_JIT = False
 
 import transformation_constants
 import transformation_functions
@@ -269,24 +271,11 @@ def init_vars(queue, input_data, input_cov):
       v_sun[1][0] = 251.5
       v_sun[2][0] = 8.59
 
-   # import transformation_constants
-   # import transformation_functions
-   # import cupy as cp
-   # NUMPY_LIB = cp
-
-   # dtype = cp.float32
-
-
 if __name__ == '__main__':
 
    multiprocessing.set_start_method('forkserver')
 
    args = parse_args()
-   backend, data_type = set_up_backend(args.backend)
-
-   global NUMPY_LIB
-   NUMPY_LIB = backend
-   #dtype = data_type
 
    dtime = dt.time()
    now=dt.datetime.now()
@@ -349,14 +338,14 @@ if __name__ == '__main__':
    backend = emcee.backends.HDFBackend(filename)
    backend.reset(nwalkers, ndim)
 
-   # USE_CUDA = True
-   # if USE_CUDA: 
-   #    cvd = os.environ["CUDA_VISIBLE_DEVICES"]
-   #    cvd = [int(x) for x in cvd.split(",")]
-   #    NUM_GPUS = len(cvd)
-   #  #actually no GPUs will be used, we just create 1xPROC_PER_GPU CPU processes
-   # else:
-   NUM_GPUS = 1
+   USE_CUDA = True
+   if USE_CUDA: 
+      cvd = os.environ["CUDA_VISIBLE_DEVICES"]
+      cvd = [int(x) for x in cvd.split(",")]
+      NUM_GPUS = len(cvd)
+    #actually no GPUs will be used, we just create 1xPROC_PER_GPU CPU processes
+   else:
+      NUM_GPUS = 1
  
    PROC_PER_GPU = 8
    queue = Queue()
