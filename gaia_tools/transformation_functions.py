@@ -1,7 +1,14 @@
 import transformation_constants
 import numpy as np
 
+"""These functions transform coordinates and velocities from the International Celestial Reference System (ICRS) to a galactocentric frame of reference. The ICRS is a reference frame that is centered at the solar system barycenter and is aligned with the celestial sphere. The galactocentric frame of reference is centered on the Galactic Center and has the Galactic plane as its equatorial plane.
 
+The transform_coordinates_galactocentric function takes as input a DataFrame of ICRS coordinates and returns an array of Cartesian coordinates in the galactocentric frame of reference. The input DataFrame should have columns for the right ascension (RA), declination (dec), and distance of each object from the solar system barycenter. The function also takes optional arguments for the height of the Sun above the Galactic plane (z_0) and the Galactocentric distance of the Sun (r_0). If is_bayes is set to True, the function will use pre-computed distance estimates for the objects. Otherwise, it will compute the distance using the parallaxes provided in the input DataFrame.
+
+The transform_velocities_galactocentric function takes as input a DataFrame of ICRS coordinates and velocities, and returns an array of Cartesian velocity vector components in the galactocentric frame of reference. The input DataFrame should have columns for the right ascension, declination, distance, proper motion in RA, and proper motion in dec of each object, as well as the radial velocity. The function also takes optional arguments for the height of the Sun above the Galactic plane (z_0), the Galactocentric distance of the Sun (r_0), and the velocity vector of the Sun (v_sun). If is_bayes is set to True, the function will use pre-computed distance estimates for the objects. Otherwise, it will compute the distance using the parallaxes provided in the input DataFrame.
+
+Both functions make use of the transformation_constants module and the NumPy library (imported as np) to perform the coordinate and velocity transformations. They also have a dtype argument that allows the user to specify the data type of the output array. By default, the output is a NumPy float64 array.
+"""
 
 def transform_coordinates_galactocentric(data_icrs, 
                                         z_0 = transformation_constants.Z_0, 
@@ -10,17 +17,30 @@ def transform_coordinates_galactocentric(data_icrs,
                                         NUMPY_LIB = np,
                                         dtype = np.float64):
 
-    """This function uses input ICRS data and outputs data in cartesian (x,y,z) coordinates and in galactocentric frame of reference.
-
-    Args:
-        data_icrs (DataFrame): DataFrame of ICRS coordinates
-        z_0 (float, optional): Sun's height over Galactic plane. Defaults to transformation_constants.Z_0.
-        r_0 (float, optional): Sun's Galactocentric distance. Defaults to transformation_constants.R_0.
-        is_bayes (bool, optional): Flag for using pre-computed (Bayesian) distance estimates. Defaults to False.
-
-    Returns:
-        ndarray: Array of Cartesian coordinates of shape (n,3,1).
     """
+    Transforms coordinates from the International Celestial Reference System (ICRS) to a galactocentric frame of reference.
+
+    Parameters
+    ----------
+    data_icrs : DataFrame
+        DataFrame of ICRS coordinates, with columns for right ascension (RA), declination (dec), and distance from the solar system barycenter.
+    z_0 : float, optional
+        Height of the Sun above the Galactic plane. Default is the value specified in transformation_constants.Z_0.
+    r_0 : float, optional
+        Galactocentric distance of the Sun. Default is the value specified in transformation_constants.R_0.
+    is_bayes : bool, optional
+        Flag for using pre-computed (Bayesian) distance estimates. Default is False.
+    NUMPY_LIB : numpy module, optional
+        NumPy library to be used. Default is the imported NumPy module.
+    dtype : numpy data type, optional
+        Data type of the output array. Default is np.float64.
+
+    Returns
+    -------
+    ndarray
+        Array of Cartesian coordinates in the galactocentric frame of reference, with shape (n, 3, 1).
+    """
+
 
     # Number of data points
     n = len(data_icrs)
@@ -70,18 +90,32 @@ def transform_velocities_galactocentric(data_icrs,
                                 is_bayes = False,
                                 NUMPY_LIB = np,
                                 dtype = np.float64):
-    """Function for transforming proper motions with radial velocities to Cartesian velocity vector components in galactocentric frame.
-
-    Args:
-        data_icrs (DataFrame): DataFrame in ICRS
-        z_0 (float, optional): Sun's position over Galactic plane. Defaults to transformation_constants.Z_0.
-        r_0 (float, optional): Sun's Galactocentric distance. Defaults to transformation_constants.R_0.
-        v_sun (tuple, optional): Sun's velocity vector. Defaults to transformation_constants.V_SUN.
-        is_bayes (bool, optional): Flag for using pre-computed (Bayesian) distance estimates. Defaults to False.
-
-    Returns:
-        ndarray: Cartesian velocity components of shape (n,3,1)
     """
+    Transforms proper motions with radial velocities to Cartesian velocity vector components in a galactocentric frame of reference.
+
+    Parameters
+    ----------
+    data_icrs : DataFrame
+        DataFrame of ICRS coordinates and velocities, with columns for right ascension (RA), declination (dec), distance from the solar system barycenter, proper motion in RA, proper motion in dec, and radial velocity.
+    z_0 : float, optional
+        Height of the Sun above the Galactic plane. Default is the value specified in transformation_constants.Z_0.
+    r_0 : float, optional
+        Galactocentric distance of the Sun. Default is the value specified in transformation_constants.R_0.
+    v_sun : tuple, optional
+        Velocity vector of the Sun. Default is the value specified in transformation_constants.V_SUN.
+    is_bayes : bool, optional
+        Flag for using pre-computed (Bayesian) distance estimates. Default is False.
+    NUMPY_LIB : numpy module, optional
+        NumPy library to be used. Default is the imported NumPy module.
+    dtype : numpy data type, optional
+        Data type of the output array. Default is np.float64.
+
+    Returns
+    -------
+    ndarray
+        Array of Cartesian velocities in the galactocentric frame of reference, with shape (n, 3, 1).
+    """
+
     # Number of data points
     n = len(data_icrs)
 
@@ -147,6 +181,26 @@ def get_transformed_data(data_icrs,
                         is_bayes = False,
                         NUMPY_LIB = np,
                         dtype = np.float64):
+
+    """
+    Transforms a set of data in ICRS coordinates to a galactocentric frame of reference, and optionally calculates
+    cylindrical coordinates and velocities.
+    
+    Parameters:
+    - data_icrs: An array of ICRS coordinates and velocities.
+    - include_cylindrical: A boolean flag indicating whether cylindrical coordinates and velocities should be included in the output.
+    - z_0: A constant used in the transformation.
+    - r_0: A constant used in the transformation.
+    - v_sun: A constant used in the transformation.
+    - debug: Not used in the function.
+    - is_source_included: Not used in the function.
+    - is_bayes: A boolean flag indicating whether Bayesian priors should be used in the transformation.
+    - NUMPY_LIB: A reference to the NumPy library, used for numerical computations.
+    - dtype: The data type to use for the calculations.
+    
+    Returns:
+    An array of galactocentric coordinates and velocities, with optional cylindrical coordinates and velocities included.
+    """
 
 
     # Coordinate and velocity vector in galactocentric frame in xyz
