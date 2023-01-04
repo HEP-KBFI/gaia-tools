@@ -1,5 +1,5 @@
 import numpy as np
-#import cupy as cp
+import cupy as cp
 from numba import jit
 
 @jit(nopython=True)
