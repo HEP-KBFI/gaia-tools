@@ -54,7 +54,7 @@ def compare_mcmc_runs(samplers, bin_idx, discard=0):
     print("Sampler 1 shape: {}".format(smps_data_1.shape))
     print("Sampler 2 shape: {}".format(smps_data_2.shape))
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10), sharey=False)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10), sharey=True)
 
     bin_idx = bin_idx
 
