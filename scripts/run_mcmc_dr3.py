@@ -201,7 +201,6 @@ def log_likelihood(theta, args):
    else:
       galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
    
-
    r_min = 5000/8277
    r_max = 15000/8277
 
@@ -222,7 +221,7 @@ def log_likelihood(theta, args):
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
       if(USE_CUDA):
-         bin.bootstrapped_error = bootstrap_weighted_error_gpu_vector(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
                                                                   npcp.asarray(bin.data.sig_vphi, dtype=dtype))
       else:
          bin.bootstrapped_error = helpfunc.bootstrap_weighted_error(bin.data.v_phi.to_numpy(), bin.data.sig_vphi.to_numpy())
@@ -312,7 +311,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   galcen_data = galcen_data[::100]
+   galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices

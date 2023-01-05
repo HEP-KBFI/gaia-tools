@@ -1,3 +1,8 @@
+
+
+
+
+
 '''
 File for storing different constants and requisite matrices for transforming coordinates to 
 a different frame of reference.
@@ -39,15 +44,35 @@ k2 = 4.74047
 
 def get_A_matrix(NUMPY_LIB = np, dtype = np.float64):
 
+    """
+    Returns the A matrix as a NumPy array.
+    The A matrix is a 3x3 matrix that depends on the ICRS (International Celestial Reference System) coordinates
+    of the north galactic pole and the galactic longitude of the first intersection of the galactic plane with
+    the celestial equator. It is used to transform celestial coordinates to Galactic coordinates.
+
+    Parameters:
+    - NUMPY_LIB: optional, a NumPy-like library to use for the computation.
+    - dtype: optional, the data type of the output array.
+    """
+
     A = NUMPY_LIB.asarray([[(-1)*0.0548755604162154, (-1)*0.8734370902348850, (-1)*0.4838350155487132],
             [0.4941094278755837, (-1)*0.4448296299600112, 0.7469822444972189],
             [(-1)*0.8676661490190047, (-1)*0.1980763734312015, 0.4559837761750669]], dtype=dtype)
     return A
 
-
-# Matrix H which accounts for the height of the Sun (Z_0) aboce the Galactic plane.
 def get_H_matrix(Z_0, R_0, NUMPY_LIB = np):
     
+    """
+    Returns the H matrix as a NumPy array.
+    The H matrix accounts for the height of the Sun above the Galactic plane. It is defined based on the value
+    of THETA_0, which is the angle between the Sun's position and the Galactic plane.
+
+    Parameters:
+    - Z_0: the distance of the Sun above the midplane of the galaxy in parsecs.
+    - R_0: the distance from the Sun to the center of the galaxy in parsecs.
+    - NUMPY_LIB: optional, a NumPy-like library to use for the computation.
+    """
+
     if(Z_0/R_0 is None):
         print("Something went wrong! No values for either Z_0 or R_0 were found!")
         return
@@ -65,20 +90,21 @@ def get_H_matrix(Z_0, R_0, NUMPY_LIB = np):
     return H
 
 
-'''
-Get B matrix for velocity transformations.
-
-Expects ra, dec as NumPy arrays.
-'''
 @jit(nopython=True)
 def get_b_matrix(ra, dec, NUMPY_LIB = np, dtype = np.float64):
 
-    #B = np.array([[cosra*cosdec, -sinra, -cosra*sindec],
-    #         [sinra*cosdec, cosra, -sinra*sindec],
-    #         [sindec, np.zeros(n), cosdec]])
+    """
+    Returns the B matrix as a NumPy array.
+    The B matrix is used for transforming velocities from the celestial frame to the Galactic frame.
+    It is defined based on the values of ra and dec.
+
+    Parameters:
+    - ra: a NumPy array of right ascension values in degrees.
+    - dec: a NumPy array of declination values in degrees.
+    - NUMPY_LIB: optional, a NumPy-like library to use for the computation.
+    - dtype: optional, the data type of the output array.
+    """
     
-    
-    # Add check if ra == dec
     n = len(ra)
 
     B = NUMPY_LIB.zeros((n, 3, 3), dtype = dtype)
