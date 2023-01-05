@@ -202,8 +202,8 @@ def log_likelihood(theta, args):
       galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
    
 
-   r_min = 5000
-   r_max = 15000
+   r_min = 5000/8277
+   r_max = 15000/8277
 
    # # Generate bins
    bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
@@ -213,7 +213,7 @@ def log_likelihood(theta, args):
                                                       BL_z_min = -200,
                                                       BL_z_max = 200,
                                                       N_bins = (args.nbins, 1),
-                                                      r_drift = False,
+                                                      r_drift = True,
                                                       debug = False)
 
    n = reduce(lambda x, y: x*y, bin_collection.N_bins)

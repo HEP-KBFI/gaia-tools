@@ -206,11 +206,14 @@ def log_likelihood(theta, args):
       # Turn Galactocentric data into Pandas frame
       galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
       
+      r_min = 5000
+      r_max = 15000
+
       # # Generate bins
       bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                             theta = (0, 1),
-                                                            BL_r_min = 5000,
-                                                            BL_r_max = 15000,
+                                                            BL_r_min = r_min,
+                                                            BL_r_max = r_max,
                                                             BL_z_min = -200,
                                                             BL_z_max = 200,
                                                             N_bins = (args.nbins, 1),
