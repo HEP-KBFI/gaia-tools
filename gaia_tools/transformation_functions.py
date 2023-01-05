@@ -252,6 +252,18 @@ def get_transformed_data(data_icrs,
 
 def build_outframe(galcen_out, include_cylindrical, is_source_included):
 
+    """
+    Transform the input array into a Pandas dataframe with the appropriate columns.
+
+    Parameters:
+    - galcen_out (ndarray or cupy.ndarray): Array containing the data to be transformed into a dataframe.
+    - include_cylindrical (bool): If True, include cylindrical coordinates (r, phi, v_r, v_phi) in the dataframe.
+    - is_source_included (bool): If True, include a 'source_id' column in the dataframe.
+
+    Returns:
+    - Pandas dataframe with the appropriate columns and data.
+    """
+
     columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi']
 
     if(include_cylindrical != True):
