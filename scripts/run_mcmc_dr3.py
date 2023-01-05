@@ -407,7 +407,6 @@ if __name__ == '__main__':
                'V_sun' : v_sun,
                'R_0' : r_0,
                'Z_0' : z_0,
-               'cut_range' : args.cut_range,
                'final_sample_size' : galcen_data.shape,
                'disk_scale' : args.disk_scale,
                'vlos_dispersion_scale' : args.vlos_dispersion_scale,
