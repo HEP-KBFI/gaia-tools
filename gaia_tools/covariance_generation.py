@@ -122,10 +122,8 @@ def generate_galactocentric_covmat(df,
     # Get covariance matrix from ICRS coordinates
     C = generate_covmat(df)
 
-
     if(is_bayes == True):
         data_array = df[["ra", "dec","r_est","pmra","pmdec","radial_velocity"]].to_numpy()
-
     else:
         data_array = df[["ra", "dec","parallax","pmra","pmdec","radial_velocity"]].to_numpy()
 
@@ -176,13 +174,17 @@ def transform_cov_cylindirical(df_crt,
 
 
 def generate_covmat(df):
-    """Generates covariance matrices from the Gaia data.
+    """
+    Generates a 6x6 covariance matrix in the celestial frame from a dataframe of Gaia data.
 
-    Args:
-        df (DataFrame): A DataFrame of Gaia data.
+    Parameters:
+    - df: a Pandas dataframe with columns "ra", "dec", "parallax", "pmra", "pmdec", and "radial_velocity".
+           The dataframe should also have columns ending in "_error" for each of the above parameters,
+           and columns ending in "_corr" for pairs of parameters that are correlated.
 
     Returns:
-        Array: Numpy array of covariance matrices. Shape of (n x 6 x 6).
+    - A NumPy array with shape (n, 6, 6) where n is the number of rows in df, containing the covariance
+      matrices in the celestial frame.
     """
 
     n = len(df)

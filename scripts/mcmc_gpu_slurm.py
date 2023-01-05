@@ -38,7 +38,11 @@ import argparse
 import random
 import multiprocessing
 from multiprocessing import Pool, Process, Queue
-import pandas as pd 
+import pandas as pd
+
+FINAL_DATA_COLUMNS = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
+            'sig_vphi', 'sig_vr', 'source_id']
+
 
 def parse_args():
    parser = argparse.ArgumentParser(description='MCMC input')
@@ -112,9 +116,7 @@ def get_galcen_data(r_0):
                                        z_0 = z_0,
                                        r_0 = r_0,
                                        v_sun = v_sun,
-                                       debug = True,
                                        is_bayes = True,
-                                       is_source_included = True, 
                                        NUMPY_LIB = npcp,
                                        dtype = dtype)
 
@@ -198,13 +200,12 @@ def log_likelihood(theta, args):
    r_0 = theta[-1]
 
    with DeviceContext(device_id):
+
       # Get Galactocentric data
       galcen_data = get_galcen_data(r_0)
 
-      final_data_columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
-            'sig_vphi', 'sig_vr', 'source_id']
       # Turn Galactocentric data into Pandas frame
-      galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
+      galcen_data = pd.DataFrame(galcen_data.get(), columns=FINAL_DATA_COLUMNS)
       
       r_min = 5000
       r_max = 15000

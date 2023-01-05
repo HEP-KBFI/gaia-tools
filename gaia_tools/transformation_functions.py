@@ -1,5 +1,6 @@
 import transformation_constants
 import numpy as np
+import pandas as pd
 
 """These functions transform coordinates and velocities from the International Celestial Reference System (ICRS) to a galactocentric frame of reference. The ICRS is a reference frame that is centered at the solar system barycenter and is aligned with the celestial sphere. The galactocentric frame of reference is centered on the Galactic Center and has the Galactic plane as its equatorial plane.
 
@@ -9,6 +10,9 @@ The transform_velocities_galactocentric function takes as input a DataFrame of I
 
 Both functions make use of the transformation_constants module and the NumPy library (imported as np) to perform the coordinate and velocity transformations. They also have a dtype argument that allows the user to specify the data type of the output array. By default, the output is a NumPy float64 array.
 """
+
+INPUT_COLUMNS_REST = ['source_id', 'ra', 'dec', 'r_est', 'pmra', 'pmdec', 'radial_velocity']
+INPUT_COLUMNS_PRLX = ['source_id', 'ra', 'dec', 'parallax', 'pmra', 'pmdec', 'radial_velocity']
 
 def transform_coordinates_galactocentric(data_icrs, 
                                         z_0 = transformation_constants.Z_0, 
@@ -59,6 +63,7 @@ def transform_coordinates_galactocentric(data_icrs,
         # Declaring constants to reduce process time
         c1 = k1/data_icrs[:,3]
 
+    
     cosdec = NUMPY_LIB.cos(dec)
 
     # Initial cartesian coordinate vector in ICRS
@@ -140,7 +145,6 @@ def transform_velocities_galactocentric(data_icrs,
                       [(c2)*data_icrs[:,5]]])
 
     v_ICRS = v_ICRS.T.reshape(n,3,1, order = 'A')
-
     if(NUMPY_LIB == np):
         B = transformation_constants.get_b_matrix(ra, dec)
     else:
@@ -148,8 +152,8 @@ def transform_velocities_galactocentric(data_icrs,
     B = B.reshape(n,3,3, order = 'A')
 
     # Using M1, M2, M3, .. for transparency in case of bugs
-    M2 = NUMPY_LIB.matmul(transformation_constants.get_A_matrix(NUMPY_LIB, dtype), NUMPY_LIB.matmul(B, v_ICRS))
-    M3 = NUMPY_LIB.matmul(transformation_constants.get_H_matrix(z_0, r_0, NUMPY_LIB), M2)
+    M2 = NUMPY_LIB.matmul(transformation_constants.get_A_matrix(NUMPY_LIB, dtype), NUMPY_LIB.matmul(B, v_ICRS), dtype=dtype)
+    M3 = NUMPY_LIB.matmul(transformation_constants.get_H_matrix(z_0, r_0, NUMPY_LIB), M2, dtype=dtype)
 
     # Return is a np.array of shape (n,3,1)
     M4 = M3 + NUMPY_LIB.asarray(v_sun, dtype=dtype)
@@ -176,9 +180,9 @@ def get_transformed_data(data_icrs,
                         z_0 = transformation_constants.Z_0,
                         r_0 = transformation_constants.R_0,
                         v_sun = transformation_constants.V_SUN,
-                        debug = False,
-                        is_source_included = False,
                         is_bayes = False,
+                        is_output_frame = False,
+                        is_source_included = False,
                         NUMPY_LIB = np,
                         dtype = np.float64):
 
@@ -192,8 +196,6 @@ def get_transformed_data(data_icrs,
     - z_0: A constant used in the transformation.
     - r_0: A constant used in the transformation.
     - v_sun: A constant used in the transformation.
-    - debug: Not used in the function.
-    - is_source_included: Not used in the function.
     - is_bayes: A boolean flag indicating whether Bayesian priors should be used in the transformation.
     - NUMPY_LIB: A reference to the NumPy library, used for numerical computations.
     - dtype: The data type to use for the calculations.
@@ -202,8 +204,14 @@ def get_transformed_data(data_icrs,
     An array of galactocentric coordinates and velocities, with optional cylindrical coordinates and velocities included.
     """
 
+    if(isinstance(data_icrs, pd.DataFrame)):
+        # Filter out unneeded columns
+        if(is_bayes):
+            data_icrs = (data_icrs[INPUT_COLUMNS_REST]).to_numpy(dtype=dtype)
+        else:
+            data_icrs = (data_icrs[INPUT_COLUMNS_PRLX]).to_numpy(dtype=dtype)
 
-    # Coordinate and velocity vector in galactocentric frame in xyz
+    # Coordinate and velocity vectors in galactocentric frame in xyz
     coords =  transform_coordinates_galactocentric(data_icrs, 
                                                         z_0, 
                                                         r_0, 
@@ -218,16 +226,44 @@ def get_transformed_data(data_icrs,
                                                     is_bayes,
                                                     NUMPY_LIB,
                                                     dtype)
-    
+
+    galcen_out = NUMPY_LIB.concatenate((NUMPY_LIB.squeeze(coords, axis=2), NUMPY_LIB.squeeze(velocities, axis=2)), axis=1)
+
+    # Add cylindrical parameters if flagged
     if(include_cylindrical):
         # Using arctan2 which is defined in range [-pi ; pi]
         phi = NUMPY_LIB.arctan2(coords[:,1],coords[:,0])
         vel_cyl = transform_velocities_cylindrical(velocities, phi, NUMPY_LIB, dtype)
         coords_cyl = (NUMPY_LIB.sqrt(coords[:,0]**2 + coords[:,1]**2), phi)
         
-    galcen_out = NUMPY_LIB.concatenate((NUMPY_LIB.squeeze(coords, axis=2), NUMPY_LIB.squeeze(velocities, axis=2)), axis=1)
-    coords_cyl = NUMPY_LIB.squeeze(NUMPY_LIB.asarray(coords_cyl).T, axis=0)
-    vel_cyl = NUMPY_LIB.squeeze(vel_cyl, axis=2)[:,0:2]
-    galcen_out = NUMPY_LIB.concatenate((galcen_out, coords_cyl, vel_cyl), axis=1)
+        vel_cyl = NUMPY_LIB.squeeze(vel_cyl, axis=2)[:,0:2]
+        coords_cyl = NUMPY_LIB.squeeze(NUMPY_LIB.asarray(coords_cyl).T, axis=0)
+        galcen_out = NUMPY_LIB.concatenate((galcen_out, coords_cyl, vel_cyl), axis=1)
+
+    if(is_source_included):
+        assert dtype == np.float64, "Data type should be float64"
+        galcen_out = NUMPY_LIB.concatenate(([galcen_out, NUMPY_LIB.array([data_icrs[:,0]]).T]), axis=1)
     
+    # Declare Pandas frame if flagged
+    if(is_output_frame):
+        galcen_out = build_outframe(galcen_out, include_cylindrical, is_source_included)
+
+    return galcen_out
+
+def build_outframe(galcen_out, include_cylindrical, is_source_included):
+
+    columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi']
+
+    if(include_cylindrical != True):
+        columns = columns[0:6]
+
+    if(is_source_included):
+        columns.append('source_id')
+
+    if(isinstance(galcen_out, np.ndarray)):
+        galcen_out = pd.DataFrame(galcen_out, columns=columns)
+    else:
+        # Assumes that it is a CuPy array
+        # Note that this also migrates the data to CPU
+        galcen_out = pd.DataFrame(galcen_out.get(), columns=columns)
     return galcen_out

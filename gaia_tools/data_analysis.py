@@ -3,7 +3,6 @@
 import pandas as pd
 import numpy as np
 from scipy import stats
-import astropy
 import astropy.coordinates as coord
 from astropy.coordinates import SkyCoord
 from astropy import units as u
@@ -24,7 +23,6 @@ def filter_distance(df, dist, *args, **kwargs):
         DataFrame: Filtered DataFrame
     """
 
-    #TODO: Add Bayesian estimate version
     df['distance'] = 1/df.parallax
 
     # Distance given in pc
