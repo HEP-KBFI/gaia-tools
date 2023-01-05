@@ -191,36 +191,31 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bi
     # Setup adimensional binning
     if(r_drift):
 
-        # r and z parameters of points loaded into Series
-        r = plottable_df.r - theta[0]
-        z = plottable_df.z - theta[1]
+        data['r_orig'] = data.r
+        data['r'] = data.r/theta
 
+        r = data.r
+        z = data.z
+        
         if(debug):
-
-            excluded_df = plottable_df[plottable_df.r - theta[0] > BL_r_max]
-            print("Points drifted in r + direction {0}".format(len(excluded_df)))
-
-            excluded_df2 = plottable_df[plottable_df.r - theta[0] < BL_r_min]
-            print("Points drifted in r - direction {0}".format(len(excluded_df2)))
-
-            excluded_df2 = plottable_df[plottable_df.z - theta[1] < BL_z_min]
-            print("Points drifted in z - direction {0}".format(len(excluded_df2)))
-
-            excluded_df2 = plottable_df[plottable_df.z - theta[1] > BL_z_max]
-            print("Points drifted in z - direction {0}".format(len(excluded_df2)))
+            print("Points drifted in r + direction {0}".format(len(data[data.r/theta > BL_r_max])))
+            print("Points drifted in r - direction {0}".format(len(data[data.r/theta < BL_r_min])))
 
     else:
-
         # r and z parameters of points loaded into Series
-        r = plottable_df.r
-        z = plottable_df.z
+        r = data.r
+        z = data.z
 
     # Velocity projections of points: NOT NEEDED
-    c = plottable_df.v_phi
+    c = data.v_phi
 
     # Calling the actual binning function
-    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, z, values = c, range = [[BL_r_min, BL_r_max], [BL_z_min, BL_z_max]], bins=N_bins, statistic='mean')
-
+    H, xedges, yedges, binnumber = stats.binned_statistic_2d(r, 
+                                                            z, 
+                                                            values = c, 
+                                                            range = [[BL_r_min, BL_r_max], [BL_z_min, BL_z_max]], 
+                                                            bins=N_bins, 
+                                                            statistic='mean')
 
     # Create a meshgrid from the vertices: X, Y -> R, Z
     XX, YY = np.meshgrid(xedges, yedges)

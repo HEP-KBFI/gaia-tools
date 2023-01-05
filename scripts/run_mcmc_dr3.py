@@ -163,6 +163,23 @@ def get_galcen_data(r_0):
 
 debug = False
 
+# Fully vectorised
+def bootstrap_weighted_error_gpu_vector(bin_vphi, bin_sig_vphi):
+    
+    num_it = 1000
+    data_length = len(bin_vphi)
+    idx_list = npcp.arange(data_length)
+    bootstrapped_means = npcp.zeros(num_it)
+
+    rnd_idx = npcp.random.choice(idx_list, replace=True, size=(num_it, data_length))
+    
+    test_sample = bin_vphi[rnd_idx]
+    sig_vphi = bin_sig_vphi[rnd_idx]
+    bootstrapped_means = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
+    conf_int = npcp.percentile(bootstrapped_means, [16, 84])
+
+    return (conf_int[1] - conf_int [0])/2
+
 def log_likelihood(theta, args):
 
    if(debug):
@@ -184,16 +201,20 @@ def log_likelihood(theta, args):
    else:
       galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
    
+
+   r_min = 5000
+   r_max = 15000
+
    # # Generate bins
    bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-                                                         theta = (0, 1),
-                                                         BL_r_min = 5000,
-                                                         BL_r_max = 15000,
-                                                         BL_z_min = -200,
-                                                         BL_z_max = 200,
-                                                         N_bins = (args.nbins, 1),
-                                                         r_drift = False,
-                                                         debug = False)
+                                                      theta = r_0,
+                                                      BL_r_min = r_min,
+                                                      BL_r_max = r_max,
+                                                      BL_z_min = -200,
+                                                      BL_z_max = 200,
+                                                      N_bins = (args.nbins, 1),
+                                                      r_drift = False,
+                                                      debug = False)
 
    n = reduce(lambda x, y: x*y, bin_collection.N_bins)
    likelihood_array = np.zeros(n)
@@ -201,7 +222,7 @@ def log_likelihood(theta, args):
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
       if(USE_CUDA):
-         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+         bin.bootstrapped_error = bootstrap_weighted_error_gpu_vector(npcp.asarray(bin.data.v_phi, dtype=dtype), 
                                                                   npcp.asarray(bin.data.sig_vphi, dtype=dtype))
       else:
          bin.bootstrapped_error = helpfunc.bootstrap_weighted_error(bin.data.v_phi.to_numpy(), bin.data.sig_vphi.to_numpy())
@@ -291,8 +312,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-
-   galcen_data = galcen_data[::10]
+   galcen_data = galcen_data[::100]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
