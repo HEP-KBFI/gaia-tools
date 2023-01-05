@@ -229,7 +229,7 @@ def log_prior(theta, args):
    disk_prior = (theta[-3] > args.disk_scale - 1000) and (theta[-3] < args.disk_scale + 1000)
    vlos_prior = (theta[-2] > args.vlos_dispersion_scale - 1000) and (theta[-2] < args.vlos_dispersion_scale + 1000)
 
-   r0_prior = (theta[-1] > 7800 and theta[-1] < 8500)
+   r0_prior = (theta[-1] > 8054 and theta[-1] < 8500)
 
    if vc_prior_d and vc_prior_u and disk_prior and vlos_prior and r0_prior:
          return 0.0
@@ -285,12 +285,14 @@ if __name__ == '__main__':
 
    print('Importing DR3...')
    dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
-   gaia_dr3 = pd.read_csv(dr3_path, nrows=1e6)
+   gaia_dr3 = pd.read_csv(dr3_path)
    icrs_data = gaia_dr3[icrs_data_columns]
    print("Initial size of sample: {}".format(icrs_data.shape))
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
+
+   galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
@@ -319,29 +321,29 @@ if __name__ == '__main__':
    nwalkers = args.nwalkers
    ndim = args.nbins + 3
    nsteps = args.nsteps
-   theta_0 = random.sample(range(-300, -150), ndim)
+   theta_0 = random.sample(range(-300, -200), ndim)
 
    theta_0[-3] = args.disk_scale
    theta_0[-2] = args.vlos_dispersion_scale
    theta_0[-1] = r_0
 
    # Init starting point for all walkers
-   pos = theta_0 + 10**(-3)*np.random.randn(nwalkers, ndim)
+   pos = theta_0 + 10**(-1)*np.random.randn(nwalkers, ndim)
 
    # Setup saving results to output file
    filename = run_out_path + "/sampler_{a}.h5".format(a=start_datetime)
    backend = emcee.backends.HDFBackend(filename)
    backend.reset(nwalkers, ndim)
 
-   if USE_CUDA: 
-      cvd = os.environ["CUDA_VISIBLE_DEVICES"]
-      cvd = [int(x) for x in cvd.split(",")]
-      NUM_GPUS = len(cvd)
-    #actually no GPUs will be used, we just create 1xPROC_PER_GPU CPU processes
-   else:
-      NUM_GPUS = 1
- 
-   PROC_PER_GPU = 8
+   # if USE_CUDA: 
+   #    cvd = os.environ["CUDA_VISIBLE_DEVICES"]
+   #    cvd = [int(x) for x in cvd.split(",")]
+   #    NUM_GPUS = len(cvd)
+   #  #actually no GPUs will be used, we just create 1xPROC_PER_GPU CPU processes
+   # else:
+   #    NUM_GPUS = 1
+   NUM_GPUS = 1
+   PROC_PER_GPU = 10
    queue = Queue()
    #even though CUDA_VISIBLE_DEVICES could be e.g. 3,4
    #here the indexing will be from 0,1, as nvidia hides the other devices
