@@ -206,7 +206,10 @@ class Bin:
             print(XX)
 
         # R - bin center
-        R = np.mean(self.r_boundaries)
+        #R = np.mean(self.r_boundaries*8277)
+
+        # CASE OF ADIMENSIONAL BIN
+        R = np.mean(np.array(self.r_boundaries)*8277)
 
         # Without 2vc approximation
         #A = rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))

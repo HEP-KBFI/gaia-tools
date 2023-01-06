@@ -189,7 +189,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'OLD_BINNING_H_FIT'
+   custom_ext = 'OLD_BINNING_H_FIT_FIXBIN'
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -216,8 +216,8 @@ if __name__ == '__main__':
    plot_radial_distribution(icrs_data, run_out_path)
    fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 15000), norm_max=5000, title = "Distribution of data on the Galactic plane")
 
-   r_min = 5000
-   r_max = 15000
+   r_min = 5000/8277
+   r_max = 15000/8277
 
    # Generate bins
    bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
@@ -227,7 +227,7 @@ if __name__ == '__main__':
                                                          BL_z_min = -200,
                                                          BL_z_max = 200,
                                                          N_bins = (args.nbins, 1),
-                                                         r_drift = False,
+                                                         r_drift = True,
                                                          debug = False)
 
    # Bootstrap errors
