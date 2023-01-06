@@ -184,7 +184,7 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bi
         print("Max r value in DataFrame {0}".format(np.max(data.r)))
 
     # Fix for newly developed method
-    plottable_df = data
+    data = data
 
     # Setup adimensional binning
     if(r_drift):
@@ -219,10 +219,10 @@ def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bi
     XX, YY = np.meshgrid(xedges, yedges)
 
     # Assign a binnumber for each data entry
-    plottable_df['Bin_index'] = binnumber
+    data['Bin_index'] = binnumber
 
     # Instantiate a BinCollection object
-    bin_collection = BinCollection(plottable_df, N_bins, XX, YY, YY, mode='r-z')
+    bin_collection = BinCollection(data, N_bins, XX, YY, YY, mode='r-z')
 
     # Generate the bins with respective r-z boundaries
     bin_collection.GenerateBins()

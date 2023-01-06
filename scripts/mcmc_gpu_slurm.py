@@ -40,8 +40,7 @@ import multiprocessing
 from multiprocessing import Pool, Process, Queue
 import pandas as pd
 
-FINAL_DATA_COLUMNS = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
-            'sig_vphi', 'sig_vr', 'source_id']
+
 
 
 def parse_args():
@@ -201,31 +200,34 @@ def log_likelihood(theta, args):
 
    with DeviceContext(device_id):
 
+      final_data_columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
+            'sig_vphi', 'sig_vr', 'source_id']
+
       # Get Galactocentric data
       galcen_data = get_galcen_data(r_0)
 
       # Turn Galactocentric data into Pandas frame
-      galcen_data = pd.DataFrame(galcen_data.get(), columns=FINAL_DATA_COLUMNS)
+      galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
       
-      r_min = 5000
-      r_max = 15000
+      r_min = 5000/8277
+      r_max = 15000/8277
 
       # # Generate bins
       bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-                                                            theta = (0, 1),
+                                                            theta = r_0,
                                                             BL_r_min = r_min,
                                                             BL_r_max = r_max,
                                                             BL_z_min = -200,
                                                             BL_z_max = 200,
                                                             N_bins = (args.nbins, 1),
-                                                            r_drift = False,
+                                                            r_drift = True,
                                                             debug = False)
 
       n = reduce(lambda x, y: x*y, bin_collection.N_bins)
       likelihood_array = np.zeros(n)
 
       for i, bin in enumerate(bin_collection.bins):
-         bin.bootstrapped_error = bootstrap_weighted_error_gpu_vector(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+         bin.bootstrapped_error = bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
                                                             npcp.asarray(bin.data.sig_vphi, dtype=dtype))
          bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
                                                 h_sig = h_sig, 
@@ -250,7 +252,7 @@ def log_prior(theta, args):
    disk_prior = (theta[-3] > args.disk_scale - 1000) and (theta[-3] < args.disk_scale + 1000)
    vlos_prior = (theta[-2] > args.vlos_dispersion_scale - 1000) and (theta[-2] < args.vlos_dispersion_scale + 1000)
 
-   r0_prior = (theta[-1] > 7800 and theta[-1] < 8500)
+   r0_prior = (theta[-1] > 8054 and theta[-1] < 8500)
 
    if vc_prior_d and vc_prior_u and disk_prior and vlos_prior and r0_prior:
          return 0.0
@@ -298,7 +300,8 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}".format(start_datetime, args.nwalkers)
+   custom_ext = '10per_data'
+   run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
    print('Importing necessary column names...')
