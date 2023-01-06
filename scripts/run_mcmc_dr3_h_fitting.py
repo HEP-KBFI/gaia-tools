@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../gaia_tools/")
 
-USE_CUDA=True
+USE_CUDA=False
 
 if USE_CUDA:
    import cupy as npcp
@@ -189,7 +189,8 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   run_out_path = "../out/mcmc_runs/{}_{}".format(start_datetime, args.nwalkers)
+   custom_ext = 'H_FITTING_TEST'
+   run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
    print('Importing necessary column names...')

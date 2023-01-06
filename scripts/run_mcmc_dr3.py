@@ -128,9 +128,7 @@ def get_galcen_data(r_0):
                                        z_0 = z_0,
                                        r_0 = r_0,
                                        v_sun = v_sun,
-                                       debug = True,
-                                       is_bayes = True,
-                                       is_source_included = True, 
+                                       is_bayes = True, 
                                        NUMPY_LIB = npcp,
                                        dtype = dtype)
 
