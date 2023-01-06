@@ -6,14 +6,10 @@ import matplotlib.cm as cm
 import numpy as np
 import astropy
 import pandas as pd
-import corner
 from data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
-from BinCollection import BinCollection
 
-# TODO: Add additional projections: along y- and z-axis
-# TODO: Add options for DataFrame format
 '''
 A simple histogram displaying the distribution of entries along the galactic plane.
 Input parameters:
@@ -34,7 +30,6 @@ def distribution_hist(galcen):
     plt.title("Distribution by Distance", pad=20, fontdict={'fontsize': 20})
 
     plt.show()
-
 
 '''
 A 2D histogram to depict point source density in different regions using 2D bins.
@@ -69,9 +64,6 @@ def point_density_histogram(galcen, vmax, bin_start = -16000, bin_end = 16000, n
 
     plt.show()
 
-
-
-
 def display_values(XX, YY, H, mode = None):
     """A function that displays the specific numerical values inside each bin.
 
@@ -96,7 +88,6 @@ def display_values(XX, YY, H, mode = None):
                 txt = plt.text((XX[0][j+1] + XX[0][j])/2, (YY.T[0][i+1] + YY.T[0][i])/2, '%.0f' % H.T[i, j],
                      horizontalalignment='center',
                      verticalalignment='center', backgroundcolor='w')
-
 
 '''
 A plot which enables the user to see the bins created by the 'bin_data' functions in the
@@ -342,7 +333,6 @@ def generate_velocity_vector_map(bin_collection):
     plt.grid()
     plt.show()
 
-
 '''
 df - Imported data from CSV
 '''
@@ -359,7 +349,6 @@ def run_parameter_tests(df, parameter_list):
 
     for parameter in parameter_list:
         parameter_test_plot(galcen_astropy, galcen_my, parameter)
-
 
 
 def parameter_test_plot(galcen_astropy, galcen_my, test_parameter):
@@ -452,48 +441,6 @@ def arrowed_spines(fig, ax):
              head_width=yhw, head_length=yhl, overhang = ohg,
              length_includes_head= True, clip_on = False)
 
-
-
-'''
-Input - result of MCMCLooper.run_sampler() which is the emcee sampler object
-'''
-def display_walkers(looper_result,
-                    theta_labels = ['r', 'z', 'u', 'v', 'w']):
-
-    # Get data from emcee sampler
-    samples_data = looper_result.get_chain()
-
-    num_parameters = len(theta_labels)
-
-    fig, axes = plt.subplots(num_parameters, figsize=(10, 7), sharex=True)
-
-    labels = theta_labels
-
-    for i in range(num_parameters):
-        ax = axes[i]
-        ax.plot(samples_data[:, :, i], "k", alpha=0.3)
-        ax.set_xlim(0, len(samples_data))
-        ax.set_ylabel(labels[i])
-        ax.yaxis.set_label_coords(-0.1, 0.5)
-
-    axes[-1].set_xlabel("Step number");
-
-    plt.show()
-
-'''
-flat_samples - result from mcmclooper but result is flattened. See mcmclooper class.
-
-theta_labels - list of your parameter names [(string)]
-'''
-def generate_corner_plot(flat_samples, theta_labels):
-
-    fig = corner.corner(flat_samples, labels=theta_labels);
-    plt.show()
-
-    # Fix this in the future, Sven
-    return fig
-
-
 def display_polar_coordinates(phi, r):
 
     fig = plt.figure()
@@ -504,8 +451,6 @@ def display_polar_coordinates(phi, r):
     plt.show()
 
     return fig
-
-
 
 def display_polar_histogram(galcen_data, outpath, n_bins=100, norm_max = 1000, r_limits = (), title = "Polar Plot", is_save=True):
     """A plot which displays a polar histogram of the stars in a galactocentric frame of reference.
@@ -569,8 +514,6 @@ def display_polar_histogram(galcen_data, outpath, n_bins=100, norm_max = 1000, r
     if(is_save):
         plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
 
-
-
 def sample_distribution_galactic_coords(icrs_data, outpath, is_save = True):
 
     from astropy import units as u
@@ -599,7 +542,6 @@ def sample_distribution_galactic_coords(icrs_data, outpath, is_save = True):
     fig_name = '/sample_distribution_galactic_coords'
     if(is_save):
         plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
-
 
 def plot_radial_distribution(sample, outpath, is_save=True):
 
@@ -631,7 +573,6 @@ def plot_radial_distribution(sample, outpath, is_save=True):
     fig_name = '/star_density_heliocentric_distribution'
     if(is_save):
         plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
-
 
 def plot_distribution(sample, outpath, parameter, param_min, param_max, cutlines=None, is_save=True):
     
@@ -667,7 +608,6 @@ def plot_distribution(sample, outpath, parameter, param_min, param_max, cutlines
     fig_name = '/star_density_{}_distribution'.format(parameter)
     if(is_save):
         plt.savefig(outpath + fig_name +'.png', bbox_inches='tight', dpi=300, facecolor='white')
-
 
 def plot_velocity_distribution(bins, outpath, is_range=False, plot_MU=False, is_save = True):
 
