@@ -199,8 +199,8 @@ def log_likelihood(theta, args):
    else:
       galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
    
-   r_min = 5000/8277
-   r_max = 15000/8277
+   r_min = 5000
+   r_max = 15000
 
    # # Generate bins
    bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
@@ -210,7 +210,7 @@ def log_likelihood(theta, args):
                                                       BL_z_min = -200,
                                                       BL_z_max = 200,
                                                       N_bins = (args.nbins, 1),
-                                                      r_drift = True,
+                                                      r_drift = False,
                                                       debug = False)
 
    n = reduce(lambda x, y: x*y, bin_collection.N_bins)
@@ -295,7 +295,8 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   run_out_path = "../out/mcmc_runs/{}_{}".format(start_datetime, args.nwalkers)
+   custom_ext = 'OLD_BINNING_TEST'
+   run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
    print('Importing necessary column names...')
