@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.cm as cm
 import numpy as np
-import mpl_scatter_density
 import astropy
 import pandas as pd
 import corner
@@ -36,41 +35,6 @@ def distribution_hist(galcen):
 
     plt.show()
 
-'''
-A 2d point source density plot on the x-y plane.
-Good for visualising large data sets (number of points > 50 000)
-
-Input parameters
-----------------
-    galcen - SkyCoord object in galactocentric frame
-    vmax - maximum number of points normalised per pixel
-'''
-# CURRENTLY BROKEN
-def point_density(galcen, vmax):
-
-    norm = ImageNormalize(vmin=0., vmax=10, stretch=LogStretch())
-
-    x_coord = -galcen.x.value
-    y_coord = galcen.y.value
-
-    fig = plt.figure(figsize=(7.5, 6))
-    ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
-
-    density = ax.scatter_density(x_coord, y_coord, norm=norm, dpi = 200, cmap=plt.cm.jet)
-
-    fig.colorbar(density, label='Number of sources per pixel')
-
-    plt.title("Point Source Density (Galactocentric)", pad=20, fontdict={'fontsize': 20})
-    plt.grid()
-
-    # TODO: Make x and y limits changeable
-    ax.set_xlim(-20000, 20000)
-    ax.set_ylim(-20000, 20000)
-
-    ax.set_xlabel('$x$ [{0:latex_inline}]'.format(galcen.x.unit))
-    ax.set_ylabel('$y$ [{0:latex_inline}]'.format(galcen.y.unit))
-
-    plt.show()
 
 '''
 A 2D histogram to depict point source density in different regions using 2D bins.
