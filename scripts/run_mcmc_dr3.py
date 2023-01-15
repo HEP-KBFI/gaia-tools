@@ -210,7 +210,7 @@ def log_likelihood(theta, args):
                                                       BL_z_min = -200,
                                                       BL_z_max = 200,
                                                       N_bins = (args.nbins, 1),
-                                                      r_drift = False,
+                                                      r_drift = True,
                                                       debug = False)
 
    n = reduce(lambda x, y: x*y, bin_collection.N_bins)
@@ -295,7 +295,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'OLD_BINNING_TEST'
+   custom_ext = '10_DATA_LARGE_NOISE'
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 

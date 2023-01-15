@@ -350,7 +350,7 @@ if __name__ == '__main__':
    theta_0[-1] = r_0
 
    # Init starting point for all walkers
-   pos = theta_0 + 10**(-1)*np.random.randn(nwalkers, ndim)
+   pos = theta_0 + 10**(1)*np.random.randn(nwalkers, ndim)
 
    # Setup saving results to output file
    filename = run_out_path + "/sampler_{a}.h5".format(a=start_datetime)
