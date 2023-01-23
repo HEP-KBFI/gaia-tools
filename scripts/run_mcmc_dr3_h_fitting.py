@@ -68,8 +68,8 @@ def load_galactic_parameters():
    # -----------------------------------
 
    # Eilers et al orbital parmaeters
-   r_0 - 8122
-   z_0 - 25
+   r_0 = 8122
+   z_0 = 25
 
    v_sun = transformation_constants.V_SUN
    v_sun[0][0] = 11.1
@@ -205,10 +205,12 @@ if __name__ == '__main__':
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
    print('Importing necessary column names...')
-   icrs_data_columns = pd.read_csv('/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv', nrows = 10).columns
+   #icrs_data_columns = pd.read_csv('/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv', nrows = 10).columns
+   icrs_data_columns = pd.read_csv('/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv', nrows = 10).columns
 
    print('Importing DR3...')
-   dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
+   #dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
+   dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
    gaia_dr3 = pd.read_csv(dr3_path)
    icrs_data = gaia_dr3[icrs_data_columns]
    print("Initial size of sample: {}".format(icrs_data.shape))
