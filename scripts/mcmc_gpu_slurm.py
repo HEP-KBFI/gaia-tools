@@ -66,7 +66,14 @@ def load_galactic_parameters():
    v_sun[0][0] = 11.1
    v_sun[1][0] = 251.5
    v_sun[2][0] = 8.59
-   
+
+   # Eilers et al orbital parmaeters
+   # R0 - 8122
+   # z0 - 25
+   # v_sun[0][0] = 11.1
+   # v_sun[1][0] = 245.8
+   # v_sun[2][0] = 7.8
+
    return r_0, z_0, v_sun
 
 def apply_initial_cut(icrs_data, run_out_path):
@@ -300,7 +307,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'full_run'
+   custom_ext = '10p_run_noise_test'
    run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -315,6 +322,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
+   galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices

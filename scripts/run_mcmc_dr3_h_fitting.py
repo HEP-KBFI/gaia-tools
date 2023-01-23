@@ -53,17 +53,28 @@ def parse_args():
 
 def load_galactic_parameters():
    
-   # Initial Galactocentric distance
-   r_0 = 8277
+   # # Initial Galactocentric distance
+   # r_0 = 8277
 
-   # Initial height over Galactic plane
-   z_0 = 25
+   # # Initial height over Galactic plane
+   # z_0 = 25
 
-   # Initial solar vector
+   # # Initial solar vector
+   # v_sun = transformation_constants.V_SUN
+   # v_sun[0][0] = 11.1
+   # v_sun[1][0] = 251.5
+   # v_sun[2][0] = 8.59
+
+   # -----------------------------------
+
+   # Eilers et al orbital parmaeters
+   r_0 - 8122
+   z_0 - 25
+
    v_sun = transformation_constants.V_SUN
    v_sun[0][0] = 11.1
-   v_sun[1][0] = 251.5
-   v_sun[2][0] = 8.59
+   v_sun[1][0] = 245.8
+   v_sun[2][0] = 7.8
    
    return r_0, z_0, v_sun
 
@@ -189,7 +200,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'OLD_BINNING_H_FIT_FIXBIN'
+   custom_ext = 'EILERS_COMPARISON'
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -204,7 +215,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   galcen_data = galcen_data[::10]
+   #galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
@@ -216,12 +227,14 @@ if __name__ == '__main__':
    plot_radial_distribution(icrs_data, run_out_path)
    fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 15000), norm_max=5000, title = "Distribution of data on the Galactic plane")
 
-   r_min = 5000/8277
-   r_max = 15000/8277
+   r_0, z_0, v_sun = load_galactic_parameters()
+
+   r_min = 5000/r_0
+   r_max = 15000/r_0
 
    # Generate bins
    bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-                                                         theta = 8277,
+                                                         theta = r_0,
                                                          BL_r_min = r_min,
                                                          BL_r_max = r_max,
                                                          BL_z_min = -200,
@@ -238,7 +251,6 @@ if __name__ == '__main__':
       else:
          bin.bootstrapped_error = helpfunc.bootstrap_weighted_error(bin.data.v_phi.to_numpy(), bin.data.sig_vphi.to_numpy())
    
-   r_0, z_0, v_sun = load_galactic_parameters()
 
    # SETUP MCMC
    # Nwalkers has to be at least 2*ndim
@@ -266,7 +278,7 @@ if __name__ == '__main__':
    # else:
    NUM_GPUS = 1
  
-   PROC_PER_GPU = 16
+   PROC_PER_GPU = 6
    queue = Queue()
    #even though CUDA_VISIBLE_DEVICES could be e.g. 3,4
    #here the indexing will be from 0,1, as nvidia hides the other devices
