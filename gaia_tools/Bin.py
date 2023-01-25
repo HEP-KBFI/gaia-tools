@@ -1,4 +1,6 @@
 import numpy as np
+import helper_functions as helpfunc
+
 
 '''
 Data object for data entries with the same bin index.
@@ -46,6 +48,7 @@ class Bin:
         self.MLE_mu = None
         self.med_sig_vphi = None
         self.A_parameter = None
+        self.bootstrapped_error = None
 
     '''
     To keep this function generalized, should pass a parameter describing
@@ -122,7 +125,6 @@ class Bin:
 
             return (average, variance)
 
-
     def get_likelihood_w_asymmetry(self, v_c, drop_approx = False, debug=False):
         """Compute likelihood of bin with asymmetry taken into account
 
@@ -134,28 +136,36 @@ class Bin:
             float: Returns bin likelihood
         """
 
-        weights = 1/self.data.sig_vphi
-        weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
+        bin_vphi = self.data.v_phi.to_numpy()
+        bin_sig_vphi = self.data.sig_vphi.to_numpy()
 
-        # Weighted var
-        avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
-
+        weights = 1/bin_sig_vphi
+        
         # Weighted mean
-        avg_vphi = weighted_avg
+        weighted_mean = np.average(bin_vphi, weights=weights)
+
+        # OLD ANALYTIC
+        #weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)
+
+        # Weighted error
+        #weighted_error = helpfunc.bootstrap_weighted_error_new(bin_vphi, bin_sig_vphi)
+        weighted_error = self.bootstrapped_error
+
+        #avg_sig_vphi = (weighted_var)/len(self.data.v_phi)
 
         # Get A for asymmetric drift computation
         A = self.A_parameter
 
-        add_1 = np.log(2*np.pi*avg_sig_vphi)
+        add_1 = np.log(2*np.pi*weighted_error)
 
         if(drop_approx):
             A = 2*A
-            v_phi_model = v_c - A/(v_c + avg_vphi)
+            v_phi_model = v_c - A/(v_c + weighted_mean)
 
         else:
             v_phi_model = (v_c**2 - A)/v_c
 
-        add_2 = (avg_vphi - v_phi_model)**2/avg_sig_vphi
+        add_2 = (weighted_mean - v_phi_model)**2/weighted_error
 
         if(debug):
             print("A -> {}".format(A))
@@ -196,7 +206,10 @@ class Bin:
             print(XX)
 
         # R - bin center
-        R = np.mean(self.r_boundaries)
+        #R = np.mean(self.r_boundaries*8277)
+
+        # CASE OF ADIMENSIONAL BIN
+        R = np.mean(np.array(self.r_boundaries)*8277)
 
         # Without 2vc approximation
         #A = rad_vel_var*(XX - 1 + R*(1/h_r + 2/h_sig))
