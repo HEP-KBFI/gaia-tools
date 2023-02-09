@@ -129,6 +129,8 @@ def bin_data(galcen_data,
 
     ZZ = (np.min(galcen_data.z), np.max(galcen_data.z))
 
+    ZZ = (BL_z[0], BL_z[1])
+
     # Assign a binnumber for each data entry
     galcen_data['Bin_index'] = binnumber
 
