@@ -1,7 +1,13 @@
+'''
+This script defines functions to perform a Bayesian analysis of the kinematics of stars in the Milky Way. The code uses MCMC 
+(Markov Chain Monte Carlo) methods to determine the posterior probability distribution of the parameters that describe the kinematics. 
+It is meant to be executed on a GPU (using the CuPy library) but can also be run on a CPU.
+'''
+
 import sys
 sys.path.append("/home/sven/repos/gaia-tools/gaia_tools")
 
-USE_CUDA=True
+USE_CUDA=False
 
 if USE_CUDA:
    import cupy as npcp
@@ -24,7 +30,7 @@ import transformation_constants
 import transformation_functions
 import data_analysis
 import covariance_generation as cov
-from import_functions import import_data
+import helper_functions as helpfunc
 from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram, plot_variance_distribution, plot_velocity_distribution
 import numpy as np
 import emcee
@@ -40,9 +46,6 @@ import multiprocessing
 from multiprocessing import Pool, Process, Queue
 import pandas as pd
 
-
-
-
 def parse_args():
    parser = argparse.ArgumentParser(description='MCMC input')
    parser.add_argument('--nwalkers', type=int)
@@ -54,7 +57,8 @@ def parse_args():
    return parser.parse_args()
 
 def load_galactic_parameters():
-   
+   '''The load_galactic_parameters function sets the initial galactocentric distance, height over the Galactic plane, and solar vector used in the coordinate transformations.'''
+
    # Initial Galactocentric distance
    r_0 = 8277
 
@@ -120,6 +124,8 @@ def apply_initial_cut(icrs_data, run_out_path):
 
 def get_galcen_data(r_0):
 
+   '''The get_galcen_data function applies the coordinate transformation and returns the resulting dataset.'''
+
    # Update solar vector
    v_sun[1][0] = 251.5*(r_0/8277)
    v_sun[2][0] = 8.59*(r_0/8277)
@@ -161,46 +167,6 @@ def get_galcen_data(r_0):
    return galcen_data
 
 
-def bootstrap_weighted_error_gpu(bin_vphi, bin_sig_vphi):
-    
-    total_num_it = 1000
-    batch_num = 10
-    data_length = len(bin_vphi)
-    idx_list = npcp.arange(data_length)
-    bootstrapped_means = npcp.zeros(total_num_it)
-
-    for i in range(100):
-        rnd_idx = npcp.random.choice(idx_list, replace=True, size=(batch_num, data_length))
-        
-        test_sample = bin_vphi[rnd_idx]
-        sig_vphi = bin_sig_vphi[rnd_idx]
-
-        start_idx = (i+1)*batch_num - batch_num
-        end_idx = (i+1)*batch_num
-
-        bootstrapped_means[start_idx:end_idx] = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
-    conf_int = npcp.percentile(bootstrapped_means, [16, 84])
-
-    return (conf_int[1] - conf_int [0])/2
-
-
-# Fully vectorised
-def bootstrap_weighted_error_gpu_vector(bin_vphi, bin_sig_vphi):
-    
-    num_it = 1000
-    data_length = len(bin_vphi)
-    idx_list = npcp.arange(data_length)
-    bootstrapped_means = npcp.zeros(num_it)
-
-    rnd_idx = npcp.random.choice(idx_list, replace=True, size=(num_it, data_length))
-    
-    test_sample = bin_vphi[rnd_idx]
-    sig_vphi = bin_sig_vphi[rnd_idx]
-    bootstrapped_means = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
-    conf_int = npcp.percentile(bootstrapped_means, [16, 84])
-
-    return (conf_int[1] - conf_int [0])/2
-
 debug = False
 
 def log_likelihood(theta, args):
@@ -241,8 +207,9 @@ def log_likelihood(theta, args):
       likelihood_array = np.zeros(n)
 
       for i, bin in enumerate(bin_collection.bins):
-         bin.bootstrapped_error = bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
-                                                            npcp.asarray(bin.data.sig_vphi, dtype=dtype))
+         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+                                                                        npcp.asarray(bin.data.sig_vphi, dtype=dtype), 
+                                                                        NUMPY_LIB = npcp)
          bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
                                                 h_sig = h_sig, 
                                                 debug=False)
@@ -341,7 +308,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   #galcen_data = galcen_data[::10]
+   galcen_data = galcen_data[::100]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
