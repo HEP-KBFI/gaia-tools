@@ -11,7 +11,7 @@ from functools import reduce
 import time, timeit
 import transformation_constants
 import datetime as dt
-import photometric_cut
+import scripts.old_mcmc_scripts.photometric_cut as photometric_cut
 import os
 import pickle
 from pathlib import Path
