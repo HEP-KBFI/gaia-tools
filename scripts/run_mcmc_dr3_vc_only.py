@@ -11,7 +11,6 @@ from functools import reduce
 import time, timeit
 import transformation_constants
 import datetime as dt
-import photometric_cut
 import os
 import pickle
 from pathlib import Path

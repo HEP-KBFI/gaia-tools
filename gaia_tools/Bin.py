@@ -142,7 +142,8 @@ class Bin:
         weights = 1/bin_sig_vphi
         
         # Weighted mean
-        weighted_mean = np.average(bin_vphi, weights=weights)
+        #weighted_mean = np.average(bin_vphi, weights=weights)
+        weighted_mean = np.mean(bin_vphi)
 
         # OLD ANALYTIC
         #weighted_avg, weighted_var = self.weighted_avg_and_std(self.data.v_phi, weights)

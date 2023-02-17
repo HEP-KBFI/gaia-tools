@@ -47,7 +47,7 @@ def bin_data(galcen_data,
     # Create a meshgrid from the vertices
     XX, YY = np.meshgrid(xedges, yedges)
 
-    ZZ = (np.min(galcen_data.z), np.max(galcen_data.z))
+    ZZ = (BL_z[0], BL_z[1])
 
     # Assign a binnumber for each data entry
     galcen_data['Bin_index'] = binnumber
@@ -58,7 +58,6 @@ def bin_data(galcen_data,
     # Generate the bins with respective x-y boundaries
     bin_collection.GenerateBins()
 
-    # TODO: Generalise this!
     if(show_bins == True):
         from .data_plot import display_bins
 

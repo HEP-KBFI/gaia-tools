@@ -193,7 +193,7 @@ def build_jacobian_with_distance(df,
         r_est = df[:,2]
 
         c1 = r_est
-        c2 = dtype(1)
+        c2 = 1
         c3 = k2*(r_est/1000)
         c4 = -k2/1000
 

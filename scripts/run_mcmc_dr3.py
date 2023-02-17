@@ -1,3 +1,9 @@
+'''
+This script defines functions to perform a Bayesian analysis of the kinematics of stars in the Milky Way. The code uses MCMC 
+(Markov Chain Monte Carlo) methods to determine the posterior probability distribution of the parameters that describe the kinematics. 
+It is meant to be executed on a GPU (using the CuPy library) but can also be run on a CPU.
+'''
+
 import sys
 sys.path.append("../gaia_tools/")
 
@@ -19,12 +25,12 @@ else:
    from numba import config
    config.DISABLE_JIT = False
 
+
 import transformation_constants
 import transformation_functions
-import helper_functions as helpfunc
 import data_analysis
 import covariance_generation as cov
-from import_functions import import_data
+import helper_functions as helpfunc
 from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram, plot_variance_distribution, plot_velocity_distribution
 import numpy as np
 import emcee
@@ -38,7 +44,7 @@ import argparse
 import random
 import multiprocessing
 from multiprocessing import Pool, Process, Queue
-import pandas as pd 
+import pandas as pd
 
 def parse_args():
    parser = argparse.ArgumentParser(description='MCMC input')
@@ -50,24 +56,9 @@ def parse_args():
    parser.add_argument('--backend', type=str)
    return parser.parse_args()
 
-def set_up_backend(backend):
-   if(backend == 'gpu'):
-      print('Setting backend as GPU...')
-      import cupy as cp
-      from numba import jit, config
-      config.DISABLE_JIT = True
-      NUMPY_LIB = cp
-      dtype = cp.float32
-   else:
-      print('Setting backend as CPU...')
-      import numpy
-      NUMPY_LIB = numpy
-      dtype = numpy.float64
-
-   return NUMPY_LIB, dtype
-
 def load_galactic_parameters():
-   
+   '''The load_galactic_parameters function sets the initial galactocentric distance, height over the Galactic plane, and solar vector used in the coordinate transformations.'''
+
    # Initial Galactocentric distance
    r_0 = 8277
 
@@ -113,11 +104,20 @@ def apply_initial_cut(icrs_data, run_out_path):
    # Final data cut
    galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+
+   # Remove halo stars (condition taken from 1806.06038)                        
+   v_dif = np.linalg.norm(np.array([galcen_data.v_x, galcen_data.v_y, galcen_data.v_z])-v_sun,
+                        axis=0)                                               
+   galcen_data['v_dif'] = v_dif                                                 
+   galcen_data = galcen_data[galcen_data.v_dif<210.]
+
    galcen_data.reset_index(inplace=True, drop=True)
    
    return galcen_data
 
 def get_galcen_data(r_0):
+
+   '''The get_galcen_data function applies the coordinate transformation and returns the resulting dataset.'''
 
    # Update solar vector
    v_sun[1][0] = 251.5*(r_0/8277)
@@ -128,7 +128,7 @@ def get_galcen_data(r_0):
                                        z_0 = z_0,
                                        r_0 = r_0,
                                        v_sun = v_sun,
-                                       is_bayes = True, 
+                                       is_bayes = True,
                                        NUMPY_LIB = npcp,
                                        dtype = dtype)
 
@@ -159,24 +159,8 @@ def get_galcen_data(r_0):
 
    return galcen_data
 
+
 debug = False
-
-# Fully vectorised
-def bootstrap_weighted_error_gpu_vector(bin_vphi, bin_sig_vphi):
-    
-    num_it = 1000
-    data_length = len(bin_vphi)
-    idx_list = npcp.arange(data_length)
-    bootstrapped_means = npcp.zeros(num_it)
-
-    rnd_idx = npcp.random.choice(idx_list, replace=True, size=(num_it, data_length))
-    
-    test_sample = bin_vphi[rnd_idx]
-    sig_vphi = bin_sig_vphi[rnd_idx]
-    bootstrapped_means = (test_sample/sig_vphi).sum(axis=1)/(1/sig_vphi).sum(axis=1)
-    conf_int = npcp.percentile(bootstrapped_means, [16, 84])
-
-    return (conf_int[1] - conf_int [0])/2
 
 def log_likelihood(theta, args):
 
@@ -187,50 +171,51 @@ def log_likelihood(theta, args):
    h_sig = theta[-2]
    r_0 = theta[-1]
 
-   # Get Galactocentric data
-   galcen_data = get_galcen_data(r_0)
+   with DeviceContext(device_id):
 
-   final_data_columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
-         'sig_vphi', 'sig_vr', 'source_id']
+      final_data_columns = ['x', 'y', 'z', 'v_x', 'v_y', 'v_z', 'r', 'phi', 'v_r', 'v_phi',
+            'sig_vphi', 'sig_vr', 'source_id']
 
-   if(USE_CUDA):
+      # Get Galactocentric data
+      galcen_data = get_galcen_data(r_0)
+
       # Turn Galactocentric data into Pandas frame
-      galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
-   else:
-      galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
-   
-   r_min = 5000
-   r_max = 15000
-
-   # # Generate bins
-   bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-                                                      theta = r_0,
-                                                      BL_r_min = r_min,
-                                                      BL_r_max = r_max,
-                                                      BL_z_min = -200,
-                                                      BL_z_max = 200,
-                                                      N_bins = (args.nbins, 1),
-                                                      r_drift = True,
-                                                      debug = False)
-
-   n = reduce(lambda x, y: x*y, bin_collection.N_bins)
-   likelihood_array = np.zeros(n)
-
-   # now we need to calculate likelihood values for each bin
-   for i, bin in enumerate(bin_collection.bins):
+      # galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
+      
       if(USE_CUDA):
-         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
-                                                                  npcp.asarray(bin.data.sig_vphi, dtype=dtype))
+      # Turn Galactocentric data into Pandas frame
+         galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
       else:
-         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error(bin.data.v_phi.to_numpy(), bin.data.sig_vphi.to_numpy())
+         galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
 
-      bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
-                                             h_sig = h_sig, 
-                                             debug=False)
+      r_min = 5000/8277
+      r_max = 15000/8277
 
-      likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
+      # # Generate bins
+      bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
+                                                            theta = r_0,
+                                                            BL_r_min = r_min,
+                                                            BL_r_max = r_max,
+                                                            BL_z_min = -200,
+                                                            BL_z_max = 200,
+                                                            N_bins = (args.nbins, 1),
+                                                            r_drift = True,
+                                                            debug = False)
 
-      likelihood_array[i] = likelihood_value
+      n = reduce(lambda x, y: x*y, bin_collection.N_bins)
+      likelihood_array = np.zeros(n)
+
+      for i, bin in enumerate(bin_collection.bins):
+         bin.bootstrapped_error = helpfunc.bootstrap_weighted_error_gpu(npcp.asarray(bin.data.v_phi, dtype=dtype), 
+                                                                        npcp.asarray(bin.data.sig_vphi, dtype=dtype), 
+                                                                        NUMPY_LIB = npcp)
+         bin.A_parameter = bin.compute_A_parameter(h_r = h_r, 
+                                                h_sig = h_sig, 
+                                                debug=False)
+
+         likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
+
+         likelihood_array[i] = likelihood_value
    likelihood_sum = np.sum(likelihood_array)
 
    if(debug):
@@ -247,7 +232,7 @@ def log_prior(theta, args):
    disk_prior = (theta[-3] > args.disk_scale - 1000) and (theta[-3] < args.disk_scale + 1000)
    vlos_prior = (theta[-2] > args.vlos_dispersion_scale - 1000) and (theta[-2] < args.vlos_dispersion_scale + 1000)
 
-   r0_prior = (theta[-1] > 8054 and theta[-1] < 8500)
+   r0_prior = (theta[-1] > 7800 and theta[-1] < 8500)
 
    if vc_prior_d and vc_prior_u and disk_prior and vlos_prior and r0_prior:
          return 0.0
@@ -299,18 +284,30 @@ if __name__ == '__main__':
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
-   print('Importing necessary column names...')
-   icrs_data_columns = pd.read_csv('/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv', nrows = 10).columns
+   # print('Importing necessary column names...')
+   # icrs_data_columns = pd.read_csv("/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv", nrows = 10).columns
 
    print('Importing DR3...')
-   dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
+   dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
    gaia_dr3 = pd.read_csv(dr3_path)
-   icrs_data = gaia_dr3[icrs_data_columns]
+
+   r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
+   gaia_dr3['r_est_error'] = r_est_error
+
+   columns_to_drop = ['Vbroad', 'GRVSmag', 'Gal', 'Teff', 'logg',
+       '[Fe/H]', 'Dist', 'A0', 'RAJ2000', 'DEJ2000', 'e_RAJ2000', 'e_DEJ2000',
+       'RADEcorJ2000', 'B_Teff', 'b_Teff', 'b_logg', 'B_logg', 'b_Dist',
+       'B_Dist', 'b_AG', 'B_AG', 'b_A0', 'B_A0', 'Gmag', 'BPmag', 'RPmag', 'BP-RP']
+   gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
+   print(gaia_dr3.columns)
+   icrs_data = gaia_dr3
+
+   # icrs_data = gaia_dr3[icrs_data_columns]
    print("Initial size of sample: {}".format(icrs_data.shape))
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   galcen_data = galcen_data[::10]
+   #galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
@@ -346,22 +343,26 @@ if __name__ == '__main__':
    theta_0[-1] = r_0
 
    # Init starting point for all walkers
-   pos = theta_0 + 10**(-1)*np.random.randn(nwalkers, ndim)
+   pos = theta_0 + 10**(1)*np.random.randn(nwalkers, ndim)
 
    # Setup saving results to output file
    filename = run_out_path + "/sampler_{a}.h5".format(a=start_datetime)
    backend = emcee.backends.HDFBackend(filename)
    backend.reset(nwalkers, ndim)
 
-   # if USE_CUDA: 
-   #    cvd = os.environ["CUDA_VISIBLE_DEVICES"]
-   #    cvd = [int(x) for x in cvd.split(",")]
-   #    NUM_GPUS = len(cvd)
-   #  #actually no GPUs will be used, we just create 1xPROC_PER_GPU CPU processes
-   # else:
-   #    NUM_GPUS = 1
-   NUM_GPUS = 1
-   PROC_PER_GPU = 10
+   if USE_CUDA: 
+      cvd = os.environ["CUDA_VISIBLE_DEVICES"]
+      cvd = [int(x) for x in cvd.split(",")]
+      NUM_GPUS = len(cvd)
+      print("Num GPUs {}".format(NUM_GPUS))
+      print("Total num CPUs {}".format(multiprocessing.cpu_count()))
+   
+   else:
+      NUM_GPUS = 1
+ 
+   PROC_PER_GPU = 2
+   print("Using {} CPUs per GPU".format(PROC_PER_GPU))
+
    queue = Queue()
    #even though CUDA_VISIBLE_DEVICES could be e.g. 3,4
    #here the indexing will be from 0,1, as nvidia hides the other devices
@@ -378,6 +379,9 @@ if __name__ == '__main__':
       print("Starting sampling. Walkers = {}, Steps = {}, CPU = {}".format(nwalkers, nsteps, NUM_GPUS*PROC_PER_GPU))
       sampler.run_mcmc(pos, nsteps, progress=True)
       print("Sampler done!")
+
+   pool.close()
+   pool.join()
 
    #Dumps sampler object to pkl
    fn = run_out_path + '/sampler_{}'.format(start_datetime)
