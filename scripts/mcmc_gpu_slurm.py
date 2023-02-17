@@ -107,6 +107,13 @@ def apply_initial_cut(icrs_data, run_out_path):
    # Final data cut
    galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+
+   # Remove halo stars (condition taken from 1806.06038)                        
+   v_dif = np.linalg.norm(np.array([galcen_data.v_x, galcen_data.v_y, galcen_data.v_z])-v_sun,
+                        axis=0)                                               
+   galcen_data['v_dif'] = v_dif                                                 
+   galcen_data = galcen_data[galcen_data.v_dif<210.]
+
    galcen_data.reset_index(inplace=True, drop=True)
    
    return galcen_data
@@ -259,7 +266,7 @@ def log_prior(theta, args):
    disk_prior = (theta[-3] > args.disk_scale - 1000) and (theta[-3] < args.disk_scale + 1000)
    vlos_prior = (theta[-2] > args.vlos_dispersion_scale - 1000) and (theta[-2] < args.vlos_dispersion_scale + 1000)
 
-   r0_prior = (theta[-1] > 8054 and theta[-1] < 8500)
+   r0_prior = (theta[-1] > 7800 and theta[-1] < 8500)
 
    if vc_prior_d and vc_prior_u and disk_prior and vlos_prior and r0_prior:
          return 0.0
@@ -307,22 +314,34 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = '10p_run_noise_test'
+   custom_ext = 'full_run_mean_no_halo_stars'
    run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
-   print('Importing necessary column names...')
-   icrs_data_columns = pd.read_csv("/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv", nrows = 10).columns
+   # print('Importing necessary column names...')
+   # icrs_data_columns = pd.read_csv("/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv", nrows = 10).columns
 
    print('Importing DR3...')
    dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
    gaia_dr3 = pd.read_csv(dr3_path)
-   icrs_data = gaia_dr3[icrs_data_columns]
+
+   r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
+   gaia_dr3['r_est_error'] = r_est_error
+
+   columns_to_drop = ['Vbroad', 'GRVSmag', 'Gal', 'Teff', 'logg',
+       '[Fe/H]', 'Dist', 'A0', 'RAJ2000', 'DEJ2000', 'e_RAJ2000', 'e_DEJ2000',
+       'RADEcorJ2000', 'B_Teff', 'b_Teff', 'b_logg', 'B_logg', 'b_Dist',
+       'B_Dist', 'b_AG', 'B_AG', 'b_A0', 'B_A0', 'Gmag', 'BPmag', 'RPmag', 'BP-RP']
+   gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
+   print(gaia_dr3.columns)
+   icrs_data = gaia_dr3
+
+   # icrs_data = gaia_dr3[icrs_data_columns]
    print("Initial size of sample: {}".format(icrs_data.shape))
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   galcen_data = galcen_data[::10]
+   #galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
