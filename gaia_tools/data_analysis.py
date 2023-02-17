@@ -458,59 +458,5 @@ def transform_velocities_cylindrical(velocities_xyz, phi):
 
 
 
-def main():
-    from .data_plot import distribution_hist, point_density_histogram, display_bins, generate_velocity_map, run_parameter_tests
-    from . import covariance_generation as cov
-    import time, timeit
-    from .import_functions import import_data
-
-    # For finding current module working directory
-    #import os
-    #dir_path = os.path.dirname(os.path.realpath(__file__))
-    #print(dir_path)
-
-    # YOUR DATA FILE
-    my_path = "astroquery_test.csv"
-    full_path = r"C:\Users\SvenP\Desktop\Gaia Tools Project\Notebooks\Spectroscopic_Data_With_Correlations.csv"
-
-    # Get ICRS data
-    df = import_data(path = my_path, debug = True)
-
-    # Testing MCMC Functions
-    from tests import MCMCFunction_Test
-    MCMCFunction_Test(df)
-    return
-
-    # Transform data
-    galcen2 = get_transformed_data(df, include_cylindrical = True, debug = True, is_source_included = True)
-
-    print("\n",galcen2)
-
-    # Get covariance matrices
-    cov_df = cov.generate_covmatrices(df, df_crt = galcen2, transform_to_galcen = False, transform_to_cylindrical = True, debug=True)
-
-    # Append covariance matrices to main galactocentric data object
-    galcen2['cov_mat'] = cov_df['cov_mat']
-
-    print("START PRINT")
-    print(galcen2)
-
-    # Bin data
-    bins = bin_data(galcen2, show_bins = False, N_bins = (10, 10))
-
-
-
-
-    display_bins(bins, projection_parameter = 'v_x', mode='index')
-
-    generate_velocity_map(bins)
-
-    #print("The data is from a galactic slice of height: {0}".format(bins.bins[0].z_boundaries))
-    print("END OF MAIN")
-
-if __name__ == "__main__":
-
-    main()
-
 
 
