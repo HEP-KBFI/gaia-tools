@@ -8,7 +8,6 @@ This repository contains code to help with general Gaia data handling and to per
 The code is all written in python3 and makes substantial use of the standard pandas, numpy, matplotlib, etc. Additional libraries that you may need to investigate depending on your installation:
 
 * [`astropy`](https://www.astropy.org/)
-* [`mpl_scatter_density`](https://anaconda.org/conda-forge/mpl-scatter-density)
 * [`emcee`](https://emcee.readthedocs.io/en/stable/)
 * [`lmfit`](https://lmfit.github.io/lmfit-py/examples/example_brute.html)
 * [`corner`](https://corner.readthedocs.io/en/latest/)
