@@ -6,10 +6,8 @@ from functools import reduce
 import emcee
 import corner
 sys.path.append("../gaia_tools/")
-import data_analysis
-import transformation_constants
-import covariance_generation
-from import_functions import import_data
+
+
 
 def plot_walkers(sampler_path, 
                 burn_in = 0,
