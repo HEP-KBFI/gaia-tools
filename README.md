@@ -33,3 +33,7 @@ The input data used in the paper XXXX can be found on Zenodo at: [XXXX].
 ## Tutorials
 
 The folder `jupyter-notebok` contains Jupyter Notebooks with examples of how to use this package. 
+
+
+## Credit
+If you use this material, please don't forget to cite Põder et al. 2023.
