@@ -187,7 +187,13 @@ def log_likelihood(theta, args):
       galcen_data = get_galcen_data(r_0)
 
       # Turn Galactocentric data into Pandas frame
-      galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
+      # galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
+
+      if(USE_CUDA):
+      # Turn Galactocentric data into Pandas frame
+         galcen_data = pd.DataFrame(galcen_data.get(), columns=final_data_columns)
+      else:
+         galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
       
       r_min = 5000/8277
       r_max = 15000/8277
@@ -281,7 +287,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'full_run_mean_no_halo_stars'
+   custom_ext = 'benchmark_0_GPU'
    run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -308,7 +314,7 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   galcen_data = galcen_data[::100]
+   #galcen_data = galcen_data[::100]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
