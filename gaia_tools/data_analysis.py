@@ -154,7 +154,15 @@ def bin_data(galcen_data,
     return bin_collection
 
 
-def get_collapsed_bins(data, theta, BL_r_min, BL_r_max, BL_z_min, BL_z_max, N_bins = (10, 10), r_drift = False, debug=False):
+def get_collapsed_bins(data, 
+                       theta, 
+                       BL_r_min, 
+                       BL_r_max, 
+                       BL_z_min, 
+                       BL_z_max, 
+                       N_bins = (10, 10), 
+                       r_drift = False, 
+                       debug=False):
     """Returns bin in r - z
 
     Args:

@@ -266,15 +266,39 @@ class BinCollection:
             bin.MLE_sigma = MLE_sigma
             bin.MLE_mu = MLE_mu
 
-
-
         return
 
+    def merge_bins(self, bin_indices):
 
-    def GetMean(data):
+        bin1, bin2 = [self.bins[bin_indices[0]], self.bins[bin_indices[1]]]
+
+        for index in bin_indices:
+            del self.bins[index]
+
+        # Get bin number of the bin from which the merging starts
+        new_bin_num = bin1.bin_num
+        merged_dataset = pd.concat([bin1.data, bin2.data], ignore_index=True)
+        merged_dataset['Bin_index'] = new_bin_num
+
+        # Merge bounadries
+        new_r_boundaries = (bin1.r_boundaries[0], bin2.r_boundaries[-1])
+        print(new_r_boundaries)
+
+        # Same as before
+        new_z_boundaries = bin1.z_boundaries
+        print(new_z_boundaries)
+
+        merged_bin = Bin(merged_dataset)
+        merged_bin.r_boundaries = new_r_boundaries
+        merged_bin.z_boundaries = new_z_boundaries
+
+        self.bins.append(merged_bin)
+        self.N_bins = (len(self.bins), 1)
+        new_r_boundaries = np.delete(self.bin_boundaries[0], bin_indices[-1]-1, 1)
+        new_z_boundaries = np.delete(self.bin_boundaries[1], bin_indices[-1]-1, 1)
+        self.bin_boundaries = (new_r_boundaries, new_z_boundaries)
+        self.bin_num_set = set([bin.bin_num for bin in self.bins])
+            
 
 
-        pass;
 
-    def GetStd():
-        pass;
