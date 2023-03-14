@@ -225,6 +225,10 @@ def log_likelihood(theta, args):
                                                             r_drift = True,
                                                             debug = False)
 
+      is_merge = False
+      if(is_merge):
+         bin_collection.merge_bins([-2, -1])
+
       n = reduce(lambda x, y: x*y, bin_collection.N_bins)
       likelihood_array = np.zeros(n)
 
