@@ -7,7 +7,7 @@ It is meant to be executed on a GPU (using the CuPy library) but can also be run
 import sys
 sys.path.append("/home/sven/repos/gaia-tools/gaia_tools")
 
-USE_CUDA=False
+USE_CUDA=True
 
 if USE_CUDA:
    import cupy as npcp
@@ -93,6 +93,8 @@ def apply_initial_cut(icrs_data, run_out_path):
                                           is_bayes = True,
                                           is_source_included = True)
 
+   print("Galactocentric data shape: {}".format(galcen_data.shape))
+
    galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
                                                                is_bayes = True,
                                                                Z_0 = z_0,
@@ -104,19 +106,33 @@ def apply_initial_cut(icrs_data, run_out_path):
                                                 R_0 = r_0)
    galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
+   print("Galactocentric data shape after merge with covariance info: {}".format(galcen_data.shape))
+
    # Plots before cut
    plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 15000])
    plot_distribution(galcen_data, run_out_path, 'z', -2000, 2000, [-200, 200])
 
+   # Remove noisy distances
+   print("Removing noisy distances")
+   galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 5]
+   galcen_data = galcen_data.drop(columns=['parallax_over_error'])
+
+   print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
+
    # Final data cut
    galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+
+   print("Galactocentric data shape after constraining region: {}".format(galcen_data.shape))
 
    # Remove halo stars (condition taken from 1806.06038)                        
    v_dif = np.linalg.norm(np.array([galcen_data.v_x, galcen_data.v_y, galcen_data.v_z])-v_sun,
                         axis=0)                                               
    galcen_data['v_dif'] = v_dif                                                 
    galcen_data = galcen_data[galcen_data.v_dif<210.]
+
+   print("Galactocentric data shape after removing halo stars: {}".format(galcen_data.shape))
 
    galcen_data.reset_index(inplace=True, drop=True)
    
@@ -287,7 +303,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'benchmark_0_GPU'
+   custom_ext = 'full_run_parallax_cut_5'
    run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -308,6 +324,9 @@ if __name__ == '__main__':
    gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
    print(gaia_dr3.columns)
    icrs_data = gaia_dr3
+
+   parallax_over_error = icrs_data.parallax/icrs_data.parallax_error
+   icrs_data['parallax_over_error'] = parallax_over_error
 
    # icrs_data = gaia_dr3[icrs_data_columns]
    print("Initial size of sample: {}".format(icrs_data.shape))
