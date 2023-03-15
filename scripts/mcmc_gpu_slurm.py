@@ -115,7 +115,7 @@ def apply_initial_cut(icrs_data, run_out_path):
    # Remove noisy distances
    print("Removing noisy distances")
    galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
-   galcen_data = galcen_data[galcen_data.parallax_over_error > 5]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 8]
    galcen_data = galcen_data.drop(columns=['parallax_over_error'])
 
    print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
@@ -225,7 +225,7 @@ def log_likelihood(theta, args):
                                                             r_drift = True,
                                                             debug = False)
 
-      is_merge = False
+      is_merge = True
       if(is_merge):
          bin_collection.merge_bins([-2, -1])
 
@@ -307,7 +307,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'full_run_parallax_cut_5'
+   custom_ext = 'full_run_parallax_cut_8_merged_bins'
    run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
