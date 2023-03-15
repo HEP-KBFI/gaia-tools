@@ -4,15 +4,7 @@ sys.path.append("../scripts/")
 import covariance_generation
 import transformation_constants
 import data_analysis
-from mcmc_plots import *
 import numpy as np
-import emcee
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import pickle
-from pylab import *
-from scipy.optimize import curve_fit
-from cProfile import label
 import pandas as pd
 
 dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
