@@ -8,6 +8,7 @@ import sys
 sys.path.append("/home/sven/repos/gaia-tools/gaia_tools")
 
 USE_CUDA=True
+is_merge = True
 
 if USE_CUDA:
    import cupy as npcp
@@ -225,7 +226,6 @@ def log_likelihood(theta, args):
                                                             r_drift = True,
                                                             debug = False)
 
-      is_merge = True
       if(is_merge):
          bin_collection.merge_bins([-2, -1])
 
@@ -364,7 +364,11 @@ if __name__ == '__main__':
 
    # Nwalkers has to be at least 2*ndim
    nwalkers = args.nwalkers
-   ndim = args.nbins + 3
+
+   if(is_merge):
+      ndim = args.nbins - 1 + 3
+   else:
+      ndim = args.nbins + 3
    nsteps = args.nsteps
    theta_0 = random.sample(range(-300, -200), ndim)
 

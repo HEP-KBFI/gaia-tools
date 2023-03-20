@@ -13,7 +13,7 @@ singularity exec -B /local -B /home -B /scratch -B /scratch-persistent --nv $IMG
     python3 scripts/mcmc_gpu_slurm.py \
         --nwalkers 48 \
         --nsteps 6000 \
-        --nbins 9 \
+        --nbins 10 \
         --disk-scale 3000.0 \
         --vlos-dispersion-scale 21000.0 \
         --backend gpu

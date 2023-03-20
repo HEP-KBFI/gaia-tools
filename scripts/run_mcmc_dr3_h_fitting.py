@@ -2,6 +2,7 @@ import sys
 sys.path.append("../gaia_tools/")
 
 USE_CUDA=False
+is_merge = True
 
 if USE_CUDA:
    import cupy as npcp
@@ -24,7 +25,6 @@ import transformation_functions
 import helper_functions as helpfunc
 import data_analysis
 import covariance_generation as cov
-from import_functions import import_data
 from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram, plot_variance_distribution, plot_velocity_distribution
 import numpy as np
 import emcee
@@ -91,6 +91,8 @@ def apply_initial_cut(icrs_data, run_out_path):
                                           is_bayes = True,
                                           is_source_included = True)
 
+   print("Galactocentric data shape: {}".format(galcen_data.shape))
+
    galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
                                                                is_bayes = True,
                                                                Z_0 = z_0,
@@ -102,13 +104,34 @@ def apply_initial_cut(icrs_data, run_out_path):
                                                 R_0 = r_0)
    galcen_data = galcen_data.merge(cyl_cov, on='source_id')
 
+   print("Galactocentric data shape after merge with covariance info: {}".format(galcen_data.shape))
+
    # Plots before cut
    plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 15000])
    plot_distribution(galcen_data, run_out_path, 'z', -2000, 2000, [-200, 200])
 
+   # Remove noisy distances
+   print("Removing noisy distances")
+   galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 8]
+   galcen_data = galcen_data.drop(columns=['parallax_over_error'])
+
+   print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
+
    # Final data cut
    galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+
+   print("Galactocentric data shape after constraining region: {}".format(galcen_data.shape))
+
+   # Remove halo stars (condition taken from 1806.06038)                        
+   v_dif = np.linalg.norm(np.array([galcen_data.v_x, galcen_data.v_y, galcen_data.v_z])-v_sun,
+                        axis=0)                                               
+   galcen_data['v_dif'] = v_dif                                                 
+   galcen_data = galcen_data[galcen_data.v_dif<210.]
+
+   print("Galactocentric data shape after removing halo stars: {}".format(galcen_data.shape))
+
    galcen_data.reset_index(inplace=True, drop=True)
    
    return galcen_data
@@ -142,7 +165,8 @@ def log_likelihood(theta, args):
    if(debug):
       tic=timeit.default_timer()
 
-   likelihood_array = np.zeros(args.nbins)
+   n = len(bin_collection.bins)
+   likelihood_array = np.zeros(n)
 
    # now we need to calculate likelihood values for each bin
    for i, bin in enumerate(bin_collection.bins):
@@ -200,7 +224,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'EILERS_COMPARISON'
+   custom_ext = 'EILERS_COMPARISON_w_cut_8'
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -215,7 +239,22 @@ if __name__ == '__main__':
    dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
    #dr3_path = '/storage/users/benitoca/2022_v0_project/data/GaiaDR3/GaiaDR3_RV_RGB_fidelity.csv'
    gaia_dr3 = pd.read_csv(dr3_path)
-   icrs_data = gaia_dr3[icrs_data_columns]
+
+   r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
+   gaia_dr3['r_est_error'] = r_est_error
+
+   columns_to_drop = ['Vbroad', 'GRVSmag', 'Gal', 'Teff', 'logg',
+       '[Fe/H]', 'Dist', 'A0', 'RAJ2000', 'DEJ2000', 'e_RAJ2000', 'e_DEJ2000',
+       'RADEcorJ2000', 'B_Teff', 'b_Teff', 'b_logg', 'B_logg', 'b_Dist',
+       'B_Dist', 'b_AG', 'B_AG', 'b_A0', 'B_A0', 'Gmag', 'BPmag', 'RPmag', 'BP-RP']
+   gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
+   print(gaia_dr3.columns)
+   icrs_data = gaia_dr3
+
+   parallax_over_error = icrs_data.parallax/icrs_data.parallax_error
+   icrs_data['parallax_over_error'] = parallax_over_error
+
+   # icrs_data = gaia_dr3[icrs_data_columns]
    print("Initial size of sample: {}".format(icrs_data.shape))
 
    print('Applying cut...')
@@ -248,6 +287,9 @@ if __name__ == '__main__':
                                                          r_drift = True,
                                                          debug = False)
 
+   if(is_merge):
+      bin_collection.merge_bins([-2, -1])
+
    # Bootstrap errors
    for i, bin in enumerate(bin_collection.bins):
       if(USE_CUDA):
@@ -260,7 +302,11 @@ if __name__ == '__main__':
    # SETUP MCMC
    # Nwalkers has to be at least 2*ndim
    nwalkers = args.nwalkers
-   ndim = args.nbins + 2
+
+   if(is_merge):
+      ndim = args.nbins - 1 + 2
+   else:
+      ndim = args.nbins + 2
    nsteps = args.nsteps
    theta_0 = random.sample(range(-300, -200), ndim)
 
