@@ -1,6 +1,7 @@
 # Gaia Tools
 
-This repository contains code to help with general Gaia data handling and to perform a Bayesian analysis of the kinematics of stars in the Milky Way as described in [XXXX].
+This repository contains code to help with general Gaia data handling and to perform a Bayesian analysis of the kinematics of stars in the Milky Way as described in A Bayesian Estimation of the Milky Way’s Circular Velocity Curve
+using Gaia DR3.
 
 
 ## Requirements
@@ -27,7 +28,7 @@ To install the project as an importable package do the following:
 
 ## Data
 
-The input data used in the paper XXXX can be found on Zenodo at: [XXXX].
+The input data used in the paper can be found on [Zenodo](https://zenodo.org/record/7755721#.ZBw3QI5BxQp).
 
 
 ## Tutorials
