@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
+dr3_path ='/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
 gaia_dr3 = pd.read_csv(dr3_path)
 
 r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
@@ -79,9 +80,9 @@ def apply_initial_cut(icrs_data):
 
    # Final data cut
    galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
+   print("Galactocentric data shape after constraining region in r: {}".format(galcen_data.shape))
    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
-
-   print("Galactocentric data shape after constraining region: {}".format(galcen_data.shape))
+   print("Galactocentric data shape after constraining region in z: {}".format(galcen_data.shape))
 
    # Remove halo stars (condition taken from 1806.06038)                        
    v_dif = np.linalg.norm(np.array([galcen_data.v_x, galcen_data.v_y, galcen_data.v_z])-v_sun,
@@ -102,4 +103,4 @@ print(galcen_data.shape)
 gaia_dr3 = gaia_dr3.merge(galcen_data, on='source_id')[gaia_dr3.columns]
 
 print('Dumping to file.')
-gaia_dr3.to_csv('/local/sven/v0_project_archive/Poder_vc_DR3_input.csv', index=False)
+#gaia_dr3.to_csv('/local/sven/v0_project_archive/Poder_vc_DR3_input.csv', index=False)
