@@ -1,8 +1,8 @@
 import sys
 sys.path.append("../gaia_tools/")
 
-USE_CUDA=False
-is_merge = True
+USE_CUDA=True
+is_merge = False
 
 if USE_CUDA:
    import cupy as npcp
@@ -69,8 +69,12 @@ def load_galactic_parameters():
 
    # Eilers et al orbital parmaeters
    r_0 = 8122
+
    z_0 = 25
 
+   # Referee check
+   z_0 = 0
+   
    v_sun = transformation_constants.V_SUN
    v_sun[0][0] = 11.1
    v_sun[1][0] = 245.8
@@ -113,7 +117,7 @@ def apply_initial_cut(icrs_data, run_out_path):
    # Remove noisy distances
    print("Removing noisy distances")
    galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
-   galcen_data = galcen_data[galcen_data.parallax_over_error > 8]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 5]
    galcen_data = galcen_data.drop(columns=['parallax_over_error'])
 
    print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
@@ -224,19 +228,13 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'EILERS_COMPARISON_w_cut_8'
+   custom_ext = 'EILERS_COMPARISON_Z_0_CHECK'
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
-   print('Importing necessary column names...')
-   #icrs_data_columns = pd.read_csv('/home/svenpoder/DATA/Gaia_2MASS Data_DR2/gaia_rv_data_bayes.csv', nrows = 10).columns
-   icrs_data_columns = pd.read_csv('/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv', nrows = 10).columns
-   #icrs_data_columns = pd.read_csv('/storage/users/benitoca/2022_v0_project/data/gaia_rv_data_bayes.csv', $
-   #                                  nrows = 10).columns
-
    print('Importing DR3...')
-   #dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
    dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
+   dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
    #dr3_path = '/storage/users/benitoca/2022_v0_project/data/GaiaDR3/GaiaDR3_RV_RGB_fidelity.csv'
    gaia_dr3 = pd.read_csv(dr3_path)
 
@@ -254,7 +252,6 @@ if __name__ == '__main__':
    parallax_over_error = icrs_data.parallax/icrs_data.parallax_error
    icrs_data['parallax_over_error'] = parallax_over_error
 
-   # icrs_data = gaia_dr3[icrs_data_columns]
    print("Initial size of sample: {}".format(icrs_data.shape))
 
    print('Applying cut...')
