@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../gaia_tools/")
 
-USE_CUDA=True
+USE_CUDA=False
 is_merge = False
 
 if USE_CUDA:
@@ -228,13 +228,13 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'EILERS_COMPARISON_Z_0_CHECK'
+   custom_ext = 'EILERS_COMPARISON_w_cut_5_Z_0_CHECK'
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
    print('Importing DR3...')
-   dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
-   dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
+   dr3_path = '/local/sven/v0_project_archive/GaiaDR3_RV_RGB_fidelity.csv'
+   #dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
    #dr3_path = '/storage/users/benitoca/2022_v0_project/data/GaiaDR3/GaiaDR3_RV_RGB_fidelity.csv'
    gaia_dr3 = pd.read_csv(dr3_path)
 

@@ -5,7 +5,7 @@ IMG=/home/software/singularity/base.simg
 
 # singularity exec -B /home -B /scratch -B /scratch-persistent --nv $IMG python3 scripts/gpu_test_script.py
 
-singularity exec -B /local -B /home -B /scratch -B /scratch-persistent --nv $IMG \
+singularity exec -B /local -B /home -B /scratch --nv $IMG \
     python3 run_mcmc_dr3_h_fitting.py --nwalkers 48 \
                         --nsteps 8000 \
                         --nbins 10 \
