@@ -51,40 +51,37 @@ def parse_args():
    parser.add_argument('--backend', type=str)
    return parser.parse_args()
 
-def load_galactic_parameters():
+def load_galactic_parameters(r_0 = 8500):
    
    # # Initial Galactocentric distance
-   # r_0 = 8277
+   r_0 = r_0
 
    # # Initial height over Galactic plane
-   # z_0 = 25
-
-   # # Initial solar vector
-   # v_sun = transformation_constants.V_SUN
-   # v_sun[0][0] = 11.1
-   # v_sun[1][0] = 251.5
-   # v_sun[2][0] = 8.59
-
-   # -----------------------------------
-
-   # Eilers et al orbital parmaeters
-   r_0 = 8122
-
    z_0 = 25
 
-   # Referee check
-   z_0 = 0
-   
+   # # Initial solar vector
    v_sun = transformation_constants.V_SUN
    v_sun[0][0] = 11.1
-   v_sun[1][0] = 245.8
-   v_sun[2][0] = 7.8
+   v_sun[1][0] = 251.5*(r_0/8277)
+   v_sun[2][0] = 8.59*(r_0/8277)
+
+   # -----------------------------------
+   # Referee check
+   # z_0 = 0
+
+   # Eilers et al orbital parmaeters
+   # r_0 = 8122
+   # z_0 = 25
+   # v_sun = transformation_constants.V_SUN
+   # v_sun[0][0] = 11.1
+   # v_sun[1][0] = 245.8
+   # v_sun[2][0] = 7.8
    
    return r_0, z_0, v_sun
 
-def apply_initial_cut(icrs_data, run_out_path):
+def apply_initial_cut(icrs_data, run_out_path, r_0 = 8500):
 
-   r_0, z_0, v_sun = load_galactic_parameters()
+   r_0, z_0, v_sun = load_galactic_parameters(r_0)
 
    galcen_data = data_analysis.get_transformed_data(icrs_data,
                                           include_cylindrical = True,
@@ -228,7 +225,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'EILERS_COMPARISON_w_cut_5_Z_0_CHECK'
+   custom_ext = 'R0_8500_CHECK_fixed'
    run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -256,7 +253,6 @@ if __name__ == '__main__':
 
    print('Applying cut...')
    galcen_data = apply_initial_cut(icrs_data, run_out_path)
-   #galcen_data = galcen_data[::10]
    print("Final size of sample {}".format(galcen_data.shape))
    
    # Declare final sample ICRS data and covariance matrices
