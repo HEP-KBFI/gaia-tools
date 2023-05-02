@@ -3,8 +3,6 @@ import sys
 sys.path.append("../gaia_tools/")
 import data_analysis
 import covariance_generation as cov
-from import_functions import import_data
-from data_plot import sample_distribution_galactic_coords, plot_radial_distribution, plot_distribution, display_polar_histogram, plot_variance_distribution, plot_velocity_distribution
 import numpy as np
 import emcee
 from functools import reduce
@@ -18,6 +16,91 @@ import argparse
 import random
 import pandas as pd
 import helper_functions as helpfunc 
+
+def load_galactic_parameters():
+   
+   # # Initial Galactocentric distance
+   r_0 = 8277
+
+   # # Initial height over Galactic plane
+   z_0 = 25
+
+   # # Initial solar vector
+   v_sun = transformation_constants.V_SUN
+   v_sun[0][0] = 11.1
+   v_sun[1][0] = 251.5*(r_0/8277)
+   v_sun[2][0] = 8.59*(r_0/8277)
+
+   # -----------------------------------
+   # Referee check
+   # z_0 = 0
+
+   # Eilers et al orbital parmaeters
+   # r_0 = 8122
+   # z_0 = 25
+   # v_sun = transformation_constants.V_SUN
+   # v_sun[0][0] = 11.1
+   # v_sun[1][0] = 245.8
+   # v_sun[2][0] = 7.8
+   
+   return r_0, z_0, v_sun
+
+def apply_initial_cut(icrs_data, run_out_path):
+
+   r_0, z_0, v_sun = load_galactic_parameters()
+
+   galcen_data = data_analysis.get_transformed_data(icrs_data,
+                                          include_cylindrical = True,
+                                          z_0 = z_0,
+                                          r_0 = r_0,
+                                          v_sun = v_sun,
+                                          debug = True,
+                                          is_bayes = True,
+                                          is_source_included = True)
+
+   print("Galactocentric data shape: {}".format(galcen_data.shape))
+
+   galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
+                                                               is_bayes = True,
+                                                               Z_0 = z_0,
+                                                               R_0 = r_0)
+
+   cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
+                                                C = galactocentric_cov,
+                                                Z_0 = z_0,
+                                                R_0 = r_0)
+   galcen_data = galcen_data.merge(cyl_cov, on='source_id')
+
+   print("Galactocentric data shape after merge with covariance info: {}".format(galcen_data.shape))
+
+
+   # Remove noisy distances
+   print("Removing noisy distances")
+   galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 5]
+   galcen_data = galcen_data.drop(columns=['parallax_over_error'])
+
+   print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
+
+   # Final data cut
+   galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
+   galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
+
+   print("Galactocentric data shape after constraining region: {}".format(galcen_data.shape))
+
+   # Remove halo stars (condition taken from 1806.06038)                        
+   v_dif = np.linalg.norm(np.array([galcen_data.v_x, galcen_data.v_y, galcen_data.v_z])-v_sun,
+                        axis=0)                                               
+   galcen_data['v_dif'] = v_dif                                                 
+   galcen_data = galcen_data[galcen_data.v_dif<210.]
+
+   print("Galactocentric data shape after removing halo stars: {}".format(galcen_data.shape))
+
+   galcen_data.reset_index(inplace=True, drop=True)
+   
+   return galcen_data
+
+
 
 dtime = dt.time()
 now=dt.datetime.now()
@@ -34,111 +117,56 @@ parser.add_argument('--vlos-dispersion-scale', type=float)
 args = parser.parse_args()
 
 
-# galcen_data = pd.read_csv('/home/svenpoder/data/baseline_sample_old.csv')
-# print(galcen_data.shape)
-# icrs_data = pd.read_csv('/home/svenpoder/data/gaia_rv_data_bayes.csv')
-# print(icrs_data.shape)
-# icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
-# icrs_data.reset_index(inplace=True, drop=True)
-
-
-print('Grabbing needed columns')
-icrs_data = pd.read_csv('/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv', nrows = 10)
-
-print('Importing DR3')
-path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
-gaia_dr3 = pd.read_csv(path)
-
-icrs_data = gaia_dr3[icrs_data.columns]
-
-
-# Create outpath for current run
-run_out_path = "../out/mcmc_runs/{}_range{}".format(start_datetime, args.cut_range)
+print('Creating outpath for current run...')
+custom_ext = 'VC_ONLY_default_params'
+run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
 Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
-# print("Photometric cut..")
-# sample_IDs = photometric_cut.get_sample_IDs(run_out_path, args.cut_range, True)
+print('Importing DR3...')
+dr3_path = '/local/sven/v0_project_archive/GaiaDR3_RV_RGB_fidelity.csv'
+#dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
+#dr3_path = '/storage/users/benitoca/2022_v0_project/data/GaiaDR3/GaiaDR3_RV_RGB_fidelity.csv'
+gaia_dr3 = pd.read_csv(dr3_path)
 
-# # The path containing the initial ICRS data with Bayesian distance estimates.
-# my_path = "/local/sven/gaia_tools_data/gaia_rv_data_bayes.csv"
+r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
+gaia_dr3['r_est_error'] = r_est_error
 
-# # Import ICRS data
-# icrs_data = import_data(path = my_path, is_bayes = True, debug = True)
-# icrs_data = icrs_data.merge(sample_IDs, on='source_id', suffixes=("", "_y"))
-# icrs_data.reset_index(inplace=True, drop=True)
+columns_to_drop = ['Vbroad', 'GRVSmag', 'Gal', 'Teff', 'logg',
+      '[Fe/H]', 'Dist', 'A0', 'RAJ2000', 'DEJ2000', 'e_RAJ2000', 'e_DEJ2000',
+      'RADEcorJ2000', 'B_Teff', 'b_Teff', 'b_logg', 'B_logg', 'b_Dist',
+      'B_Dist', 'b_AG', 'B_AG', 'b_A0', 'B_A0', 'Gmag', 'BPmag', 'RPmag', 'BP-RP']
+gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
+print(gaia_dr3.columns)
+icrs_data = gaia_dr3
 
-print("Size of sample after diagonal cut in ROI {}".format(icrs_data.shape))
+parallax_over_error = icrs_data.parallax/icrs_data.parallax_error
+icrs_data['parallax_over_error'] = parallax_over_error
 
-## TRANSFORMATION CONSTANTS
-v_sun = transformation_constants.V_SUN
+print("Initial size of sample: {}".format(icrs_data.shape))
 
-#Eilers et al.
-v_sun[0][0] = 11.1
-v_sun[1][0] = 245.8
-v_sun[2][0] = 7.8
-z_0 = 25
-r_0 = 8122
 
-# z_0 = transformation_constants.Z_0
-# r_0 = transformation_constants.R_0
-
-galcen_data = data_analysis.get_transformed_data(icrs_data,
-                                       include_cylindrical = True,
-                                       z_0 = z_0,
-                                       r_0 = r_0,
-                                       v_sun = v_sun,
-                                       debug = True,
-                                       is_bayes = True,
-                                       is_source_included = True)
-
-galactocentric_cov = cov.generate_galactocentric_covmat(icrs_data, 
-                                                            is_bayes = True,
-                                                            Z_0 = z_0,
-                                                            R_0 = r_0)
-
-cyl_cov = cov.transform_cov_cylindirical(galcen_data, 
-                                             C = galactocentric_cov,
-                                             Z_0 = z_0,
-                                             R_0 = r_0)
-
-galcen_data = galcen_data.merge(cyl_cov, on='source_id')
-
-print(galcen_data.columns)
-
-# Selection plots
-plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 15000])
-plot_distribution(galcen_data, run_out_path, 'z', -2000, 2000, [-200, 200])
-
-# Final data selection
-galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
-galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
-galcen_data.reset_index(inplace=True, drop=True)
+print('Applying cut...')
+galcen_data = apply_initial_cut(icrs_data, run_out_path)
 print("Final size of sample {}".format(galcen_data.shape))
 
+# Declare final sample ICRS data and covariance matrices
 icrs_data = icrs_data.merge(galcen_data, on='source_id')[icrs_data.columns]
+C_icrs = cov.generate_covmat(icrs_data)
 
-# Sample distribution plots
-sample_distribution_galactic_coords(icrs_data, run_out_path)
-plot_radial_distribution(icrs_data, run_out_path)
-fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 15000), norm_max=5000, title = "Distribution of data on the Galactic plane")
-
-min_r = np.min(galcen_data.r)
-max_r = np.max(galcen_data.r)
+r_0, z_0, v_sun = load_galactic_parameters()
+r_min = 5000/r_0
+r_max = 15000/r_0
 
 # Generate bins
 bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
-                                                      theta = (0, 1),
-                                                      BL_r_min = 5000,
-                                                      BL_r_max = 15000,
+                                                      theta = r_0,
+                                                      BL_r_min = r_min,
+                                                      BL_r_max = r_max,
                                                       BL_z_min = -200,
                                                       BL_z_max = 200,
                                                       N_bins = (args.nbins, 1),
-                                                      r_drift = False,
+                                                      r_drift = True,
                                                       debug = False)
-
-# Plots the velocity and velocity variance distribution of first 4 bins.
-plot_velocity_distribution(bin_collection.bins[0:4], run_out_path, True)
-plot_variance_distribution(bin_collection.bins[0:4], 'v_phi', run_out_path)
 
 # A parameter computation
 for i, bin in enumerate(bin_collection.bins):
