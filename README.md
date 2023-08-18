@@ -1,7 +1,6 @@
 # Gaia Tools
 
-This repository contains code to help with general Gaia data handling and to perform a Bayesian analysis of the kinematics of stars in the Milky Way as described in A Bayesian Estimation of the Milky Way’s Circular Velocity Curve
-using Gaia DR3.
+This repository contains code to help with general Gaia data handling and to perform a Bayesian analysis of the kinematics of stars in the Milky Way as described in A Bayesian Estimation of the Milky Way’s Circular Velocity Curve using Gaia DR3 (Põder, Benito et al. 2023).
 
 
 ## Requirements
