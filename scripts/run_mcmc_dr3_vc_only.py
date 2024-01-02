@@ -17,6 +17,8 @@ import random
 import pandas as pd
 import helper_functions as helpfunc 
 
+is_merge = True
+
 def load_galactic_parameters():
    
    # # Initial Galactocentric distance
@@ -77,13 +79,13 @@ def apply_initial_cut(icrs_data, run_out_path):
    # Remove noisy distances
    print("Removing noisy distances")
    galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
-   galcen_data = galcen_data[galcen_data.parallax_over_error > 5]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 20]
    galcen_data = galcen_data.drop(columns=['parallax_over_error'])
 
    print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
 
    # Final data cut
-   galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
+   galcen_data = galcen_data[(galcen_data.r < 14000) & (galcen_data.r > 5000)]
    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
 
    print("Galactocentric data shape after constraining region: {}".format(galcen_data.shape))
@@ -118,24 +120,32 @@ args = parser.parse_args()
 
 
 print('Creating outpath for current run...')
-custom_ext = 'VC_ONLY_default_params'
+custom_ext = 'VC_ONLY_parallax_cut_20'
 run_out_path = "../out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
 Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
 print('Importing DR3...')
-dr3_path = '/local/sven/v0_project_archive/GaiaDR3_RV_RGB_fidelity.csv'
+#dr3_path = '/local/sven/v0_project_archive/GaiaDR3_RV_RGB_fidelity.csv'
+dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity_skinny.csv'
 #dr3_path = '/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
 #dr3_path = '/storage/users/benitoca/2022_v0_project/data/GaiaDR3/GaiaDR3_RV_RGB_fidelity.csv'
 gaia_dr3 = pd.read_csv(dr3_path)
 
-r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
-gaia_dr3['r_est_error'] = r_est_error
+# OLD DISTANCE ESTIMATE
+# r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
+# gaia_dr3['r_est_error'] = r_est_error
 
-columns_to_drop = ['Vbroad', 'GRVSmag', 'Gal', 'Teff', 'logg',
-      '[Fe/H]', 'Dist', 'A0', 'RAJ2000', 'DEJ2000', 'e_RAJ2000', 'e_DEJ2000',
-      'RADEcorJ2000', 'B_Teff', 'b_Teff', 'b_logg', 'B_logg', 'b_Dist',
-      'B_Dist', 'b_AG', 'B_AG', 'b_A0', 'B_A0', 'Gmag', 'BPmag', 'RPmag', 'BP-RP']
-gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
+# SWAP FOR GSPPHOT
+r_est = gaia_dr3.Dist                                               
+gaia_dr3['r_est'] = r_est 
+r_est_error = (gaia_dr3.B_Dist - gaia_dr3.b_Dist)/2                 
+gaia_dr3['r_est_error'] = r_est_error 
+
+# columns_to_drop = ['Vbroad', 'GRVSmag', 'Gal', 'Teff', 'logg',
+#       '[Fe/H]', 'Dist', 'A0', 'RAJ2000', 'DEJ2000', 'e_RAJ2000', 'e_DEJ2000',
+#       'RADEcorJ2000', 'B_Teff', 'b_Teff', 'b_logg', 'B_logg', 'b_Dist',
+#       'B_Dist', 'b_AG', 'B_AG', 'b_A0', 'B_A0', 'Gmag', 'BPmag', 'RPmag', 'BP-RP']
+# gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
 print(gaia_dr3.columns)
 icrs_data = gaia_dr3
 
@@ -155,7 +165,7 @@ C_icrs = cov.generate_covmat(icrs_data)
 
 r_0, z_0, v_sun = load_galactic_parameters()
 r_min = 5000/r_0
-r_max = 15000/r_0
+r_max = 14000/r_0
 
 # Generate bins
 bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
@@ -167,6 +177,8 @@ bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                       N_bins = (args.nbins, 1),
                                                       r_drift = True,
                                                       debug = False)
+if(is_merge):
+   bin_collection.merge_bins([-2, -1])
 
 # A parameter computation
 for i, bin in enumerate(bin_collection.bins):
@@ -222,7 +234,11 @@ print("{0} CPUs".format(ncpu))
 
 # Nwalkers has to be at least 2*ndim
 nwalkers = args.nwalkers
-ndim = args.nbins
+
+if(is_merge):
+   ndim = args.nbins - 1
+else: 
+   ndim = args.nbins
 nsteps = args.nsteps
 theta_0 = random.sample(range(-300, -150), ndim)
 

@@ -8,7 +8,7 @@ import sys
 sys.path.append("/home/sven/repos/gaia-tools/gaia_tools")
 
 USE_CUDA=True
-is_merge = True
+is_merge = False
 
 if USE_CUDA:
    import cupy as npcp
@@ -110,19 +110,19 @@ def apply_initial_cut(icrs_data, run_out_path):
    print("Galactocentric data shape after merge with covariance info: {}".format(galcen_data.shape))
 
    # Plots before cut
-   plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 15000])
+   plot_distribution(galcen_data, run_out_path, 'r', 0, 20000, [5000, 14000])
    plot_distribution(galcen_data, run_out_path, 'z', -2000, 2000, [-200, 200])
 
    # Remove noisy distances
    print("Removing noisy distances")
    galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
-   galcen_data = galcen_data[galcen_data.parallax_over_error > 8]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 10]
    galcen_data = galcen_data.drop(columns=['parallax_over_error'])
 
    print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
 
    # Final data cut
-   galcen_data = galcen_data[(galcen_data.r < 15000) & (galcen_data.r > 5000)]
+   galcen_data = galcen_data[(galcen_data.r < 14000) & (galcen_data.r > 5000)]
    galcen_data = galcen_data[(galcen_data.z < 200) & (galcen_data.z > -200)]
 
    print("Galactocentric data shape after constraining region: {}".format(galcen_data.shape))
@@ -213,7 +213,7 @@ def log_likelihood(theta, args):
          galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
       
       r_min = 5000/8277
-      r_max = 15000/8277
+      r_max = 14000/8277
 
       # # Generate bins
       bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
@@ -307,7 +307,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'full_run_parallax_cut_8_merged_bins'
+   custom_ext = 'full_run_parallax_cut_10_9_bins_true_rtx'
    run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -347,13 +347,13 @@ if __name__ == '__main__':
    # Plots after cut
    sample_distribution_galactic_coords(icrs_data, run_out_path)
    plot_radial_distribution(icrs_data, run_out_path)
-   fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 15000), norm_max=5000, title = "Distribution of data on the Galactic plane")
+   fig2 = display_polar_histogram(galcen_data, run_out_path, r_limits=(0, 14000), norm_max=5000, title = "Distribution of data on the Galactic plane")
 
    # Generate bins
    bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
                                                          theta = (0, 1),
                                                          BL_r_min = 5000,
-                                                         BL_r_max = 15000,
+                                                         BL_r_max = 14000,
                                                          BL_z_min = -200,
                                                          BL_z_max = 200,
                                                          N_bins = (args.nbins, 1),

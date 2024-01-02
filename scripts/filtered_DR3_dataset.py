@@ -7,17 +7,24 @@ import data_analysis
 import numpy as np
 import pandas as pd
 
-dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
-dr3_path ='/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
+dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity_skinny.csv'
+# dr3_path = '/local/mariacst/2022_v0_project/data/GaiaDR3_RV_RGB_fidelity.csv'
+# dr3_path ='/home/svenpoder/DATA/Gaia_DR3/GaiaDR3_RV_RGB_fidelity.csv'
 gaia_dr3 = pd.read_csv(dr3_path)
 
-r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
-gaia_dr3['r_est_error'] = r_est_error
+# OLD DISTANCE ESTIMATE
+# r_est_error = (gaia_dr3.B_rpgeo - gaia_dr3.b_rpgeo)/2
+# gaia_dr3['r_est_error'] = r_est_error
 
-columns_to_drop = ['Unnamed: 0', 'Vbroad', 'GRVSmag', 'Gal', 'Teff', 'logg',
-       '[Fe/H]', 'Dist', 'A0', 'RAJ2000', 'DEJ2000', 'e_RAJ2000', 'e_DEJ2000',
-       'RADEcorJ2000', 'B_Teff', 'b_Teff', 'b_logg', 'B_logg', 'b_Dist',
-       'B_Dist', 'b_AG', 'B_AG', 'b_A0', 'B_A0', 'Gmag', 'BPmag', 'RPmag', 'BP-RP']
+gaia_dr3['r_est_rpgeo'] = gaia_dr3.r_est
+
+# SWAP FOR GSPPHOT
+r_est = gaia_dr3.Dist                                               
+gaia_dr3['r_est'] = r_est 
+r_est_error = (gaia_dr3.B_Dist - gaia_dr3.b_Dist)/2                 
+gaia_dr3['r_est_error'] = r_est_error 
+
+columns_to_drop = ['Unnamed: 0', 'Unnamed: 0.1']
 gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
 
 parallax_over_error = gaia_dr3.parallax/gaia_dr3.parallax_error
@@ -73,7 +80,7 @@ def apply_initial_cut(icrs_data):
    # Remove noisy distances
    print("Removing noisy distances")
    galcen_data['parallax_over_error'] = icrs_data.parallax_over_error[galcen_data.source_id == icrs_data.source_id]
-   galcen_data = galcen_data[galcen_data.parallax_over_error > 5]
+   galcen_data = galcen_data[galcen_data.parallax_over_error > 20]
    galcen_data = galcen_data.drop(columns=['parallax_over_error'])
 
    print("Galactocentric data shape after removing noisy distances: {}".format(galcen_data.shape))
@@ -101,6 +108,16 @@ galcen_data = apply_initial_cut(gaia_dr3)
 print(galcen_data.shape)
 
 gaia_dr3 = gaia_dr3.merge(galcen_data, on='source_id')[gaia_dr3.columns]
+print(gaia_dr3.shape)
 
+print(gaia_dr3.r_est)
+print(gaia_dr3.Dist)
+
+columns_to_drop = ['r_est', 'r_est_error']
+gaia_dr3 = gaia_dr3.drop(columns=columns_to_drop)
+
+gaia_dr3.rename(columns={"Dist": "rGSPPhot", "b_Dist": "b_rGSPPhot", "B_Dist" :" B_rGSPPhot"}, inplace=True)
+
+print(gaia_dr3.columns)
 print('Dumping to file.')
-#gaia_dr3.to_csv('/local/sven/v0_project_archive/Poder_vc_DR3_input.csv', index=False)
+gaia_dr3.to_csv('/local/sven/v0_project_archive/Poder_vc_DR3_input_v2.csv', index=False)
