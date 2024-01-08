@@ -241,6 +241,7 @@ def get_transformed_data(data_icrs,
         galcen_out = NUMPY_LIB.concatenate((galcen_out, coords_cyl, vel_cyl), axis=1)
 
     if(is_source_included):
+        print(dtype(data_icrs[:,0]))
         assert dtype == np.float64, "Data type should be float64"
         galcen_out = NUMPY_LIB.concatenate(([galcen_out, NUMPY_LIB.array([data_icrs[:,0]]).T]), axis=1)
     
