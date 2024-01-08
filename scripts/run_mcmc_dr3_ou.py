@@ -238,6 +238,9 @@ def log_prior(theta, args):
 
    r0_prior = (theta[-1] > 7800 and theta[-1] < 8500)
 
+   # Testing idea of lower values
+   r0_prior = (theta[-1] > 8000 and theta[-1] < 8200)
+
    if vc_prior_d and vc_prior_u and disk_prior and vlos_prior and r0_prior:
          return 0.0
    return -np.inf
@@ -284,8 +287,8 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'OU_run'
-   run_out_path = "/out/mcmc_runs_OU/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
+   custom_ext = 'OU_run_small_R0_prior'
+   run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs_OU/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
    print('Importing DR3...')
