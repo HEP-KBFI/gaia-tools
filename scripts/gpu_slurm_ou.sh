@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=ou_run
 #SBATCH -p gpu
-#SBATCH --gres gpu:rtx:6
+#SBATCH --gres gpu:rtx:2
 #SBATCH --mem-per-gpu=10G
 #SBATCH -e /home/sven/repos/gaia-tools/out/ou_run_logs/error__%A.log
 #SBATCH -o /home/sven/repos/gaia-tools/out/ou_run_logs/output__%A.log
@@ -18,4 +18,5 @@ singularity exec -B /local -B /home -B /scratch --nv $IMG \
         --nbins 10 \
         --disk-scale 3000.0 \
         --vlos-dispersion-scale 21000.0 \
-        --backend gpu
+        --backend gpu \
+        --distance-scaling 0.9

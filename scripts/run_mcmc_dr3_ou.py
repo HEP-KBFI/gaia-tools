@@ -55,6 +55,7 @@ def parse_args():
    parser.add_argument('--disk-scale', type=float)
    parser.add_argument('--vlos-dispersion-scale', type=float)
    parser.add_argument('--backend', type=str)
+   parser.add_argument('--distance-scaling', type=float)
    return parser.parse_args()
 
 def load_galactic_parameters():
@@ -189,8 +190,11 @@ def log_likelihood(theta, args):
       else:
          galcen_data = pd.DataFrame(galcen_data, columns=final_data_columns)
 
+      #r_min = 6000/8178
       r_min = 6000/8178
+
       r_max = 25500/8178
+      r_max = 24000/8178
 
       # # Generate bins
       bin_collection = data_analysis.get_collapsed_bins(data = galcen_data,
@@ -220,6 +224,7 @@ def log_likelihood(theta, args):
          likelihood_value = bin.get_likelihood_w_asymmetry(theta[i], drop_approx=True, debug=False)
 
          likelihood_array[i] = likelihood_value
+   #print(likelihood_array, flush=True)
    likelihood_sum = np.sum(likelihood_array)
 
    if(debug):
@@ -239,7 +244,7 @@ def log_prior(theta, args):
    r0_prior = (theta[-1] > 7800 and theta[-1] < 8500)
 
    # Testing idea of lower values
-   r0_prior = (theta[-1] > 8000 and theta[-1] < 8200)
+   # r0_prior = (theta[-1] > 8000 and theta[-1] < 8200)
 
    if vc_prior_d and vc_prior_u and disk_prior and vlos_prior and r0_prior:
          return 0.0
@@ -287,7 +292,7 @@ if __name__ == '__main__':
    start_datetime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
    print('Creating outpath for current run...')
-   custom_ext = 'OU_run_small_R0_prior'
+   custom_ext = 'OU_run_distance_scaling_{}'.format(args.distance_scaling)
    run_out_path = "/home/sven/repos/gaia-tools/out/mcmc_runs_OU/{}_{}_{}".format(start_datetime, args.nwalkers, custom_ext)
    Path(run_out_path).mkdir(parents=True, exist_ok=True)
 
@@ -298,6 +303,11 @@ if __name__ == '__main__':
    print(gaia_dr3.columns)
    icrs_data = gaia_dr3
 
+   ### APPLY DISTANCE SCALING
+
+   print(icrs_data['r_est'][0:10])
+   icrs_data['r_est'] = icrs_data['r_est']*args.distance_scaling
+   print(icrs_data['r_est'][0:10])
 
    print("Initial size of sample: {}".format(icrs_data.shape))
 
