@@ -79,3 +79,7 @@ def bubble_sort(items):
     docs/
         index.md  # The documentation homepage.
         ...       # Other markdown pages, images and other files.
+
+
+![Joonis 1](figures/joonis1.png)
+

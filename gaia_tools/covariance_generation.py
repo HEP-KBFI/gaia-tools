@@ -41,7 +41,7 @@ def generate_covmatrices(df,
     R_0 = r_0
 
     assert len(df) > 0, "Error! No data found in input DataFrame!"
-    assert len(df_crt) > 0, "Error! No data found in input galactocentric DataFrame!"
+    #assert len(df_crt) > 0, "Error! No data found in input galactocentric DataFrame!"
 
     if(debug):
         print("Generating covariance matrices from input data..")
