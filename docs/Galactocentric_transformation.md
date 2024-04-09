@@ -13,4 +13,26 @@ All Gaia parameters can be found [here.](https://gea.esac.esa.int/archive/docume
 Transforming ICRS coordinates to Galactocentric x,y,z.
 
 Here's an example:
+```py
+from data_analysis import get_transformed_data
+df=pd.read_csv(path)
+df_new=get_transformed_data(df,
+                        include_cylindrical = False,
+                        z_0 = 17,
+                        r_0 = 8178,
+                        v_sun = ([[11.1], [232.24], [7.25]])
+                        is_bayes = False,
+                        is_output_frame = False,
+                        is_source_included = False,
+                        NUMPY_LIB = np,
+                        dtype = np.float64)
+```
+ICRS:
 
+![ICRS](figures/ICRS.png)
+
+<img src='figures/ICRS.png' alt='ICRS' title='ICRS' width='100' height='100'/>
+
+Galactocentric Cartesian:
+
+![Cartesian](figures/Cartesian.png)
