@@ -36,5 +36,3 @@ ICRS:
 Galactocentric Cartesian:
 
 ![Cartesian](figures/Cartesian.png)
-
-test
