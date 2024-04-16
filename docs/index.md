@@ -1,6 +1,6 @@
 # Homepage
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+This is the gaia tools documentation!
 
 ## Code Annotation Examples
 
