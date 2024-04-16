@@ -10,7 +10,7 @@ graph TD
 
 All Gaia parameters can be found [here.](https://gea.esac.esa.int/archive/documentation/GDR2/Gaia_archive/chap_datamodel/sec_dm_main_tables/ssec_dm_gaia_source.html) 
 ## Positional observables
-Transforming ICRS coordinates to Galactocentric x,y,z.
+Transforming ICRS coordinates to Galactocentric x, y, z.
 
 Here's an example:
 ```py
@@ -31,7 +31,7 @@ ICRS:
 
 ![ICRS](figures/ICRS.png)
 
-<img src='figures/ICRS.png' alt='ICRS' title='ICRS' width='100' height='100'/>
+<!---<img src='figures/ICRS.png' alt='ICRS' title='ICRS' width='100' height='100'/>-->
 
 Galactocentric Cartesian:
 
