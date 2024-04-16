@@ -4,7 +4,7 @@ on:
     branches: 
      - master
      - main
-     - Documentation
+     - gh-pages
 permissions:
   contents: write
 jobs:
