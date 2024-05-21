@@ -47,18 +47,13 @@ markdown_extensions:
  - pymdownx.superfences
  - pymdownx.mark
  - attr_list
+ - md_in_html
  - pymdownx.emoji:
      emoji_index: !!python/name:materialx.emoji.twemoji
      emoji_generator: !!python/name:materialx.emoji.to_svg
 
 copyright:
   &copy 2024 <a href="https://github.com/eleliis22"  target="_blank" rel="noopener">Ele-Liis Evestus</a>
-
-markdown_extensions:
-  - pymdownx.arithmatex:
-      generic: true
-  - attr_list
-  - md_in_html
 
 extra_javascript:
   - javascripts/mathjax.js
@@ -68,4 +63,8 @@ extra_javascript:
 plugins:
   - search
   - mermaid2
-  - awesome-pages
+
+nav:
+  - index.md
+  - Galactocentric_transformation.md
+  - Error_propagation.md
