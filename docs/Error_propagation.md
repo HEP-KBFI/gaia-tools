@@ -40,3 +40,5 @@ generate_covmatrices(data_icrs,
                          is_unpack_velocity = False,
                          debug = False)
 ```
+
+![Errorpropagation](figures/errorpropagation.png)
