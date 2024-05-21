@@ -68,3 +68,4 @@ extra_javascript:
 plugins:
   - search
   - mermaid2
+  - awesome-pages

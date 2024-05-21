@@ -48,7 +48,7 @@ def generate_covmatrices(df,
         tic=timeit.default_timer()
 
     # Get covariance matrix from ICRS coordinates
-    C = generate_covmat(df)
+    C = generate_covmat(df, is_parallax=not is_bayes)
 
     if(transform_to_galcen is True):
 

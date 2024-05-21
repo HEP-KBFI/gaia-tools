@@ -25,6 +25,7 @@ theme:
      primary: pink
      accent: lime
 
+
 extra:
   social:
    - icon: fontawesome/brands/github-alt
@@ -70,3 +71,4 @@ extra_javascript:
 plugins:
   - search
   - mermaid2
+  - awesome-pages
