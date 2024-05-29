@@ -68,3 +68,4 @@ nav:
   - index.md
   - Galactocentric_transformation.md
   - Error_propagation.md
+  - CPU,GPU Optimization.md

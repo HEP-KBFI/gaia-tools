@@ -1,9 +1,11 @@
-# Error propagation
 
 ## Covariance data processing
+A covariance matrix is a 6x6 matrix in the celestial frame from the dataframe of Gaia data. The parameter's columns used in this Pandas dataframe are: 'ra', 'dec', 'parallax, 'pmra', 'pmdec', and 'radial_velocity'. You should also have all the columns ending with '_error' for each of the parameters named before and columns ending with '_corr' for pairs that are correlated.
+
+In the Gaia-Tools code base under 'covmatrices_generation' the 'generate_covmat' function is used to create the covariance matrices and the function 'generate_covmatrices' can be used to transform the matrices from one coordinate system to another.
 
 ## Covariance data propagation
-Transforming the covariance matrix form ICRS to Galactocentric $v_x$, $v_y$, $v_z$.
+Transforming the covariance matrix from ICRS to Galactocentric $v_x$, $v_y$, $v_z$.
 
 Here's an example:
 ```py
@@ -42,3 +44,5 @@ generate_covmatrices(data_icrs,
 ```
 
 ![Errorpropagation](figures/errorpropagation.png)
+
+![Errorpropagation2](figures/err_prop2.png)
