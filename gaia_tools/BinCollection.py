@@ -1,4 +1,4 @@
-from Bin import Bin
+from .Bin import Bin
 import numpy as np
 import pandas as pd
 import math
