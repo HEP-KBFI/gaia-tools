@@ -6,7 +6,7 @@ import matplotlib.cm as cm
 import numpy as np
 import astropy
 import pandas as pd
-from data_analysis import generate_vector_mesh
+from .data_analysis import generate_vector_mesh
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 

@@ -3,14 +3,13 @@ A module to deal with everything data import.
 '''
 
 import pandas as pd
-from data_analysis import filter_distance
+from .data_analysis import filter_distance
 import sys
 sys.path.append("../gaia_tools/")
 sys.path.append("../scripts/")
-import data_analysis
-import covariance_generation as cov
-import transformation_constants
-import photometric_cut
+from . import data_analysis
+from . import covariance_generation as cov
+from . import transformation_constants
 import numpy as np
 
 

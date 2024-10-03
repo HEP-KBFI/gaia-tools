@@ -8,7 +8,7 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.table import QTable
 from .BinCollection import BinCollection
-import transformation_constants
+from . import transformation_constants
 import timeit, time
 
 def filter_distance(df, dist, *args, **kwargs):
