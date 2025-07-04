@@ -1,14 +1,17 @@
 # Galactocentric transformation
-These codes require six parameters from Gaia data: right ascension $\alpha$ [deg], declination $\delta$ [deg], parallax $\varpi$ [mas] and their velocities $\mu_\alpha$ [mas/year], $\mu_\delta$ [mas/year], $v_r$ [km/s]. 
-We want to transform these coordinates to Galactrocentric Cartesian coordinates: x, y, z, $v_x$, $v_y$, $v_z$ and then to Galactocentric Cylindrical coordinates: r, $\varphi$, z, $v_r$, $v_\varphi$, $v_z$.
+Gaia data is provided in the ICRS (International Celestial Reference System) frame. To study Milky Way dynamics, it is often necessary to convert this data to a Galactocentric reference frame.
 
-```mermaid
-graph TD
-    A[ICRS] --> B[Galactocentric Cartesian];
-    B -->C[Galactocentric Cylindrical];
-```
+To transform both the position and velocity of a star, we need its 6D phase space information, defined by: 
+* right ascension $\alpha$ [deg], 
+* declination $\delta$ [deg] 
+* parallax or other distance measure $\varpi$ [mas] / $d$ [pc]
+* proper motion in $\alpha$ $\mu_\alpha$ [mas/year] 
+* proper motion in $\delta$ $\mu_\delta$ [mas/year]
+* radial velocity $v_r$ [km/s]. 
 
-All Gaia parameters can be found [here.](https://gea.esac.esa.int/archive/documentation/GDR2/Gaia_archive/chap_datamodel/sec_dm_main_tables/ssec_dm_gaia_source.html) 
+The idea is to transform these parameters to a Galactrocentric frame of reference and Cartesian coordinates: $x$, $y$, $z$, $v_x$, $v_y$, $v_z$. After this, the switch to Galactocentric Cylindrical coordinates is straight forward: $r$, $\varphi$, $z$, $v_r$, $v_\varphi$, $v_z$.
+
+The exact column names of these data products in the Gaia data can be found [here.](https://gea.esac.esa.int/archive/documentation/GDR2/Gaia_archive/chap_datamodel/sec_dm_main_tables/ssec_dm_gaia_source.html) 
 
 ## Positional observables
 Transforming ICRS coordinates $\alpha$, $\delta$, $\varpi$ to Galactocentric Cartesian coordinates x, y, z.
