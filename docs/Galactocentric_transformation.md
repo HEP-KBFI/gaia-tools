@@ -1,7 +1,7 @@
 # Galactocentric transformation
 Gaia data is provided in the ICRS (International Celestial Reference System) frame. To study Milky Way dynamics, it is often necessary to convert this data to a Galactocentric reference frame.
 
-To transform both the position and velocity of a star, we need its 6D phase space information, defined by: 
+To transform both the position and velocity of a star, we need its 6D phase space information, defined by:   
 - right ascension $\alpha$ [deg],  
 - declination $\delta$ [deg]  
 - parallax or other distance measure $\varpi$ [mas] / $d$ [pc]  
@@ -24,6 +24,20 @@ z_{ICRS}\\
 \frac{k_1}{\varpi} sin(\alpha) cos(\delta)\\
 \frac{k_1}{\varpi} sin(\delta) \end{bmatrix}$
 (1)
+
+$$
+\textbf{r}_{ICRS} = \begin{bmatrix} 
+x_{ICRS}\\ 
+y_{ICRS}\\ 
+z_{ICRS}
+\end{bmatrix}
+= \frac{k_1}{\varpi}
+\begin{bmatrix}
+\cos(\alpha) \cos(\delta)\\ 
+\sin(\alpha) \cos(\delta)\\
+\sin(\delta)
+\end{bmatrix}
+$$
 
 where $k_1=10^3$ [pc] is a scaling factor and $\varpi$ [mas] is the measured annual parallax of the star.
 
