@@ -29,6 +29,7 @@ z_{ICRS}
 \sin(\delta)
 \end{bmatrix}
 $$
+
 (1)
 
 where $k_1=10^3$ [pc] is a scaling factor and $\varpi$ [mas] is the measured annual parallax of the star.
@@ -43,6 +44,7 @@ y_{ICRS}\\
 z_{ICRS}\\ 
 \end{bmatrix} -R_0 \begin{bmatrix} 1\\ 0\\ 0\\ \end{bmatrix} \end{pmatrix}
 $$
+
 (2)
 
 Matrix $\textbf{H}$ accounts for the Sun's height over the Galactic plane, defined as:
@@ -52,6 +54,7 @@ $$
 0 & 1 & 0\\
 -sin(\theta) & 0 & cos(\theta) \end{bmatrix}
 $$
+
 (3)
 
 where $\theta$ is the angle between the position vector of the Sun and the Galactic plane $\theta=sin^{−1}
@@ -65,6 +68,7 @@ $$
 0.4941094278755837 & −0.4448296299600112 & 0.7469822444972189\\
 −0.8676661490190047 & −0.1980763734312015 & 0.4559837761750669 \end{bmatrix}
 $$
+
 (4)
 
 Transforming the velocities to Galactocentric Cartesian, using  the right ascension and declination proper
@@ -75,6 +79,7 @@ $$
 \frac{k_2}{\varpi}{\mu_\alpha*}\\ 
 \frac{k_2}{\varpi}\mu_\delta \end{bmatrix} + \begin{bmatrix} U_\odot\\ V_{\odot,TOT}\\ W_\odot \end{bmatrix}
 $$
+
 (5)
 
 where the scaling factor $k_2=4.74047$ [pc] and the $\textbf{B}$ matrix is a coordinate matrix dependent on the right ascension and
@@ -87,6 +92,7 @@ sin(\alpha) & cos(\alpha) & 0\\
 0 & 1 & 0\\
 sin(\delta) & 0 & cos(\delta) \end{bmatrix}
 $$
+
 (6)
 
 Here's an example:
