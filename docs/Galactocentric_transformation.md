@@ -60,7 +60,7 @@ $$
 where $\theta$ is the angle between the position vector of the Sun and the Galactic plane $\theta=sin^{−1}
 (\frac{z_0}{R_0})$.
 
-Matrix $\textbf{A}_G^T$ is a 3x3 fixed orthogonal matrix, which is responsible for the rotation of the coordinate frame and is
+The matrix $\textbf{A}_G^T$ is a 3x3 fixed orthogonal matrix, which is responsible for the rotation of the coordinate frame and is
 defined as:
 
 $$
@@ -71,29 +71,7 @@ $$
 
 (4)
 
-Transforming the velocities to Galactocentric Cartesian, using  the right ascension and declination proper
-motion components $\begin{pmatrix} \mu_\alpha , \mu_\delta \end{pmatrix}$ as well as the radial velocity $\begin{pmatrix} v_r \end{pmatrix}$:
 
-$$
-\begin{bmatrix} v_x\\ v_y\\ v_z \end{bmatrix}=\textbf{H}\textbf{A}_G^T\textbf{B} \begin{bmatrix} v_r\\ 
-\frac{k_2}{\varpi}{\mu_\alpha*}\\ 
-\frac{k_2}{\varpi}\mu_\delta \end{bmatrix} + \begin{bmatrix} U_\odot\\ V_{\odot,TOT}\\ W_\odot \end{bmatrix}
-$$
-
-(5)
-
-where the scaling factor $k_2=4.74047$ [pc] and the $\textbf{B}$ matrix is a coordinate matrix dependent on the right ascension and
-declination of the star, defined as:
-
-$$
-\textbf{B}=\begin{bmatrix} cos(\alpha) & -sin(\alpha) & 0\\
-sin(\alpha) & cos(\alpha) & 0\\
-0 & 0 & 1 \end{bmatrix}\begin{bmatrix} cos(\delta) & 0 & -sin(\delta)\\
-0 & 1 & 0\\
-sin(\delta) & 0 & cos(\delta) \end{bmatrix}
-$$
-
-(6)
 
 Here's an example:
 ```py
@@ -115,7 +93,10 @@ df_new=get_transformed_data(df,
 ![ICRS](figures/ICRS.png){: style="height:330px"}
 ![Cartesian](figures/Cartesian.png){: style="height:365px"}
 
-Now we can transform the Galactocentric Cartesian coordinates x, y, z to Galactocentric Cylindrical coordinates r, $\varphi$, z.
+
+An important argument in the above example is the 'is_bayes' flag. If True, the function will search for distance estimates using the column name 'r_est', expecting all distances to be in units of [pc]. If False, the function will use the inverse parallax as the distance estimates. 
+
+Now we can transform the Galactocentric Cartesian coordinates x, y, z to Galactocentric Cylindrical coordinates r, $\varphi$, z. The only difference from the previous example is the flag 'include_cylindrical = True'.
 
 Here's an example:
 ```py
@@ -143,7 +124,33 @@ And this one shows the location of the stars relative to the Galactic disk.
 ![Cylindrical_z](figures/cylindrical_z.png){: style="height:350px"}
 
 ## Velocities
-We can also transform velocities the same way as coordinates, from one system to another.
+
+Transforming the velocities to Galactocentric Cartesian, using the right ascension and declination proper
+motion components $\begin{pmatrix} \mu_\alpha , \mu_\delta \end{pmatrix}$ as well as the radial velocity $\begin{pmatrix} v_r \end{pmatrix}$:
+
+$$
+\begin{bmatrix} v_x\\ v_y\\ v_z \end{bmatrix}=\textbf{H}\textbf{A}_G^T\textbf{B} \begin{bmatrix} v_r\\ 
+\frac{k_2}{\varpi}{\mu_\alpha*}\\ 
+\frac{k_2}{\varpi}\mu_\delta \end{bmatrix} + \begin{bmatrix} U_\odot\\ V_{\odot,TOT}\\ W_\odot \end{bmatrix}
+$$
+
+(5)
+
+where the scaling factor $k_2=4.74047$ [pc] and the $\textbf{B}$ matrix is a coordinate matrix dependent on the right ascension and
+declination of the star, defined as:
+
+$$
+\textbf{B}=\begin{bmatrix} cos(\alpha) & -sin(\alpha) & 0\\
+sin(\alpha) & cos(\alpha) & 0\\
+0 & 0 & 1 \end{bmatrix}\begin{bmatrix} cos(\delta) & 0 & -sin(\delta)\\
+0 & 1 & 0\\
+sin(\delta) & 0 & cos(\delta) \end{bmatrix}
+$$
+
+(6)
+
+
+
 
 Here's and example of how to transform ICRS velocities to Galactocentric Cartesian velocities:
 ```py
