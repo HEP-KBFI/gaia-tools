@@ -5,7 +5,7 @@ A covariance matrix is a 6x6 matrix in the celestial frame from the dataframe of
 In the Gaia-Tools code base under 'covmatrices_generation' the 'generate_covmat' function is used to create the covariance matrices and the function 'generate_covmatrices' can be used to transform the matrices from one coordinate system to another.
 
 ## Covariance data propagation
-Transforming the covariance matrix from ICRS to Galactocentric $v_x$, $v_y$, $v_z$.
+Transforming the covariance matrix from ICRS to Galactocentric.
 
 Here's an example:
 ```py
