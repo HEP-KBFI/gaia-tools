@@ -13,6 +13,12 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://git.hep.kbfi.ee/gaia-physics/gaia-tools",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "numpy",
+        "pandas",
+        "astropy",
+        "numba"
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
