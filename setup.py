@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.1.4",
     author="Sven Poder",
     author_email="sven.poder@live.com",
-    description="A small example package",
+    description="The 'gaia-tools' package provides utilities for working with Gaia astrometric data. It includes functions for transforming coordinates between ICRS and Galactocentric (Cartesian and cylindrical) frames, as well as tools for constructing and propagating full astrometric covariance matrices. The package is designed to support analyses of Galactic dynamics.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://git.hep.kbfi.ee/gaia-physics/gaia-tools",
