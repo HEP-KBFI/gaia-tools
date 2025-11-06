@@ -36,4 +36,4 @@ The folder `jupyter-notebok` contains Jupyter Notebooks with examples of how to 
 
 
 ## Credit
-If you use this material, please don't forget to cite Põder et al. 2023.
+If you use this code, please don't forget to cite our paper Põder et al. 2023 (A&A, 676:A134, 2023) and the code. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17524206.svg)](https://doi.org/10.5281/zenodo.17524206)
